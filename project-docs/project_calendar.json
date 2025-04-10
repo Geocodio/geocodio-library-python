@@ -1,0 +1,297 @@
+[
+  {
+    "date": "2025-04-10",
+    "phase": "🔵 Res/API",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Explore PHP & pygeocodio repos (let's learn from others!)" },
+      { "hours": 2, "title": "Document key differences (first step done!)" }
+    ]
+  },
+  {
+    "date": "2025-04-11",
+    "phase": "🔵 Res/API",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 3, "title": "Dive into Geocodio API docs (discovery time!)" },
+      { "hours": 3, "title": "Sketch initial API outline (creative time!)" }
+    ]
+  },
+  {
+    "date": "2025-04-14",
+    "phase": "🔵 Res/API",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Refine API structure (making it elegant!)" },
+      { "hours": 2, "title": "Share progress with team (collaboration time!)" }
+    ]
+  },
+  {
+    "date": "2025-04-15",
+    "phase": "🔵 Res/API",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 3, "title": "Incorporate feedback (teamwork makes it work!)" },
+      { "hours": 3, "title": "Polish and refine (making it shine!)" }
+    ]
+  },
+  {
+    "date": "2025-04-16",
+    "phase": "🔵 Res/API",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Finalize API design (big milestone!)" },
+      { "hours": 2, "title": "Start README (sharing our vision!)" }
+    ]
+  },
+  {
+    "date": "2025-04-17",
+    "phase": "🔵 Res/API",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 3, "title": "Complete README (first doc done!)" },
+      { "hours": 3, "title": "Celebrate phase completion! 🎉" }
+    ]
+  },
+  {
+    "date": "2025-04-18",
+    "phase": "🟢 Sync Impl",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 3, "title": "Set up project (fresh start!)" },
+      { "hours": 3, "title": "First geocoding method (making it real!)" }
+    ]
+  },
+  {
+    "date": "2025-04-21",
+    "phase": "🟢 Sync Impl",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Add reverse geocoding (expanding capabilities!)" },
+      { "hours": 2, "title": "Write first tests (safety first!)" }
+    ]
+  },
+  {
+    "date": "2025-04-22",
+    "phase": "🟢 Sync Impl",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Implement batch geocoding (scaling up!)" },
+      { "hours": 2, "title": "Test and debug (making it solid!)" }
+    ]
+  },
+  {
+    "date": "2025-04-23",
+    "phase": "🟢 Sync Impl",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Add address parsing (smart features!)" },
+      { "hours": 2, "title": "Implement data appending (more power!)" }
+    ]
+  },
+  {
+    "date": "2025-04-24",
+    "phase": "🟢 Sync Impl",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Build error handling (making it robust!)" },
+      { "hours": 2, "title": "Add input validation (safety first!)" }
+    ]
+  },
+  {
+    "date": "2025-04-25",
+    "phase": "🟢 Sync Impl",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Expand test coverage (quality matters!)" },
+      { "hours": 2, "title": "Document sync client (sharing knowledge!)" }
+    ]
+  },
+  {
+    "date": "2025-04-28",
+    "phase": "🟢 Sync Impl",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 6, "title": "Review and polish (making it shine!)" }
+    ]
+  },
+  {
+    "date": "2025-04-29",
+    "phase": "🟢 Sync Impl",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Finalize sync implementation (big win!)" },
+      { "hours": 2, "title": "Celebrate completion! 🎉" }
+    ]
+  },
+  {
+    "date": "2025-04-30",
+    "phase": "🟡 Async Impl",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 3, "title": "Design async client (new adventure!)" },
+      { "hours": 3, "title": "First async methods (exciting times!)" }
+    ]
+  },
+  {
+    "date": "2025-05-01",
+    "phase": "🟡 Async Impl",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Add async reverse geocoding (more power!)" },
+      { "hours": 2, "title": "Write async tests (safety first!)" }
+    ]
+  },
+  {
+    "date": "2025-05-02",
+    "phase": "🟡 Async Impl",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Implement async batch (scaling up!)" },
+      { "hours": 2, "title": "Create async examples (sharing knowledge!)" }
+    ]
+  },
+  {
+    "date": "2025-05-05",
+    "phase": "🟡 Async Impl",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Add rate limiting (smart scaling!)" },
+      { "hours": 2, "title": "Test async methods (making it solid!)" }
+    ]
+  },
+  {
+    "date": "2025-05-06",
+    "phase": "🟡 Async Impl",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 6, "title": "Polish and optimize (making it shine!)" }
+    ]
+  },
+  {
+    "date": "2025-05-07",
+    "phase": "🟡 Async Impl",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Complete async interface (big milestone!)" },
+      { "hours": 2, "title": "Polish examples (sharing knowledge!)" }
+    ]
+  },
+  {
+    "date": "2025-05-08",
+    "phase": "🟡 Async Impl",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Run performance tests (measuring success!)" },
+      { "hours": 2, "title": "Celebrate async completion! 🎉" }
+    ]
+  },
+  {
+    "date": "2025-05-09",
+    "phase": "🟠 Enh/Robust",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Implement rate limiting (smart scaling!)" },
+      { "hours": 2, "title": "Add logging (visibility matters!)" }
+    ]
+  },
+  {
+    "date": "2025-05-12",
+    "phase": "🟠 Enh/Robust",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Enhance error handling (making it bulletproof!)" },
+      { "hours": 2, "title": "Document improvements (sharing knowledge!)" }
+    ]
+  },
+  {
+    "date": "2025-05-13",
+    "phase": "🟠 Enh/Robust",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Explore caching (performance boost!)" },
+      { "hours": 2, "title": "Review and refine (making it shine!)" }
+    ]
+  },
+  {
+    "date": "2025-05-14",
+    "phase": "🟠 Enh/Robust",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 3, "title": "Final robustness features (last touches!)" },
+      { "hours": 3, "title": "Celebrate enhancements! 🎉" }
+    ]
+  },
+  {
+    "date": "2025-05-15",
+    "phase": "🟣 Test/Docs",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Expand test coverage (quality first!)" },
+      { "hours": 2, "title": "Set up integration tests (safety net!)" }
+    ]
+  },
+  {
+    "date": "2025-05-16",
+    "phase": "🟣 Test/Docs",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Complete integration tests (solid foundation!)" },
+      { "hours": 2, "title": "Debug and polish (making it perfect!)" }
+    ]
+  },
+  {
+    "date": "2025-05-19",
+    "phase": "🟣 Test/Docs",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Draft user docs (sharing knowledge!)" },
+      { "hours": 2, "title": "Review with team (collaboration time!)" }
+    ]
+  },
+  {
+    "date": "2025-05-20",
+    "phase": "🟣 Test/Docs",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Polish documentation (making it shine!)" },
+      { "hours": 2, "title": "Create examples (helping others!)" }
+    ]
+  },
+  {
+    "date": "2025-05-21",
+    "phase": "🟣 Test/Docs",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 3, "title": "Final doc review (last polish!)" },
+      { "hours": 3, "title": "Celebrate documentation! 🎉" }
+    ]
+  },
+  {
+    "date": "2025-05-22",
+    "phase": "🔴 CI/CD",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Set up CI workflows (automation magic!)" },
+      { "hours": 2, "title": "Test CI setup (safety first!)" }
+    ]
+  },
+  {
+    "date": "2025-05-23",
+    "phase": "🔴 CI/CD",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Implement PyPI publishing (sharing with world!)" },
+      { "hours": 2, "title": "Test deployment (making it smooth!)" }
+    ]
+  },
+  {
+    "date": "2025-05-26",
+    "phase": "🔴 CI/CD",
+    "start_time": "11:00",
+    "tasks": [
+      { "hours": 4, "title": "Final CI/CD verification (last checks!)" },
+      { "hours": 2, "title": "Project completion celebration! 🎊" }
+    ]
+  }
+]
