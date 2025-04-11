@@ -17,54 +17,28 @@ A visual guide to track our progress through the Geocodio Python library impleme
 gantt
     title Geocodio Project Timeline
     dateFormat YYYY-MM-DD
-    axisFormat %m/%d
+    axisFormat %b %d
 
     section Research
-    Explore Repos & Docs :a1, 2025-04-10, 1d
-    API Design          :a2, 2025-04-11, 1d
-    Refine Structure    :a3, 2025-04-14, 1d
-    Polish Design       :a4, 2025-04-15, 1d
-    Finalize API        :a5, 2025-04-16, 1d
-    Complete README     :a6, 2025-04-17, 1d
+    Research           :2025-04-10, 2025-04-17
 
     section Sync
-    Project Setup       :b1, 2025-04-18, 1d
-    Basic Geocoding     :b2, 2025-04-21, 1d
-    Reverse Geocoding   :b3, 2025-04-22, 1d
-    Batch Processing    :b4, 2025-04-23, 1d
-    Data Processing     :b5, 2025-04-24, 1d
-    Error Handling      :b6, 2025-04-25, 1d
+    Implementation     :2025-04-18, 2025-04-25
 
     section Async
-    Async Design        :c1, 2025-04-28, 1d
-    Async Geocoding     :c2, 2025-04-29, 1d
-    Async Reverse       :c3, 2025-04-30, 1d
-    Async Batch         :c4, 2025-05-01, 1d
-    Async Features      :c5, 2025-05-02, 1d
+    Development        :2025-04-28, 2025-05-02
 
     section Enhance
-    Rate Limiting       :d1, 2025-05-05, 1d
-    Performance Opt     :d2, 2025-05-06, 1d
-    Robustness         :d3, 2025-05-07, 1d
-    Error Handling      :d4, 2025-05-08, 1d
-    Final Polish        :d5, 2025-05-09, 1d
+    Improvements       :2025-05-05, 2025-05-09
 
     section Test
-    Test Coverage       :e1, 2025-05-12, 1d
-    Integration Tests   :e2, 2025-05-13, 1d
-    Documentation      :e3, 2025-05-14, 1d
-    Example Code        :e4, 2025-05-15, 1d
-    Doc Review         :e5, 2025-05-16, 1d
+    QA & Review        :2025-05-12, 2025-05-16
 
     section Deploy
-    CI Setup           :f1, 2025-05-19, 1d
-    Workflow Tests     :f2, 2025-05-20, 1d
-    PyPI Setup         :f3, 2025-05-21, 1d
-    Deployment Tests   :f4, 2025-05-22, 1d
-    Final Deployment   :f5, 2025-05-23, 1d
+    Release            :2025-05-19, 2025-05-23
 
     section Complete
-    Final Verification :g1, 2025-05-26, 1d
+    Final Review      :2025-05-26, 2025-05-26
 ```
 
 ## Development Process
