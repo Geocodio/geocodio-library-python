@@ -15,117 +15,124 @@ A visual guide to track our progress through the Geocodio Python library impleme
 ## Project Timeline
 ```mermaid
 gantt
-    title Weekly Task Breakdown
-    dateFormat  YYYY-MM-DD
-    axisFormat %b %d
-    todayMarker on
+    title Geocodio Project Timeline
+    dateFormat YYYY-MM-DD
+    axisFormat %m/%d
 
-    section Week 1
-    Research & Analysis      :a1, 2025-04-10, 1d
-    API Design              :a2, 2025-04-11, 1d
-    Refinement              :a3, 2025-04-14, 1d
-    Polish & Feedback       :a4, 2025-04-15, 1d
-    Finalization            :a5, 2025-04-16, 1d
-    Phase Completion        :a6, 2025-04-17, 1d
+    section Research
+    Explore Repos & Docs :a1, 2025-04-10, 1d
+    API Design          :a2, 2025-04-11, 1d
+    Refine Structure    :a3, 2025-04-14, 1d
+    Polish Design       :a4, 2025-04-15, 1d
+    Finalize API        :a5, 2025-04-16, 1d
+    Complete README     :a6, 2025-04-17, 1d
 
-    section Week 2
-    Project Setup           :b1, 2025-04-18, 1d
-    Implementation          :b2, 2025-04-21, 1d
-    Batch Processing        :b3, 2025-04-22, 1d
-    Data Processing         :b4, 2025-04-23, 1d
-    Error Handling          :b5, 2025-04-24, 1d
-    Documentation           :b6, 2025-04-25, 1d
+    section Sync
+    Project Setup       :b1, 2025-04-18, 1d
+    Basic Geocoding     :b2, 2025-04-21, 1d
+    Reverse Geocoding   :b3, 2025-04-22, 1d
+    Batch Processing    :b4, 2025-04-23, 1d
+    Data Processing     :b5, 2025-04-24, 1d
+    Error Handling      :b6, 2025-04-25, 1d
 
-    section Week 3
-    Review & Polish         :c1, 2025-04-28, 1d
-    Sync Completion         :c2, 2025-04-29, 1d
-    Async Design            :c3, 2025-04-30, 1d
-    Async Implementation    :c4, 2025-05-01, 1d
-    Async Features          :c5, 2025-05-02, 1d
+    section Async
+    Async Design        :c1, 2025-04-28, 1d
+    Async Geocoding     :c2, 2025-04-29, 1d
+    Async Reverse       :c3, 2025-04-30, 1d
+    Async Batch         :c4, 2025-05-01, 1d
+    Async Features      :c5, 2025-05-02, 1d
 
-    section Week 4
-    Async Features          :d1, 2025-05-05, 1d
-    Polish & Optimize       :d2, 2025-05-06, 1d
-    Completion              :d3, 2025-05-07, 1d
-    Performance             :d4, 2025-05-08, 1d
-    Robustness              :d5, 2025-05-09, 1d
+    section Enhance
+    Rate Limiting       :d1, 2025-05-05, 1d
+    Performance Opt     :d2, 2025-05-06, 1d
+    Robustness         :d3, 2025-05-07, 1d
+    Error Handling      :d4, 2025-05-08, 1d
+    Final Polish        :d5, 2025-05-09, 1d
 
-    section Week 5
-    Error Handling          :e1, 2025-05-12, 1d
-    Optimization            :e2, 2025-05-13, 1d
-    Enhancements            :e3, 2025-05-14, 1d
-    Testing                 :e4, 2025-05-15, 1d
-    Final Polish            :e5, 2025-05-16, 1d
+    section Test
+    Test Coverage       :e1, 2025-05-12, 1d
+    Integration Tests   :e2, 2025-05-13, 1d
+    Documentation      :e3, 2025-05-14, 1d
+    Example Code        :e4, 2025-05-15, 1d
+    Doc Review         :e5, 2025-05-16, 1d
 
-    section Week 6
-    Documentation           :f1, 2025-05-19, 1d
-    Polish Docs             :f2, 2025-05-20, 1d
-    Doc Completion          :f3, 2025-05-21, 1d
-    CI Setup                :f4, 2025-05-22, 1d
-    Deployment              :f5, 2025-05-23, 1d
+    section Deploy
+    CI Setup           :f1, 2025-05-19, 1d
+    Workflow Tests     :f2, 2025-05-20, 1d
+    PyPI Setup         :f3, 2025-05-21, 1d
+    Deployment Tests   :f4, 2025-05-22, 1d
+    Final Deployment   :f5, 2025-05-23, 1d
 
-    section Week 7
-    Project Completion      :g1, 2025-05-26, 1d
+    section Complete
+    Final Verification :g1, 2025-05-26, 1d
 ```
 
 ## Development Process
 ```mermaid
+%%{init: { 'theme': 'dark', 'themeVariables': { 'fontFamily': 'arial', 'backgroundColor': 'transparent' } } }%%
 flowchart TD
-    classDef research fill:#3498db,stroke:#2980b9,color:white
-    classDef sync fill:#2ecc71,stroke:#27ae60,color:white
-    classDef async fill:#f1c40f,stroke:#f39c12,color:black
-    classDef enhance fill:#e67e22,stroke:#d35400,color:white
-    classDef test fill:#9b59b6,stroke:#8e44ad,color:white
-    classDef deploy fill:#e74c3c,stroke:#c0392b,color:white
+    classDef research fill:#2196F3,stroke:#1976D2,color:white
+    classDef sync fill:#4CAF50,stroke:#388E3C,color:white
+    classDef async fill:#FFEB3B,stroke:#FBC02D,color:#000000
+    classDef enhance fill:#FF9800,stroke:#F57C00,color:white
+    classDef test fill:#9C27B0,stroke:#7B1FA2,color:white
+    classDef deploy fill:#F44336,stroke:#D32F2F,color:white
 
-    A[Start]:::research --> B[Write Code]:::sync
-    B --> C[Run Tests]:::test
-    C -->|Tests Pass| D[Document Changes]:::research
-    C -->|Tests Fail| E[Fix Issues]:::enhance
+    style A fill:#2196F3,stroke:#1976D2,color:white
+    style B fill:#4CAF50,stroke:#388E3C,color:white
+    style C fill:#9C27B0,stroke:#7B1FA2,color:white
+    style D fill:#2196F3,stroke:#1976D2,color:white
+    style E fill:#FF9800,stroke:#F57C00,color:white
+    style F fill:#9C27B0,stroke:#7B1FA2,color:white
+    style G fill:#4CAF50,stroke:#388E3C,color:white
+    style H fill:#F44336,stroke:#D32F2F,color:white
+    style I fill:#F44336,stroke:#D32F2F,color:white
+
+    A[Start] --> B[Write Code]
+    B --> C[Run Tests]
+    C -->|Tests Pass| D[Document Changes]
+    C -->|Tests Fail| E[Fix Issues]
     E --> B
-    D --> F[Review Code]:::test
-    F -->|Approved| G[Commit Changes]:::sync
+    D --> F[Review Code]
+    F -->|Approved| G[Commit Changes]
     F -->|Needs Changes| E
-    G --> H[Deploy]:::deploy
-    H --> I[End]:::deploy
+    G --> H[Deploy]
+    H --> I[End]
 ```
 
 ## Daily Progress Tracker
 ```mermaid
+%%{init: { 'theme': 'dark', 'themeVariables': { 'fontFamily': 'arial', 'backgroundColor': 'transparent' } } }%%
 flowchart TD
-    classDef research fill:#3498db,stroke:#2980b9,color:white
-    classDef sync fill:#2ecc71,stroke:#27ae60,color:white
-    classDef async fill:#f1c40f,stroke:#f39c12,color:black
-    classDef enhance fill:#e67e22,stroke:#d35400,color:white
-    classDef test fill:#9b59b6,stroke:#8e44ad,color:white
-    classDef deploy fill:#e74c3c,stroke:#c0392b,color:white
-    classDef break fill:#95a5a6,stroke:#7f8c8d,color:white
-
-    subgraph "Morning Block (11:00 AM - 1:00 PM)"
-        A[Research & Planning]:::research
-        B[Code Implementation]:::sync
+    subgraph "Morning (11a-1p)"
+        A[Research & Planning]
+        B[Code Implementation]
     end
 
-    subgraph "Lunch Break (1:00 PM - 2:00 PM)"
-        C[Rest & Recharge]:::break
+    subgraph "Lunch (1p-2p)"
+        C[Rest & Recharge]
     end
 
-    subgraph "Afternoon Block (2:00 PM - 4:00 PM)"
-        D[Testing & Review]:::test
-        E[Documentation]:::research
+    subgraph "Afternoon (2p-4p)"
+        D[Testing & Review]
+        E[Documentation]
     end
 
-    subgraph "Final Block (4:00 PM - 5:00 PM)"
-        F[Polish & Cleanup]:::enhance
-        G[Plan Next Day]:::research
+    subgraph "Final (4p-5p)"
+        F[Polish & Cleanup]
+        G[Plan Next Day]
     end
 
-    A --> B
-    B --> C
-    C --> D
-    D --> E
-    E --> F
-    F --> G
+    %% Colors matching our guide
+    style A fill:#2196F3,stroke:#1976D2,color:white %% Blue for Research
+    style B fill:#4CAF50,stroke:#388E3C,color:white %% Green for Sync/Implementation
+    style C fill:#90A4AE,stroke:#607D8B,color:white %% Gray for Break
+    style D fill:#9C27B0,stroke:#7B1FA2,color:white %% Purple for Testing
+    style E fill:#2196F3,stroke:#1976D2,color:white %% Blue for Documentation
+    style F fill:#FF9800,stroke:#F57C00,color:white %% Orange for Enhancements
+    style G fill:#2196F3,stroke:#1976D2,color:white %% Blue for Planning
+
+    A --> B --> C --> D --> E --> F --> G
 ```
 
 ## Progress Tracking
