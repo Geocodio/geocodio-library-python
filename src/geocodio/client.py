@@ -1,0 +1,154 @@
+"""
+src/geocodio/client.py
+High‑level synchronous client for the Geocodio API.
+"""
+
+from __future__ import annotations
+
+import os
+from typing import List, Union, Dict, Tuple, Optional
+
+import httpx
+
+from .models import (
+    GeocodingResponse, GeocodingResult, AddressComponents,
+    Location, GeocodioFields, Timezone, CongressionalDistrict
+)
+from .exceptions import InvalidRequestError, AuthenticationError, GeocodioServerError
+
+
+class GeocodioClient:
+    BASE_PATH = "/v1.7"  # keep in sync with Geocodio’s current version
+
+    def __init__(self, api_key: Optional[str] = None, hostname: str = "api.geocod.io"):
+        self.api_key: str = api_key or os.getenv("GEOCODIO_API_KEY", "")
+        if not self.api_key:
+            raise AuthenticationError(
+                detail="No API key supplied and GEOCODIO_API_KEY is not set."
+            )
+        self.hostname = hostname.rstrip("/")
+        self._http = httpx.Client(base_url=f"https://{self.hostname}")
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # Public methods
+    # ──────────────────────────────────────────────────────────────────────────
+
+    def geocode(
+        self,
+        address: Union[str, Dict[str, str], List[Union[str, Dict[str, str]]]],
+        fields: Optional[List[str]] = None,
+        limit: Optional[int] = None,
+    ) -> GeocodingResponse:
+        params: Dict[str, Union[str, int]] = {"api_key": self.api_key}
+        if fields:
+            params["fields"] = ",".join(fields)
+        if limit:
+            params["limit"] = int(limit)
+
+        endpoint: str
+        data: Dict[str, Union[str, dict, list]] | None
+
+        # Decide single vs batch automatically
+        if isinstance(address, list):
+            endpoint = f"{self.BASE_PATH}/geocode"
+            data = {"addresses": address}
+        else:
+            endpoint = f"{self.BASE_PATH}/geocode"
+            # For single addresses we can use GET
+            if isinstance(address, dict):
+                # structured
+                params.update(address)
+            else:
+                params["q"] = address
+            data = None  # GET style
+
+        response = self._request("POST" if data else "GET", endpoint, params, json=data)
+        return self._parse_geocoding_response(response.json())
+
+    def reverse(
+        self,
+        coordinate: Union[str, Tuple[float, float], List[Union[str, Tuple[float, float]]]],
+        fields: Optional[List[str]] = None,
+        limit: Optional[int] = None,
+    ) -> GeocodingResponse:
+        params: Dict[str, Union[str, int]] = {"api_key": self.api_key}
+        if fields:
+            params["fields"] = ",".join(fields)
+        if limit:
+            params["limit"] = int(limit)
+
+        endpoint: str
+        data: Dict[str, list] | None
+
+        # Batch vs single coordinate
+        if isinstance(coordinate, list):
+            endpoint = f"{self.BASE_PATH}/reverse"
+            data = {"coordinates": coordinate}
+        else:
+            endpoint = f"{self.BASE_PATH}/reverse"
+            if isinstance(coordinate, tuple):
+                params["q"] = f"{coordinate[0]},{coordinate[1]}"
+            else:
+                params["q"] = coordinate  # "lat,lng"
+            data = None
+
+        response = self._request("POST" if data else "GET", endpoint, params, json=data)
+        return self._parse_geocoding_response(response.json())
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # Internal helpers
+    # ──────────────────────────────────────────────────────────────────────────
+
+    def _request(
+        self,
+        method: str,
+        endpoint: str,
+        params: dict,
+        json: Optional[dict] = None,
+    ) -> httpx.Response:
+        resp = self._http.request(method, endpoint, params=params, json=json, timeout=30)
+        if resp.status_code == 422:
+            raise InvalidRequestError(resp.text)
+        if resp.status_code == 403:
+            raise AuthenticationError(resp.text)
+        if 500 <= resp.status_code <= 599:
+            raise GeocodioServerError(resp.text)
+        resp.raise_for_status()
+        return resp
+
+    # ──────────────────────────────────────────────────────────────────────────
+
+    def _parse_geocoding_response(self, data: dict) -> GeocodingResponse:
+        results = [
+            GeocodingResult(
+                address_components=AddressComponents.from_api(res["address_components"]),
+                formatted_address=res["formatted_address"],
+                location=Location(**res["location"]),
+                accuracy=res.get("accuracy", 0.0),
+                accuracy_type=res.get("accuracy_type", ""),
+                source=res.get("source", ""),
+                fields=self._parse_fields(res.get("fields")),
+            )
+            for res in data.get("results", [])
+        ]
+        return GeocodingResponse(input=data.get("input", {}), results=results)
+
+    def _parse_fields(self, fields_data: dict | None) -> GeocodioFields | None:
+        if not fields_data:
+            return None
+
+        timezone = (
+            Timezone.from_api(fields_data["timezone"])
+            if "timezone" in fields_data else None
+        )
+        congressional_districts = None
+        if "congressional_districts" in fields_data:
+            congressional_districts = [
+                CongressionalDistrict(**cd)
+                for cd in fields_data["congressional_districts"]
+            ]
+
+        return GeocodioFields(
+            timezone=timezone,
+            congressional_districts=congressional_districts,
+        )
