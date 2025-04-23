@@ -1,25 +1,8 @@
+OLD - see current project_calendar.json
+
 # Geocodio Python Library Internal Project Plan 🌟
 
 Hey there! 👋 Welcome to our journey of building something awesome together! This plan is designed to be your friendly guide through the development of the Geocodio Python Library. We've built in plenty of breathing room and celebration points along the way. Remember: progress, not perfection! 🎯
-
-## ⏰ Time Management Quick Reference ⏰
-
-### Daily Time Blocks
-```
-🕚 11:00 - 12:30 | Morning Focus
-🕧 12:30 - 13:00 | Break & Refresh
-🕐 13:00 - 14:30 | Afternoon Sprint
-🕝 14:30 - 15:00 | Break & Stretch
-🕒 15:00 - 16:30 | Final Push
-🕟 16:30 - 17:00 | Wrap-up & Plan Tomorrow
-```
-
-### Pomodoro Technique 🍅
-```
-25 min work → 5 min break → 25 min work → 5 min break
-25 min work → 5 min break → 25 min work → 15 min break
-Repeat!
-```
 
 ## Managing Perfectionism & Procrastination 🧠
 

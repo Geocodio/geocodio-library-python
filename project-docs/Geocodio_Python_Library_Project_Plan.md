@@ -1,70 +1,75 @@
+OLD - see current project_calendar.json
+
 # Geocodio Python Library: Project Plan
 
 This document outlines the phases, tasks, and timeline for developing the official Geocodio Python Library, designed to be fully feature-comparable to the official PHP client.
 
 ## 📅 Timeline Overview
 
-| Phase                             | Duration   |
-|-----------------------------------|------------|
-| 1. Research & Design              | 1-2 weeks  |
-| 2. Core Implementation (Sync)     | 2-3 weeks  |
-| 3. Async Implementation           | 2-4 weeks  |
-| 4. Improvements & Robustness      | 1-2 weeks  |
-| 5. Testing & Documentation        | 2 weeks    |
-| 6. Automation & Publishing        | 1 week     |
-| **Total Estimated Time**          | **9-12 weeks** |
+| Phase                             | Duration   | Start Date  | End Date    |
+|-----------------------------------|------------|-------------|-------------|
+| 1. Research & Design              | 2 weeks    | 2025-04-21  | 2025-04-29  |
+| 2. Core Implementation (Sync)     | 2 weeks    | 2025-04-30  | 2025-05-13  |
+| 3. Enhancements & Validation      | 1 week     | 2025-05-14  | 2025-05-19  |
+| 4. Testing                        | 1 week     | 2025-05-20  | 2025-05-27  |
+| 5. CI/CD & PyPI Publishing        | 1 week     | 2025-05-28  | 2025-06-04  |
+| **Total Estimated Time**          | **7 weeks** | 2025-04-21  | 2025-06-04  |
 
 ---
 
 ## 🛠️ Tasks by Phase
 
-### Phase 1: Research & Design
-- Review existing Geocodio libraries and official API.
-- Create detailed API design ensuring feature parity with the PHP client.
-- **Deliverable:** API specification document.
+### Phase 1: Research & Design (2025-04-21 to 2025-04-29)
+- Review Geocodio PHP client library
+- Review pygeocodio (third-party Python library)
+- Review Geocodio API documentation
+- Review and extract endpoint schema from OpenAPI spec
+- Draft proposed Python class structure and method signatures
+- Review and revise initial plan internally
+- Finalize internal API specification (doc format)
+- **Deliverable:** API specification document
 
-### Phase 2: Core Implementation (Sync)
-- Implement synchronous methods: forward/reverse geocoding, batch processing, address parsing, data appending.
-- **Deliverable:** Working synchronous Python library.
+### Phase 2: Core Implementation (Sync) (2025-04-30 to 2025-05-13)
+- Implement forward geocoding (single address)
+- Implement forward geocoding (batch)
+- Implement reverse geocoding (single coordinate)
+- Implement reverse geocoding (batch)
+- Implement address parsing interface and response mapping
+- Implement data append options (timezone, districts, etc.)
+- Handle request construction and response parsing
+- Add input validation for all user-facing methods
+- Format API responses into Python data classes or dicts
+- Code review and refactor for clarity and maintainability
+- **Deliverable:** Working synchronous Python library
 
-### Phase 3: Async Implementation
-- Implement asynchronous support using Python's asyncio and aiohttp libraries, enabling concurrent requests for improved performance.
+### Phase 3: Enhancements & Validation (2025-05-14 to 2025-05-19)
+- Implement exception classes and error raising for 4xx/5xx
+- Log errors and request metadata for debugging (opt-in)
+- Add environment/config support for setting API key
+- Perform internal QA on inputs/outputs and expected behavior
+- **Deliverable:** Enhanced and validated library
 
-**Example:**
-```python
-from geocodio import AsyncGeocodioClient
+### Phase 4: Testing (2025-05-20 to 2025-05-27)
+- Write unit tests for geocoding functions
+- Write unit tests for parsing and appending functions
+- Write integration tests using the Geocodio API (live key)
+- Mock API for offline test coverage
+- Review and improve test coverage (target ~90%)
+- **Deliverable:** Fully tested library
 
-async def geocode_addresses(addresses):
-    client = AsyncGeocodioClient("YOUR_API_KEY")
-    results = await client.batch_geocode(addresses)
-    return results
-```
-
-- **Deliverable:** Functional async capabilities alongside synchronous methods.
-
-### Phase 4: Improvements & Robustness
-- Implement precise rate limit handling with exponential backoff.
-
-**Example:**
-If a request exceeds the API limit, the library automatically retries after incremental delays (e.g., 1 second, 2 seconds, 4 seconds).
-
-- Enhance error handling, logging clarity, and overall stability.
-- **Deliverable:** Robust, reliable library with clear error reporting.
-
-### Phase 5: Testing & Documentation
-- Write comprehensive unit and integration tests.
-- Create detailed user documentation and examples, provided in the format requested by Geocodio to seamlessly integrate with current library documentation.
-- **Deliverable:** Fully tested and documented library.
-
-### Phase 6: Automation & Publishing
-- Configure automated testing and publishing workflows matching the official PHP client's CI/CD practices.
-- **Deliverable:** Official Python library published to PyPI.
+### Phase 5: CI/CD & PyPI Publishing (2025-05-28 to 2025-06-04)
+- Set up GitHub Actions for automated test runs on PR
+- Create setup.py and/or pyproject.toml
+- Configure PyPI publishing workflow (via GitHub or manual)
+- Draft minimal README with installation and quick usage
+- Run manual test release to PyPI test instance
+- Publish v1.0 to PyPI
+- **Deliverable:** Published Python package
 
 ---
 
 ## 🎯 Key Benefits
 
-- **Async Support:** Enables users to handle multiple geocoding requests concurrently, significantly boosting throughput and application responsiveness.
 - **Reliability:** Clear and automated management of API rate limits and error conditions, reducing developer overhead and manual intervention.
 - **Ease of Integration:** Documentation aligned directly with Geocodio's existing library documentation for consistency and ease of use.
 - **Simplified Ongoing Maintenance:** Automated testing and publishing workflows streamline updates and ensure ongoing library health with minimal effort.
@@ -74,9 +79,7 @@ If a request exceeds the API limit, the library automatically retries after incr
 ## 📦 Deliverables
 
 - Complete Python library feature-equivalent to the official PHP library.
-- Robust synchronous and asynchronous client implementations.
-- Comprehensive rate-limit handling, error management, and clear logging.
-- Fully integrated user documentation matching Geocodio's documentation standards.
+- Robust synchronous client implementation.
 - Automated CI/CD setup for ongoing ease of maintenance and deployment.
 
 ---
@@ -91,10 +94,8 @@ Please let us know if you have any questions or require further details.
 
 ## 📅 Project Timeline Summary
 
-If the project begins on **Monday, April 15, 2025**, the estimated completion window is:
-
-- **Earliest end date:** June 16, 2025 (9 weeks)
-- **Latest end date:** July 21, 2025 (12 weeks)
+Project Start: **Monday, April 21, 2025**
+Project End: **Wednesday, June 4, 2025**
 
 This assumes a consistent weekly commitment of approximately 30 hours.
 
@@ -113,29 +114,23 @@ This assumes a consistent weekly commitment of approximately 30 hours.
 - Data appending implementation: 100%
 - Unit test coverage: ≥70%
 
-### Phase 3: Async Implementation
-- Async client base implementation: 100%
-- Async geocoding methods: 100%
-- Async batch processing: 100%
-- Async rate limit management: 100%
-- Performance benchmarks: Completed
-
-### Phase 4: Enhancements & Robustness
-- Rate limiting implementation: 100%
-- Error handling coverage: 100%
+### Phase 3: Enhancements & Validation
+- Exception handling implementation: 100%
 - Logging implementation: 100%
-- Internal documentation: 100%
+- Environment config support: 100%
+- Internal QA completion: 100%
 
-### Phase 5: Testing & Documentation
+### Phase 4: Testing
 - Unit test coverage: ≥90%
 - Integration test coverage: 100%
-- User documentation completion: 100%
-- Example code coverage: 100%
+- Mock API implementation: 100%
+- Test documentation: 100%
 
-### Phase 6: Automation & Publishing
+### Phase 5: CI/CD & PyPI Publishing
 - CI/CD pipeline setup: 100%
 - PyPI publishing automation: 100%
-- Maintainer documentation: 100%
+- Documentation completion: 100%
+- Package publishing: 100%
 
 ### Overall Progress Tracking
 - Code completion percentage
@@ -172,39 +167,35 @@ This assumes a consistent weekly commitment of approximately 30 hours.
   - [ ] Address parsing
   - [ ] Data appending
 
-### Phase 3: Async Implementation
-- [ ] Async Client Base
-  - [ ] aiohttp integration
-  - [ ] Async request handling
-  - [ ] Concurrent request management
-- [ ] Async Features
-  - [ ] Async geocoding
-  - [ ] Async batch processing
-  - [ ] Async data appending
-
-### Phase 4: Improvements & Robustness
-- [ ] Rate Limiting
-  - [ ] Exponential backoff
-  - [ ] Queue management
-  - [ ] Retry logic
+### Phase 3: Enhancements & Validation
 - [ ] Error Handling
-  - [ ] Custom exceptions
+  - [ ] Exception classes
   - [ ] Error messages
   - [ ] Recovery strategies
+- [ ] Logging
+  - [ ] Request metadata
+  - [ ] Error logging
+  - [ ] Debug support
+- [ ] Configuration
+  - [ ] Environment variables
+  - [ ] API key management
+  - [ ] Settings validation
 
-### Phase 5: Testing & Documentation
-- [ ] Testing
-  - [ ] Unit tests
-  - [ ] Integration tests
-  - [ ] Performance tests
-  - [ ] Error case tests
-- [ ] Documentation
-  - [ ] API reference
-  - [ ] Usage examples
-  - [ ] Best practices
-  - [ ] Troubleshooting guide
+### Phase 4: Testing
+- [ ] Unit Tests
+  - [ ] Geocoding functions
+  - [ ] Parsing functions
+  - [ ] Data appending
+- [ ] Integration Tests
+  - [ ] Live API testing
+  - [ ] Mock API implementation
+  - [ ] Error scenarios
+- [ ] Test Coverage
+  - [ ] Coverage reporting
+  - [ ] Coverage improvement
+  - [ ] Documentation
 
-### Phase 6: Automation & Publishing
+### Phase 5: CI/CD & PyPI Publishing
 - [ ] CI/CD Setup
   - [ ] GitHub Actions configuration
   - [ ] Test automation
@@ -213,14 +204,16 @@ This assumes a consistent weekly commitment of approximately 30 hours.
   - [ ] PyPI package setup
   - [ ] Version management
   - [ ] Release notes
+- [ ] Documentation
+  - [ ] README
+  - [ ] Installation guide
+  - [ ] Usage examples
 
 ## ⚠️ Risk Assessment
 
 ### Technical Risks
 - **API Changes**: Geocodio API updates may require library modifications
   - *Mitigation*: Regular API monitoring and version pinning
-- **Performance Issues**: Async implementation may not meet performance goals
-  - *Mitigation*: Early performance testing and optimization
 
 ### Project Risks
 - **Scope Creep**: Additional features may be requested
@@ -263,7 +256,6 @@ Note: As a single developer, some phases may require additional time. The timeli
 ### Testing Strategy
 - Unit testing (pytest)
 - Integration testing
-- Performance testing
 - Security testing
 
 ### Documentation Quality

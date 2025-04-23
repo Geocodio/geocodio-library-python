@@ -1,297 +1,322 @@
 [
   {
-    "date": "2025-04-10",
-    "phase": "🔵 Res/API",
-    "start_time": "11:00",
-    "tasks": [
-      { "hours": 4, "title": "Explore PHP & pygeocodio repos (let's learn from others!)" },
-      { "hours": 2, "title": "Document key differences (first step done!)" }
-    ]
-  },
-  {
-    "date": "2025-04-11",
-    "phase": "🔵 Res/API",
-    "start_time": "11:00",
-    "tasks": [
-      { "hours": 3, "title": "Dive into Geocodio API docs (discovery time!)" },
-      { "hours": 3, "title": "Sketch initial API outline (creative time!)" }
-    ]
-  },
-  {
-    "date": "2025-04-14",
-    "phase": "🔵 Res/API",
-    "start_time": "11:00",
-    "tasks": [
-      { "hours": 4, "title": "Refine API structure (making it elegant!)" },
-      { "hours": 2, "title": "Share progress with team (collaboration time!)" }
-    ]
-  },
-  {
-    "date": "2025-04-15",
-    "phase": "🔵 Res/API",
-    "start_time": "11:00",
-    "tasks": [
-      { "hours": 3, "title": "Incorporate feedback (teamwork makes it work!)" },
-      { "hours": 3, "title": "Polish and refine (making it shine!)" }
-    ]
-  },
-  {
-    "date": "2025-04-16",
-    "phase": "🔵 Res/API",
-    "start_time": "11:00",
-    "tasks": [
-      { "hours": 4, "title": "Finalize API design (big milestone!)" },
-      { "hours": 2, "title": "Start README (sharing our vision!)" }
-    ]
-  },
-  {
-    "date": "2025-04-17",
-    "phase": "🔵 Res/API",
-    "start_time": "11:00",
-    "tasks": [
-      { "hours": 3, "title": "Complete README (first doc done!)" },
-      { "hours": 3, "title": "Celebrate phase completion! 🎉" }
-    ]
-  },
-  {
-    "date": "2025-04-18",
-    "phase": "🟢 Sync Impl",
-    "start_time": "11:00",
-    "tasks": [
-      { "hours": 3, "title": "Set up project (fresh start!)" },
-      { "hours": 3, "title": "First geocoding method (making it real!)" }
-    ]
-  },
-  {
     "date": "2025-04-21",
-    "phase": "🟢 Sync Impl",
-    "start_time": "11:00",
+    "phase": "\ud83d\udd35 Research & Design",
     "tasks": [
-      { "hours": 4, "title": "Add reverse geocoding (expanding capabilities!)" },
-      { "hours": 2, "title": "Write first tests (safety first!)" }
+      {
+        "hours": 4.3,
+        "title": "Review Geocodio PHP client library"
+      }
     ]
   },
   {
     "date": "2025-04-22",
-    "phase": "🟢 Sync Impl",
-    "start_time": "11:00",
+    "phase": "\ud83d\udd35 Research & Design",
     "tasks": [
-      { "hours": 4, "title": "Implement batch geocoding (scaling up!)" },
-      { "hours": 2, "title": "Test and debug (making it solid!)" }
+      {
+        "hours": 4.3,
+        "title": "Review pygeocodio (third-party Python library)"
+      }
     ]
   },
   {
     "date": "2025-04-23",
-    "phase": "🟢 Sync Impl",
-    "start_time": "11:00",
+    "phase": "\ud83d\udd35 Research & Design",
     "tasks": [
-      { "hours": 4, "title": "Add address parsing (smart features!)" },
-      { "hours": 2, "title": "Implement data appending (more power!)" }
+      {
+        "hours": 4.3,
+        "title": "Review Geocodio API documentation"
+      }
     ]
   },
   {
     "date": "2025-04-24",
-    "phase": "🟢 Sync Impl",
-    "start_time": "11:00",
+    "phase": "\ud83d\udd35 Research & Design",
     "tasks": [
-      { "hours": 4, "title": "Build error handling (making it robust!)" },
-      { "hours": 2, "title": "Add input validation (safety first!)" }
+      {
+        "hours": 4.3,
+        "title": "Review and extract endpoint schema from OpenAPI spec"
+      }
     ]
   },
   {
     "date": "2025-04-25",
-    "phase": "🟢 Sync Impl",
-    "start_time": "11:00",
+    "phase": "\ud83d\udd35 Research & Design",
     "tasks": [
-      { "hours": 4, "title": "Expand test coverage (quality matters!)" },
-      { "hours": 2, "title": "Document sync client (sharing knowledge!)" }
+      {
+        "hours": 4.3,
+        "title": "Draft proposed Python class structure and method signatures"
+      }
     ]
   },
   {
     "date": "2025-04-28",
-    "phase": "🟢 Sync Impl",
-    "start_time": "11:00",
+    "phase": "\ud83d\udd35 Research & Design",
     "tasks": [
-      { "hours": 6, "title": "Review and polish (making it shine!)" }
+      {
+        "hours": 4.3,
+        "title": "Review and revise initial plan internally"
+      }
     ]
   },
   {
     "date": "2025-04-29",
-    "phase": "🟢 Sync Impl",
-    "start_time": "11:00",
+    "phase": "\ud83d\udd35 Research & Design",
     "tasks": [
-      { "hours": 4, "title": "Finalize sync implementation (big win!)" },
-      { "hours": 2, "title": "Celebrate completion! 🎉" }
+      {
+        "hours": 4.3,
+        "title": "Finalize internal API specification (doc format)"
+      }
     ]
   },
   {
     "date": "2025-04-30",
-    "phase": "🟡 Async Impl",
-    "start_time": "11:00",
+    "phase": "\ud83d\udfe2 Core Implementation (Sync)",
     "tasks": [
-      { "hours": 3, "title": "Design async client (new adventure!)" },
-      { "hours": 3, "title": "First async methods (exciting times!)" }
+      {
+        "hours": 6,
+        "title": "Implement forward geocoding (single address)"
+      }
     ]
   },
   {
     "date": "2025-05-01",
-    "phase": "🟡 Async Impl",
-    "start_time": "11:00",
+    "phase": "\ud83d\udfe2 Core Implementation (Sync)",
     "tasks": [
-      { "hours": 4, "title": "Add async reverse geocoding (more power!)" },
-      { "hours": 2, "title": "Write async tests (safety first!)" }
+      {
+        "hours": 6,
+        "title": "Implement forward geocoding (batch)"
+      }
     ]
   },
   {
     "date": "2025-05-02",
-    "phase": "🟡 Async Impl",
-    "start_time": "11:00",
+    "phase": "\ud83d\udfe2 Core Implementation (Sync)",
     "tasks": [
-      { "hours": 4, "title": "Implement async batch (scaling up!)" },
-      { "hours": 2, "title": "Create async examples (sharing knowledge!)" }
+      {
+        "hours": 6,
+        "title": "Implement reverse geocoding (single coordinate)"
+      }
     ]
   },
   {
     "date": "2025-05-05",
-    "phase": "🟡 Async Impl",
-    "start_time": "11:00",
+    "phase": "\ud83d\udfe2 Core Implementation (Sync)",
     "tasks": [
-      { "hours": 4, "title": "Add rate limiting (smart scaling!)" },
-      { "hours": 2, "title": "Test async methods (making it solid!)" }
+      {
+        "hours": 6,
+        "title": "Implement reverse geocoding (batch)"
+      }
     ]
   },
   {
     "date": "2025-05-06",
-    "phase": "🟡 Async Impl",
-    "start_time": "11:00",
+    "phase": "\ud83d\udfe2 Core Implementation (Sync)",
     "tasks": [
-      { "hours": 6, "title": "Polish and optimize (making it shine!)" }
+      {
+        "hours": 6,
+        "title": "Implement address parsing interface and response mapping"
+      }
     ]
   },
   {
     "date": "2025-05-07",
-    "phase": "🟡 Async Impl",
-    "start_time": "11:00",
+    "phase": "\ud83d\udfe2 Core Implementation (Sync)",
     "tasks": [
-      { "hours": 4, "title": "Complete async interface (big milestone!)" },
-      { "hours": 2, "title": "Polish examples (sharing knowledge!)" }
+      {
+        "hours": 6,
+        "title": "Implement data append options (timezone, districts, etc.)"
+      }
     ]
   },
   {
     "date": "2025-05-08",
-    "phase": "🟡 Async Impl",
-    "start_time": "11:00",
+    "phase": "\ud83d\udfe2 Core Implementation (Sync)",
     "tasks": [
-      { "hours": 4, "title": "Run performance tests (measuring success!)" },
-      { "hours": 2, "title": "Celebrate async completion! 🎉" }
+      {
+        "hours": 6,
+        "title": "Handle request construction and response parsing"
+      }
     ]
   },
   {
     "date": "2025-05-09",
-    "phase": "🟠 Enh/Robust",
-    "start_time": "11:00",
+    "phase": "\ud83d\udfe2 Core Implementation (Sync)",
     "tasks": [
-      { "hours": 4, "title": "Implement rate limiting (smart scaling!)" },
-      { "hours": 2, "title": "Add logging (visibility matters!)" }
+      {
+        "hours": 6,
+        "title": "Add input validation for all user-facing methods"
+      }
     ]
   },
   {
     "date": "2025-05-12",
-    "phase": "🟠 Enh/Robust",
-    "start_time": "11:00",
+    "phase": "\ud83d\udfe2 Core Implementation (Sync)",
     "tasks": [
-      { "hours": 4, "title": "Enhance error handling (making it bulletproof!)" },
-      { "hours": 2, "title": "Document improvements (sharing knowledge!)" }
+      {
+        "hours": 6,
+        "title": "Format API responses into Python data classes or dicts"
+      }
     ]
   },
   {
     "date": "2025-05-13",
-    "phase": "🟠 Enh/Robust",
-    "start_time": "11:00",
+    "phase": "\ud83d\udfe2 Core Implementation (Sync)",
     "tasks": [
-      { "hours": 4, "title": "Explore caching (performance boost!)" },
-      { "hours": 2, "title": "Review and refine (making it shine!)" }
+      {
+        "hours": 6,
+        "title": "Code review and refactor for clarity and maintainability"
+      }
     ]
   },
   {
     "date": "2025-05-14",
-    "phase": "🟠 Enh/Robust",
-    "start_time": "11:00",
+    "phase": "\ud83d\udfe1 Enhancements & Validation",
     "tasks": [
-      { "hours": 3, "title": "Final robustness features (last touches!)" },
-      { "hours": 3, "title": "Celebrate enhancements! 🎉" }
+      {
+        "hours": 7.5,
+        "title": "Implement exception classes and error raising for 4xx/5xx"
+      }
     ]
   },
   {
     "date": "2025-05-15",
-    "phase": "🟣 Test/Docs",
-    "start_time": "11:00",
+    "phase": "\ud83d\udfe1 Enhancements & Validation",
     "tasks": [
-      { "hours": 4, "title": "Expand test coverage (quality first!)" },
-      { "hours": 2, "title": "Set up integration tests (safety net!)" }
+      {
+        "hours": 7.5,
+        "title": "Log errors and request metadata for debugging (opt-in)"
+      }
     ]
   },
   {
     "date": "2025-05-16",
-    "phase": "🟣 Test/Docs",
-    "start_time": "11:00",
+    "phase": "\ud83d\udfe1 Enhancements & Validation",
     "tasks": [
-      { "hours": 4, "title": "Complete integration tests (solid foundation!)" },
-      { "hours": 2, "title": "Debug and polish (making it perfect!)" }
+      {
+        "hours": 7.5,
+        "title": "Add environment/config support for setting API key"
+      }
     ]
   },
   {
     "date": "2025-05-19",
-    "phase": "🟣 Test/Docs",
-    "start_time": "11:00",
+    "phase": "\ud83d\udfe1 Enhancements & Validation",
     "tasks": [
-      { "hours": 4, "title": "Draft user docs (sharing knowledge!)" },
-      { "hours": 2, "title": "Review with team (collaboration time!)" }
+      {
+        "hours": 7.5,
+        "title": "Perform internal QA on inputs/outputs and expected behavior"
+      }
     ]
   },
   {
     "date": "2025-05-20",
-    "phase": "🟣 Test/Docs",
-    "start_time": "11:00",
+    "phase": "\ud83d\udfe3 Testing",
     "tasks": [
-      { "hours": 4, "title": "Polish documentation (making it shine!)" },
-      { "hours": 2, "title": "Create examples (helping others!)" }
+      {
+        "hours": 6,
+        "title": "Write unit tests for geocoding functions"
+      }
     ]
   },
   {
     "date": "2025-05-21",
-    "phase": "🟣 Test/Docs",
-    "start_time": "11:00",
+    "phase": "\ud83d\udfe3 Testing",
     "tasks": [
-      { "hours": 3, "title": "Final doc review (last polish!)" },
-      { "hours": 3, "title": "Celebrate documentation! 🎉" }
+      {
+        "hours": 6,
+        "title": "Write unit tests for parsing and appending functions"
+      }
     ]
   },
   {
     "date": "2025-05-22",
-    "phase": "🔴 CI/CD",
-    "start_time": "11:00",
+    "phase": "\ud83d\udfe3 Testing",
     "tasks": [
-      { "hours": 4, "title": "Set up CI workflows (automation magic!)" },
-      { "hours": 2, "title": "Test CI setup (safety first!)" }
+      {
+        "hours": 6,
+        "title": "Write integration tests using the Geocodio API (live key)"
+      }
     ]
   },
   {
     "date": "2025-05-23",
-    "phase": "🔴 CI/CD",
-    "start_time": "11:00",
+    "phase": "\ud83d\udfe3 Testing",
     "tasks": [
-      { "hours": 4, "title": "Implement PyPI publishing (sharing with world!)" },
-      { "hours": 2, "title": "Test deployment (making it smooth!)" }
+      {
+        "hours": 6,
+        "title": "Mock API for offline test coverage"
+      }
     ]
   },
   {
-    "date": "2025-05-26",
-    "phase": "🔴 CI/CD",
-    "start_time": "11:00",
+    "date": "2025-05-27",
+    "phase": "\ud83d\udfe3 Testing",
     "tasks": [
-      { "hours": 4, "title": "Final CI/CD verification (last checks!)" },
-      { "hours": 2, "title": "Project completion celebration! 🎊" }
+      {
+        "hours": 6,
+        "title": "Review and improve test coverage (target ~90%)"
+      }
+    ]
+  },
+  {
+    "date": "2025-05-28",
+    "phase": "\ud83d\udd34 CI/CD & PyPI Publishing",
+    "tasks": [
+      {
+        "hours": 5,
+        "title": "Set up GitHub Actions for automated test runs on PR"
+      }
+    ]
+  },
+  {
+    "date": "2025-05-29",
+    "phase": "\ud83d\udd34 CI/CD & PyPI Publishing",
+    "tasks": [
+      {
+        "hours": 5,
+        "title": "Create setup.py and/or pyproject.toml"
+      }
+    ]
+  },
+  {
+    "date": "2025-05-30",
+    "phase": "\ud83d\udd34 CI/CD & PyPI Publishing",
+    "tasks": [
+      {
+        "hours": 5,
+        "title": "Configure PyPI publishing workflow (via GitHub or manual)"
+      }
+    ]
+  },
+  {
+    "date": "2025-06-02",
+    "phase": "\ud83d\udd34 CI/CD & PyPI Publishing",
+    "tasks": [
+      {
+        "hours": 5,
+        "title": "Draft minimal README with installation and quick usage"
+      }
+    ]
+  },
+  {
+    "date": "2025-06-03",
+    "phase": "\ud83d\udd34 CI/CD & PyPI Publishing",
+    "tasks": [
+      {
+        "hours": 5,
+        "title": "Run manual test release to PyPI test instance"
+      }
+    ]
+  },
+  {
+    "date": "2025-06-04",
+    "phase": "\ud83d\udd34 CI/CD & PyPI Publishing",
+    "tasks": [
+      {
+        "hours": 5,
+        "title": "Publish v1.0 to PyPI"
+      }
     ]
   }
 ]

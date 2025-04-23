@@ -20,25 +20,19 @@ gantt
     axisFormat %b %d
 
     section Research
-    Research           :2025-04-10, 2025-04-17
+    Research           :2025-04-21, 2025-04-29
 
     section Sync
-    Implementation     :2025-04-18, 2025-04-25
-
-    section Async
-    Development        :2025-04-28, 2025-05-02
+    Implementation     :2025-04-30, 2025-05-13
 
     section Enhance
-    Improvements       :2025-05-05, 2025-05-09
+    Improvements       :2025-05-14, 2025-05-19
 
     section Test
-    QA & Review        :2025-05-12, 2025-05-16
+    QA & Review        :2025-05-20, 2025-05-27
 
     section Deploy
-    Release            :2025-05-19, 2025-05-23
-
-    section Complete
-    Final Review      :2025-05-26, 2025-05-26
+    Release            :2025-05-28, 2025-06-04
 ```
 
 ## Development Process
