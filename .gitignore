@@ -31,6 +31,7 @@ ENV/
 # IDE
 .idea/
 .vscode/
+.cursor/
 *.swp
 *.swo
 
@@ -63,6 +64,7 @@ ENV/
 # IDE specific files
 .idea/
 .vscode/
+.cursor/
 *.swp
 *.swo
 
