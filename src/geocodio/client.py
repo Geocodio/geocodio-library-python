@@ -12,13 +12,14 @@ import httpx
 
 from .models import (
     GeocodingResponse, GeocodingResult, AddressComponents,
-    Location, GeocodioFields, Timezone, CongressionalDistrict
+    Location, GeocodioFields, Timezone, CongressionalDistrict,
+    CensusData, ACSSurveyData
 )
 from .exceptions import InvalidRequestError, AuthenticationError, GeocodioServerError
 
 
 class GeocodioClient:
-    BASE_PATH = "/v1.7"  # keep in sync with Geocodio’s current version
+    BASE_PATH = "/v1.7"  # keep in sync with Geocodio's current version
 
     def __init__(self, api_key: Optional[str] = None, hostname: str = "api.geocod.io"):
         self.api_key: str = api_key or os.getenv("GEOCODIO_API_KEY", "")
@@ -35,7 +36,7 @@ class GeocodioClient:
 
     def geocode(
         self,
-        address: Union[str, Dict[str, str], List[Union[str, Dict[str, str]]]],
+        address: Union[str, Dict[str, str], List[Union[str, Dict[str, str]]], Dict[str, Union[str, Dict[str, str]]]],
         fields: Optional[List[str]] = None,
         limit: Optional[int] = None,
     ) -> GeocodingResponse:
@@ -48,19 +49,25 @@ class GeocodioClient:
         endpoint: str
         data: Dict[str, Union[str, dict, list]] | None
 
-        # Decide single vs batch automatically
-        if isinstance(address, list):
+        # Handle different input types
+        if isinstance(address, dict) and not any(isinstance(v, dict) for v in address.values()):
+            # Single structured address
+            endpoint = f"{self.BASE_PATH}/geocode"
+            params.update(address)
+            data = None
+        elif isinstance(address, list):
+            # Batch addresses
             endpoint = f"{self.BASE_PATH}/geocode"
             data = {"addresses": address}
-        else:
+        elif isinstance(address, dict) and any(isinstance(v, dict) for v in address.values()):
+            # Batch addresses with custom keys
             endpoint = f"{self.BASE_PATH}/geocode"
-            # For single addresses we can use GET
-            if isinstance(address, dict):
-                # structured
-                params.update(address)
-            else:
-                params["q"] = address
-            data = None  # GET style
+            data = {"addresses": list(address.values()), "keys": list(address.keys())}
+        else:
+            # Single address string
+            endpoint = f"{self.BASE_PATH}/geocode"
+            params["q"] = address
+            data = None
 
         response = self._request("POST" if data else "GET", endpoint, params, json=data)
         return self._parse_geocoding_response(response.json())
@@ -142,13 +149,31 @@ class GeocodioClient:
             if "timezone" in fields_data else None
         )
         congressional_districts = None
-        if "congressional_districts" in fields_data:
+        if "cd" in fields_data:
             congressional_districts = [
                 CongressionalDistrict(**cd)
-                for cd in fields_data["congressional_districts"]
+                for cd in fields_data["cd"]
             ]
+
+        census2010 = (
+            CensusData.from_api(fields_data["census2010"])
+            if "census2010" in fields_data else None
+        )
+
+        census2020 = (
+            CensusData.from_api(fields_data["census2020"])
+            if "census2020" in fields_data else None
+        )
+
+        acs = (
+            ACSSurveyData.from_api(fields_data["acs"])
+            if "acs" in fields_data else None
+        )
 
         return GeocodioFields(
             timezone=timezone,
             congressional_districts=congressional_districts,
+            census2010=census2010,
+            census2020=census2020,
+            acs=acs,
         )

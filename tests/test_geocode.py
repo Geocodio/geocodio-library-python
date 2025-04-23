@@ -164,7 +164,7 @@ def test_geocode_with_fields(client, httpx_mock):
     # Arrange: stub the API call with timezone and congressional districts
     def response_callback(request):
         assert request.method == "GET"
-        assert request.url.params["fields"] == "timezone,congressional_districts"
+        assert request.url.params["fields"] == "timezone,cd"
         return httpx.Response(200, json={
             "results": [{
                 "address_components": {
@@ -186,11 +186,11 @@ def test_geocode_with_fields(client, httpx_mock):
                         "utc_offset": -5,
                         "observes_dst": True
                     },
-                    "congressional_districts": [
+                    "cd": [
                         {
                             "name": "Virginia's 8th congressional district",
                             "district_number": 8,
-                            "congress_number": 118
+                            "congress_number": "118"
                         }
                     ]
                 }
@@ -202,12 +202,12 @@ def test_geocode_with_fields(client, httpx_mock):
         url=httpx.URL("https://api.test/v1.7/geocode", params={
             "api_key": "TEST_KEY",
             "q": "1109 Highland St, Arlington, VA",
-            "fields": "timezone,congressional_districts"
+            "fields": "timezone,cd"
         }),
     )
 
     # Act
-    resp = client.geocode("1109 Highland St, Arlington, VA", fields=["timezone", "congressional_districts"])
+    resp = client.geocode("1109 Highland St, Arlington, VA", fields=["timezone", "cd"])
 
     # Assert
     assert len(resp.results) == 1
@@ -215,8 +215,9 @@ def test_geocode_with_fields(client, httpx_mock):
     assert resp.results[0].fields.timezone.utc_offset == -5
     assert resp.results[0].fields.timezone.observes_dst is True
     assert len(resp.results[0].fields.congressional_districts) == 1
+    assert resp.results[0].fields.congressional_districts[0].name == "Virginia's 8th congressional district"
     assert resp.results[0].fields.congressional_districts[0].district_number == 8
-    assert resp.results[0].fields.congressional_districts[0].congress_number == 118
+    assert resp.results[0].fields.congressional_districts[0].congress_number == "118"
 
 
 def test_geocode_with_limit(client, httpx_mock):

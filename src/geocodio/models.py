@@ -88,6 +88,45 @@ class CongressionalDistrict:
 # ──────────────────────────────────────────────────────────────────────────────
 
 @dataclass(slots=True, frozen=True)
+class CensusData(_HasExtras):
+    """
+    Census data for a location.
+    """
+    block: Optional[str] = None
+    blockgroup: Optional[str] = None
+    tract: Optional[str] = None
+    county_fips: Optional[str] = None
+    state_fips: Optional[str] = None
+    extras: Dict[str, Any] = field(default_factory=dict, repr=False)
+
+    @classmethod
+    def from_api(cls, data: Dict[str, Any]) -> "CensusData":
+        known = {f.name for f in cls.__dataclass_fields__.values()}
+        core  = {k: v for k, v in data.items() if k in known}
+        extra = {k: v for k, v in data.items() if k not in known}
+        return cls(**core, extras=extra)
+
+
+@dataclass(slots=True, frozen=True)
+class ACSSurveyData(_HasExtras):
+    """
+    American Community Survey data for a location.
+    """
+    population: Optional[int] = None
+    households: Optional[int] = None
+    median_income: Optional[int] = None
+    median_age: Optional[float] = None
+    extras: Dict[str, Any] = field(default_factory=dict, repr=False)
+
+    @classmethod
+    def from_api(cls, data: Dict[str, Any]) -> "ACSSurveyData":
+        known = {f.name for f in cls.__dataclass_fields__.values()}
+        core  = {k: v for k, v in data.items() if k in known}
+        extra = {k: v for k, v in data.items() if k not in known}
+        return cls(**core, extras=extra)
+
+
+@dataclass(slots=True, frozen=True)
 class GeocodioFields:
     """
     Container for optional 'fields' returned by the Geocodio API.
@@ -95,6 +134,9 @@ class GeocodioFields:
     """
     timezone: Optional[Timezone] = None
     congressional_districts: Optional[List[CongressionalDistrict]] = None
+    census2010: Optional[CensusData] = None
+    census2020: Optional[CensusData] = None
+    acs: Optional[ACSSurveyData] = None
 
 
 # ──────────────────────────────────────────────────────────────────────────────

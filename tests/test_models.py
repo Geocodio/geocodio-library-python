@@ -26,9 +26,8 @@ def test_address_components_extras():
     assert ac.city == "Arlington"
     assert ac.state == "VA"
     assert ac.zip == "22201"
-    assert ac.extras["extra_field"] == "extra value"
-    assert ac.extras["another_extra"] == 123
     assert ac.get_extra("extra_field") == "extra value"
+    assert ac.get_extra("another_extra") == 123
     assert ac.get_extra("nonexistent", "default") == "default"
 
 
@@ -46,7 +45,6 @@ def test_timezone_extras():
     assert tz.name == "America/New_York"
     assert tz.utc_offset == -5
     assert tz.observes_dst is True
-    assert tz.extras["extra_field"] == "extra value"
     assert tz.get_extra("extra_field") == "extra value"
     assert tz.get_extra("nonexistent", "default") == "default"
 
