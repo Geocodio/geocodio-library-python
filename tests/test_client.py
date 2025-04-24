@@ -5,6 +5,7 @@ Tests for the GeocodioClient class
 import pytest
 import httpx
 from geocodio import GeocodioClient
+from geocodio.exceptions import AuthenticationError
 
 
 @pytest.fixture
@@ -27,10 +28,12 @@ def test_client_initialization_with_env_var(monkeypatch):
     assert client.api_key == "env-key"
 
 
-def test_client_initialization_no_key():
+def test_client_initialization_no_key(monkeypatch):
     """Test that the client raises an error when no API key is provided"""
-    with pytest.raises(Exception):
-        GeocodioClient(api_key="")
+    # Ensure environment variable is not set
+    monkeypatch.delenv("GEOCODIO_API_KEY", raising=False)
+    with pytest.raises(AuthenticationError, match="No API key supplied and GEOCODIO_API_KEY is not set"):
+        GeocodioClient()
 
 
 def test_geocode_with_census_data(mock_request):
