@@ -47,7 +47,7 @@ class GeocodioClient:
             params["limit"] = int(limit)
 
         endpoint: str
-        data: Dict[str, Union[str, dict, list]] | None
+        data: Union[List, Dict] | None
 
         # Handle different input types
         if isinstance(address, dict) and not any(isinstance(v, dict) for v in address.values()):
@@ -56,9 +56,9 @@ class GeocodioClient:
             params.update(address)
             data = None
         elif isinstance(address, list):
-            # Batch addresses
+            # Batch addresses - send list directly
             endpoint = f"{self.BASE_PATH}/geocode"
-            data = {"addresses": address}
+            data = address
         elif isinstance(address, dict) and any(isinstance(v, dict) for v in address.values()):
             # Batch addresses with custom keys
             endpoint = f"{self.BASE_PATH}/geocode"
@@ -125,7 +125,26 @@ class GeocodioClient:
 
     # ──────────────────────────────────────────────────────────────────────────
 
-    def _parse_geocoding_response(self, data: dict) -> GeocodingResponse:
+    def _parse_geocoding_response(self, response_json: dict) -> GeocodingResponse:
+        print("Raw response:", response_json)  # Debug logging
+
+        # Handle batch response format
+        if "results" in response_json and isinstance(response_json["results"], list) and response_json["results"] and "response" in response_json["results"][0]:
+            results = [
+                GeocodingResult(
+                    address_components=AddressComponents.from_api(res["response"]["results"][0]["address_components"]),
+                    formatted_address=res["response"]["results"][0]["formatted_address"],
+                    location=Location(**res["response"]["results"][0]["location"]),
+                    accuracy=res["response"]["results"][0].get("accuracy", 0.0),
+                    accuracy_type=res["response"]["results"][0].get("accuracy_type", ""),
+                    source=res["response"]["results"][0].get("source", ""),
+                    fields=self._parse_fields(res["response"]["results"][0].get("fields")),
+                )
+                for res in response_json["results"]
+            ]
+            return GeocodingResponse(input=response_json.get("input", {}), results=results)
+
+        # Handle single response format
         results = [
             GeocodingResult(
                 address_components=AddressComponents.from_api(res["address_components"]),
@@ -136,9 +155,9 @@ class GeocodioClient:
                 source=res.get("source", ""),
                 fields=self._parse_fields(res.get("fields")),
             )
-            for res in data.get("results", [])
+            for res in response_json.get("results", [])
         ]
-        return GeocodingResponse(input=data.get("input", {}), results=results)
+        return GeocodingResponse(input=response_json.get("input", {}), results=results)
 
     def _parse_fields(self, fields_data: dict | None) -> GeocodioFields | None:
         if not fields_data:

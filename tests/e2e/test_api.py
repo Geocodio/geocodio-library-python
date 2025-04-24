@@ -129,3 +129,53 @@ def test_integration_with_fields(client):
             assert isinstance(fields.acs.median_income, int)
         if fields.acs.median_age is not None:
             assert isinstance(fields.acs.median_age, float)
+
+
+def test_integration_batch_geocode(client):
+    """Test real batch geocoding API call."""
+    # Test addresses
+    addresses = [
+        "3730 N Clark St, Chicago, IL",
+        "638 E 13th Ave, Denver, CO"
+    ]
+
+    # Make the API call
+    response = client.geocode(addresses)
+
+    # Verify response structure
+    assert response is not None
+    assert len(response.results) == 2
+
+    # Check first address (Chicago)
+    chicago = response.results[0]
+    assert chicago.formatted_address == "3730 N Clark St, Chicago, IL 60613"
+    assert chicago.accuracy > 0.9
+    assert chicago.accuracy_type == "rooftop"
+    assert chicago.source == "Cook"
+
+    # Verify Chicago address components
+    components = chicago.address_components
+    assert components.number == "3730"
+    assert components.predirectional == "N"
+    assert components.street == "Clark"
+    assert components.suffix == "St"
+    assert components.city == "Chicago"
+    assert components.state == "IL"
+    assert components.zip == "60613"
+
+    # Check second address (Denver)
+    denver = response.results[1]
+    assert denver.formatted_address == "638 E 13th Ave, Denver, CO 80203"
+    assert denver.accuracy > 0.9
+    assert denver.accuracy_type == "rooftop"
+    assert "Denver" in denver.source
+
+    # Verify Denver address components
+    components = denver.address_components
+    assert components.number == "638"
+    assert components.predirectional == "E"
+    assert components.street == "13th"
+    assert components.suffix == "Ave"
+    assert components.city == "Denver"
+    assert components.state == "CO"
+    assert components.zip == "80203"
