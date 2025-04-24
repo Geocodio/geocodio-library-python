@@ -77,10 +77,19 @@ class Timezone(_HasExtras):
 
 
 @dataclass(slots=True, frozen=True)
-class CongressionalDistrict:
+class CongressionalDistrict(_HasExtras):
     name: str
     district_number: int
     congress_number: str
+    ocd_id: Optional[str] = None
+    extras: Dict[str, Any] = field(default_factory=dict, repr=False)
+
+    @classmethod
+    def from_api(cls, data: Dict[str, Any]) -> "CongressionalDistrict":
+        known = {f.name for f in cls.__dataclass_fields__.values()}
+        core  = {k: v for k, v in data.items() if k in known}
+        extra = {k: v for k, v in data.items() if k not in known}
+        return cls(**core, extras=extra)
 
 
 # ──────────────────────────────────────────────────────────────────────────────

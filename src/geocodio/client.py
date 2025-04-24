@@ -173,8 +173,13 @@ class GeocodioClient:
         congressional_districts = None
         if "cd" in fields_data:
             congressional_districts = [
-                CongressionalDistrict(**cd)
+                CongressionalDistrict.from_api(cd)
                 for cd in fields_data["cd"]
+            ]
+        elif "congressional_districts" in fields_data:
+            congressional_districts = [
+                CongressionalDistrict.from_api(cd)
+                for cd in fields_data["congressional_districts"]
             ]
 
         census2010 = (

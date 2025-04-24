@@ -23,8 +23,18 @@ def client() -> GeocodioClient:
 
 def test_client_requires_api_key():
     """Test that client raises AuthenticationError when no API key is provided."""
-    with pytest.raises(AuthenticationError):
-        GeocodioClient("")
+    # Temporarily unset the environment variable
+    original_key = os.environ.get("GEOCODIO_API_KEY")
+    if original_key:
+        del os.environ["GEOCODIO_API_KEY"]
+
+    try:
+        with pytest.raises(AuthenticationError):
+            GeocodioClient("")
+    finally:
+        # Restore the environment variable
+        if original_key:
+            os.environ["GEOCODIO_API_KEY"] = original_key
 
 def test_single_forward_geocode(client: GeocodioClient):
     """Test forward geocoding of a single address."""
@@ -108,10 +118,16 @@ def test_geocode_with_fields(client: GeocodioClient):
     assert result.fields.timezone.name == "America/Chicago"
     assert result.fields.timezone.utc_offset == -6
     assert result.fields.timezone.observes_dst is True
+    assert result.fields.timezone.extras["abbreviation"] == "CST"
+    assert result.fields.timezone.extras["source"] == "© OpenStreetMap contributors"
 
-    # Congressional district data might change, but should be present
+    # Check congressional district data
     assert result.fields.congressional_districts is not None
     district = result.fields.congressional_districts[0]
-    assert district.district_number > 0
-    assert "Congressional District" in district.name
-    assert district.congress_number is not None
+    assert district.name == "Congressional District 5"
+    assert district.district_number == 5
+    assert district.ocd_id == "ocd-division/country:us/state:il/cd:5"
+    assert district.congress_number == "119th"
+    assert district.congress_years == "2025-2027"
+    assert district.proportion == 1
+    assert len(district.current_legislators) > 0
