@@ -113,6 +113,9 @@ class GeocodioClient:
         params: dict,
         json: Optional[dict] = None,
     ) -> httpx.Response:
+        print(f"\nRequest: {method} {endpoint}")
+        print(f"Params: {params}")
+        print(f"JSON body: {json}")
         resp = self._http.request(method, endpoint, params=params, json=json, timeout=30)
         if resp.status_code == 422:
             raise InvalidRequestError(resp.text)

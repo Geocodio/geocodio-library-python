@@ -81,31 +81,60 @@ def test_geocode_single(client, httpx_mock):
 def test_geocode_batch(client, httpx_mock):
     # Arrange: stub the API call
     addresses = [
-        "1109 N Highland St, Arlington, VA",
-        "1600 Pennsylvania Ave NW, Washington, DC"
+        "3730 N Clark St, Chicago, IL",
+        "638 E 13th Ave, Denver, CO"
     ]
 
     def batch_response_callback(request):
         assert request.method == "POST"  # Should use POST for batch
-        assert json.loads(request.content) == {"addresses": addresses}  # Check payload
+        assert json.loads(request.content) == addresses  # Check payload is a list
         return httpx.Response(200, json={
             "results": [
-                sample_payload()["results"][0],  # First address
-                {  # Second address
-                    "address_components": {
-                        "number": "1600",
-                        "street": "Pennsylvania",
-                        "suffix": "Ave",
-                        "postdirectional": "NW",
-                        "city": "Washington",
-                        "state": "DC",
-                        "zip": "20500"
-                    },
-                    "formatted_address": "1600 Pennsylvania Ave NW, Washington, DC 20500",
-                    "location": {"lat": 38.898719, "lng": -77.036547},
-                    "accuracy": 1,
-                    "accuracy_type": "rooftop",
-                    "source": "DC"
+                {
+                    "query": "3730 N Clark St, Chicago, IL",
+                    "response": {
+                        "results": [{
+                            "address_components": {
+                                "number": "3730",
+                                "predirectional": "N",
+                                "street": "Clark",
+                                "suffix": "St",
+                                "city": "Chicago",
+                                "county": "Cook County",
+                                "state": "IL",
+                                "zip": "60613",
+                                "country": "US"
+                            },
+                            "formatted_address": "3730 N Clark St, Chicago, IL 60613",
+                            "location": {"lat": 41.94987, "lng": -87.65893},
+                            "accuracy": 1,
+                            "accuracy_type": "rooftop",
+                            "source": "Cook"
+                        }]
+                    }
+                },
+                {
+                    "query": "638 E 13th Ave, Denver, CO",
+                    "response": {
+                        "results": [{
+                            "address_components": {
+                                "number": "638",
+                                "predirectional": "E",
+                                "street": "13th",
+                                "suffix": "Ave",
+                                "city": "Denver",
+                                "county": "Denver County",
+                                "state": "CO",
+                                "zip": "80203",
+                                "country": "US"
+                            },
+                            "formatted_address": "638 E 13th Ave, Denver, CO 80203",
+                            "location": {"lat": 39.736792, "lng": -104.978914},
+                            "accuracy": 1,
+                            "accuracy_type": "rooftop",
+                            "source": "Denver (City of Denver Open Data Catalog CC BY 3.0)"
+                        }]
+                    }
                 }
             ]
         })
@@ -120,9 +149,10 @@ def test_geocode_batch(client, httpx_mock):
 
     # Assert
     assert len(resp.results) == 2
-    assert resp.results[0].formatted_address.endswith("VA 22201")
-    assert resp.results[1].formatted_address.endswith("DC 20500")
-    assert resp.results[1].location.lat == 38.898719
+    assert resp.results[0].formatted_address == "3730 N Clark St, Chicago, IL 60613"
+    assert resp.results[1].formatted_address == "638 E 13th Ave, Denver, CO 80203"
+    assert resp.results[0].location.lat == 41.94987
+    assert resp.results[1].location.lat == 39.736792
 
 
 def test_geocode_structured_address(client, httpx_mock):
@@ -276,3 +306,194 @@ def test_geocode_with_limit(client, httpx_mock):
     assert len(resp.results) == 2
     assert resp.results[0].formatted_address == "1109 Highland St, Arlington, VA 22201"
     assert resp.results[1].formatted_address == "1111 Highland St, Arlington, VA 22201"
+
+
+def test_geocode_batch_with_nested_response(client, httpx_mock):
+    """Test batch geocoding with the nested response structure."""
+    addresses = [
+        "3730 N Clark St, Chicago, IL",
+        "638 E 13th Ave, Denver, CO"
+    ]
+
+    def batch_response_callback(request):
+        assert request.method == "POST"
+        assert json.loads(request.content) == addresses  # Check payload is a list
+        return httpx.Response(200, json={
+            "results": [
+                {
+                    "query": "3730 N Clark St, Chicago, IL",
+                    "response": {
+                        "results": [{
+                            "address_components": {
+                                "number": "3730",
+                                "predirectional": "N",
+                                "street": "Clark",
+                                "suffix": "St",
+                                "city": "Chicago",
+                                "county": "Cook County",
+                                "state": "IL",
+                                "zip": "60613",
+                                "country": "US"
+                            },
+                            "formatted_address": "3730 N Clark St, Chicago, IL 60613",
+                            "location": {"lat": 41.94987, "lng": -87.65893},
+                            "accuracy": 1,
+                            "accuracy_type": "rooftop",
+                            "source": "Cook"
+                        }]
+                    }
+                },
+                {
+                    "query": "638 E 13th Ave, Denver, CO",
+                    "response": {
+                        "results": [{
+                            "address_components": {
+                                "number": "638",
+                                "predirectional": "E",
+                                "street": "13th",
+                                "suffix": "Ave",
+                                "city": "Denver",
+                                "county": "Denver County",
+                                "state": "CO",
+                                "zip": "80203",
+                                "country": "US"
+                            },
+                            "formatted_address": "638 E 13th Ave, Denver, CO 80203",
+                            "location": {"lat": 39.736792, "lng": -104.978914},
+                            "accuracy": 1,
+                            "accuracy_type": "rooftop",
+                            "source": "Denver (City of Denver Open Data Catalog CC BY 3.0)"
+                        }]
+                    }
+                }
+            ]
+        })
+
+    httpx_mock.add_callback(
+        callback=batch_response_callback,
+        url=httpx.URL("https://api.test/v1.7/geocode", params={"api_key": "TEST_KEY"}),
+    )
+
+    # Act
+    resp = client.geocode(addresses)
+
+    # Assert
+    assert len(resp.results) == 2
+    assert resp.results[0].formatted_address == "3730 N Clark St, Chicago, IL 60613"
+    assert resp.results[1].formatted_address == "638 E 13th Ave, Denver, CO 80203"
+    assert resp.results[0].location.lat == 41.94987
+    assert resp.results[1].location.lat == 39.736792
+
+
+def test_geocode_batch_with_fields(client, httpx_mock):
+    """Test batch geocoding with additional fields."""
+    addresses = [
+        "3730 N Clark St, Chicago, IL",
+        "638 E 13th Ave, Denver, CO"
+    ]
+
+    def batch_response_callback(request):
+        assert request.method == "POST"
+        assert request.url.params["fields"] == "timezone,cd"
+        assert json.loads(request.content) == addresses  # Check payload is a list
+        return httpx.Response(200, json={
+            "results": [
+                {
+                    "query": "3730 N Clark St, Chicago, IL",
+                    "response": {
+                        "results": [{
+                            "address_components": {
+                                "number": "3730",
+                                "predirectional": "N",
+                                "street": "Clark",
+                                "suffix": "St",
+                                "city": "Chicago",
+                                "county": "Cook County",
+                                "state": "IL",
+                                "zip": "60613",
+                                "country": "US"
+                            },
+                            "formatted_address": "3730 N Clark St, Chicago, IL 60613",
+                            "location": {"lat": 41.94987, "lng": -87.65893},
+                            "accuracy": 1,
+                            "accuracy_type": "rooftop",
+                            "source": "Cook",
+                            "fields": {
+                                "timezone": {
+                                    "name": "America/Chicago",
+                                    "utc_offset": -6,
+                                    "observes_dst": True
+                                },
+                                "cd": [
+                                    {
+                                        "name": "Congressional District 5",
+                                        "district_number": 5,
+                                        "congress_number": "119th"
+                                    }
+                                ]
+                            }
+                        }]
+                    }
+                },
+                {
+                    "query": "638 E 13th Ave, Denver, CO",
+                    "response": {
+                        "results": [{
+                            "address_components": {
+                                "number": "638",
+                                "predirectional": "E",
+                                "street": "13th",
+                                "suffix": "Ave",
+                                "city": "Denver",
+                                "county": "Denver County",
+                                "state": "CO",
+                                "zip": "80203",
+                                "country": "US"
+                            },
+                            "formatted_address": "638 E 13th Ave, Denver, CO 80203",
+                            "location": {"lat": 39.736792, "lng": -104.978914},
+                            "accuracy": 1,
+                            "accuracy_type": "rooftop",
+                            "source": "Denver (City of Denver Open Data Catalog CC BY 3.0)",
+                            "fields": {
+                                "timezone": {
+                                    "name": "America/Denver",
+                                    "utc_offset": -7,
+                                    "observes_dst": True
+                                },
+                                "cd": [
+                                    {
+                                        "name": "Congressional District 1",
+                                        "district_number": 1,
+                                        "congress_number": "119th"
+                                    }
+                                ]
+                            }
+                        }]
+                    }
+                }
+            ]
+        })
+
+    httpx_mock.add_callback(
+        callback=batch_response_callback,
+        url=httpx.URL("https://api.test/v1.7/geocode", params={"api_key": "TEST_KEY", "fields": "timezone,cd"}),
+    )
+
+    # Act
+    resp = client.geocode(addresses, fields=["timezone", "cd"])
+
+    # Assert
+    assert len(resp.results) == 2
+
+    # Check first address (Chicago)
+    assert resp.results[0].formatted_address == "3730 N Clark St, Chicago, IL 60613"
+    assert resp.results[0].fields.timezone.name == "America/Chicago"
+    assert resp.results[0].fields.timezone.utc_offset == -6
+    assert resp.results[0].fields.congressional_districts[0].district_number == 5
+
+    # Check second address (Denver)
+    assert resp.results[1].formatted_address == "638 E 13th Ave, Denver, CO 80203"
+    assert resp.results[1].fields.timezone.name == "America/Denver"
+    assert resp.results[1].fields.timezone.utc_offset == -7
+    assert resp.results[1].fields.congressional_districts[0].district_number == 1
