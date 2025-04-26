@@ -6,12 +6,25 @@ Dataclass representations of Geocodio API responses and related objects.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, List, Optional, Dict
+from typing import Any, List, Optional, Dict, TypeVar, Type, ClassVar
 
+T = TypeVar('T', bound='_HasExtras')
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Primitive value objects
-# ──────────────────────────────────────────────────────────────────────────────
+class ApiModelMixin:
+    """Mixin to provide additional functionality for API response models."""
+
+    @classmethod
+    def from_api(cls: Type[T], data: Dict[str, Any]) -> T:
+        """Create an instance from API response data.
+
+        Known fields are extracted and passed to the constructor.
+        Unknown fields are stored in the extras dictionary.
+        """
+        known = {f.name for f in cls.__dataclass_fields__.values()}
+        core = {k: v for k, v in data.items() if k in known}
+        extra = {k: v for k, v in data.items() if k not in known}
+        return cls(**core, extras=extra)
+
 
 class _HasExtras:
     extras: Dict[str, Any]
@@ -33,7 +46,7 @@ class Location:
 
 
 @dataclass(frozen=True)
-class AddressComponents(_HasExtras):
+class AddressComponents(_HasExtras, ApiModelMixin):
     # core / always-present
     number:           Optional[str] = None
     predirectional:   Optional[str] = None   # e.g. "N"
@@ -52,52 +65,39 @@ class AddressComponents(_HasExtras):
     # catch‑all for anything Geocodio adds later
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)
 
-    @classmethod
-    def from_api(cls, data: Dict[str, Any]) -> "AddressComponents":
-        """Ignore unknown keys by stashing them in `extras`."""
-        known = {f.name for f in cls.__dataclass_fields__.values()}
-        core  = {k: v for k, v in data.items() if k in known}
-        extra = {k: v for k, v in data.items() if k not in known}
-        return cls(**core, extras=extra)
-
 
 @dataclass(frozen=True)
-class Timezone(_HasExtras):
+class Timezone(_HasExtras, ApiModelMixin):
     name: str
     utc_offset: int
     observes_dst: Optional[bool] = None   # new key documented by Geocodio
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)
 
-    @classmethod
-    def from_api(cls, data: Dict[str, Any]) -> "Timezone":
-        known = {f.name for f in cls.__dataclass_fields__.values()}
-        core  = {k: v for k, v in data.items() if k in known}
-        extra = {k: v for k, v in data.items() if k not in known}
-        return cls(**core, extras=extra)
-
 
 @dataclass(slots=True, frozen=True)
-class CongressionalDistrict(_HasExtras):
+class CongressionalDistrict(_HasExtras, ApiModelMixin):
     name: str
     district_number: int
     congress_number: str
     ocd_id: Optional[str] = None
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)
 
-    @classmethod
-    def from_api(cls, data: Dict[str, Any]) -> "CongressionalDistrict":
-        known = {f.name for f in cls.__dataclass_fields__.values()}
-        core  = {k: v for k, v in data.items() if k in known}
-        extra = {k: v for k, v in data.items() if k not in known}
-        return cls(**core, extras=extra)
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Composite field container
-# ──────────────────────────────────────────────────────────────────────────────
 
 @dataclass(slots=True, frozen=True)
-class CensusData(_HasExtras):
+class StateLegislativeDistrict(_HasExtras, ApiModelMixin):
+    """
+    State legislative district information.
+    """
+    name: str
+    district_number: int
+    chamber: str  # 'house' or 'senate'
+    ocd_id: Optional[str] = None
+    proportion: Optional[float] = None  # Proportion of overlap with the address
+    extras: Dict[str, Any] = field(default_factory=dict, repr=False)
+
+
+@dataclass(slots=True, frozen=True)
+class CensusData(_HasExtras, ApiModelMixin):
     """
     Census data for a location.
     """
@@ -108,16 +108,9 @@ class CensusData(_HasExtras):
     state_fips: Optional[str] = None
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)
 
-    @classmethod
-    def from_api(cls, data: Dict[str, Any]) -> "CensusData":
-        known = {f.name for f in cls.__dataclass_fields__.values()}
-        core  = {k: v for k, v in data.items() if k in known}
-        extra = {k: v for k, v in data.items() if k not in known}
-        return cls(**core, extras=extra)
-
 
 @dataclass(slots=True, frozen=True)
-class ACSSurveyData(_HasExtras):
+class ACSSurveyData(_HasExtras, ApiModelMixin):
     """
     American Community Survey data for a location.
     """
@@ -126,13 +119,6 @@ class ACSSurveyData(_HasExtras):
     median_income: Optional[int] = None
     median_age: Optional[float] = None
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)
-
-    @classmethod
-    def from_api(cls, data: Dict[str, Any]) -> "ACSSurveyData":
-        known = {f.name for f in cls.__dataclass_fields__.values()}
-        core  = {k: v for k, v in data.items() if k in known}
-        extra = {k: v for k, v in data.items() if k not in known}
-        return cls(**core, extras=extra)
 
 
 @dataclass(slots=True, frozen=True)
@@ -143,6 +129,8 @@ class GeocodioFields:
     """
     timezone: Optional[Timezone] = None
     congressional_districts: Optional[List[CongressionalDistrict]] = None
+    state_legislative_districts: Optional[List[StateLegislativeDistrict]] = None
+    state_legislative_districts_next: Optional[List[StateLegislativeDistrict]] = None
     census2010: Optional[CensusData] = None
     census2020: Optional[CensusData] = None
     acs: Optional[ACSSurveyData] = None
