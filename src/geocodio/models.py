@@ -195,6 +195,76 @@ class Housing(_HasExtras, ApiModelMixin):
 
 
 @dataclass(slots=True, frozen=True)
+class Social(_HasExtras, ApiModelMixin):
+    """
+    American Community Survey social data.
+    """
+    high_school_graduate_or_higher: Optional[int] = None
+    bachelors_degree_or_higher: Optional[int] = None
+    graduate_degree_or_higher: Optional[int] = None
+    veterans: Optional[int] = None
+    veterans_percentage: Optional[float] = None
+    extras: Dict[str, Any] = field(default_factory=dict, repr=False)
+
+
+@dataclass(slots=True, frozen=True)
+class ZIP4Data(_HasExtras, ApiModelMixin):
+    """USPS ZIP+4 code and delivery information."""
+    zip4: str
+    delivery_point: str
+    carrier_route: str
+    extras: Dict[str, Any] = field(default_factory=dict, repr=False)
+
+
+@dataclass(slots=True, frozen=True)
+class FederalRiding(_HasExtras, ApiModelMixin):
+    """Canadian federal electoral district information."""
+    code: str
+    name_english: str
+    name_french: str
+    ocd_id: str
+    year: int
+    source: str
+    extras: Dict[str, Any] = field(default_factory=dict, repr=False)
+
+
+@dataclass(slots=True, frozen=True)
+class ProvincialRiding(_HasExtras, ApiModelMixin):
+    """Canadian provincial electoral district information."""
+    name_english: str
+    name_french: str
+    ocd_id: str
+    is_upcoming_district: bool
+    source: str
+    extras: Dict[str, Any] = field(default_factory=dict, repr=False)
+
+
+@dataclass(slots=True, frozen=True)
+class StatisticsCanadaData(_HasExtras, ApiModelMixin):
+    """Canadian statistical boundaries from Statistics Canada."""
+    division: Dict[str, Any]
+    consolidated_subdivision: Dict[str, Any]
+    subdivision: Dict[str, Any]
+    economic_region: str
+    statistical_area: Dict[str, Any]
+    cma_ca: Dict[str, Any]
+    tract: str
+    population_centre: Dict[str, Any]
+    dissemination_area: Dict[str, Any]
+    dissemination_block: Dict[str, Any]
+    census_year: int
+    designated_place: Optional[Dict[str, Any]] = None
+    extras: Dict[str, Any] = field(default_factory=dict, repr=False)
+
+
+@dataclass(slots=True, frozen=True)
+class FFIECData(_HasExtras, ApiModelMixin):
+    """FFIEC CRA/HMDA Data (Beta)."""
+    # Add FFIEC specific fields as they become available
+    extras: Dict[str, Any] = field(default_factory=dict, repr=False)
+
+
+@dataclass(slots=True, frozen=True)
 class GeocodioFields:
     """
     Container for optional 'fields' returned by the Geocodio API.
@@ -205,14 +275,42 @@ class GeocodioFields:
     state_legislative_districts: Optional[List[StateLegislativeDistrict]] = None
     state_legislative_districts_next: Optional[List[StateLegislativeDistrict]] = None
     school_districts: Optional[List[SchoolDistrict]] = None
+
+    # Census data for all available years
+    census2000: Optional[CensusData] = None
     census2010: Optional[CensusData] = None
+    census2011: Optional[CensusData] = None
+    census2012: Optional[CensusData] = None
+    census2013: Optional[CensusData] = None
+    census2014: Optional[CensusData] = None
+    census2015: Optional[CensusData] = None
+    census2016: Optional[CensusData] = None
+    census2017: Optional[CensusData] = None
+    census2018: Optional[CensusData] = None
+    census2019: Optional[CensusData] = None
     census2020: Optional[CensusData] = None
+    census2021: Optional[CensusData] = None
+    census2022: Optional[CensusData] = None
     census2023: Optional[CensusData] = None
+    census2024: Optional[CensusData] = None
+
+    # ACS data
     acs: Optional[ACSSurveyData] = None
     demographics: Optional[Demographics] = None
     economics: Optional[Economics] = None
     families: Optional[Families] = None
     housing: Optional[Housing] = None
+    social: Optional[Social] = None
+
+    # New fields
+    zip4: Optional[ZIP4Data] = None
+    ffiec: Optional[FFIECData] = None
+
+    # Canadian fields
+    riding: Optional[FederalRiding] = None
+    provriding: Optional[ProvincialRiding] = None
+    provriding_next: Optional[ProvincialRiding] = None
+    statcan: Optional[StatisticsCanadaData] = None
 
 
 # ──────────────────────────────────────────────────────────────────────────────

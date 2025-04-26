@@ -436,3 +436,245 @@ def test_integration_with_housing(client):
             assert isinstance(fields.housing.median_home_value, int)
         if fields.housing.median_rent is not None:
             assert isinstance(fields.housing.median_rent, int)
+
+
+def test_integration_with_zip4(client):
+    """Test real API call with ZIP+4 field."""
+    # Test address
+    address = "1600 Pennsylvania Ave NW, Washington, DC"
+
+    # Request additional fields
+    response = client.geocode(
+        address,
+        fields=["zip4"]
+    )
+
+    # Verify response structure
+    assert response is not None
+    assert len(response.results) > 0
+    result = response.results[0]
+
+    # Verify fields data
+    fields = result.fields
+    assert fields is not None
+
+    # Check ZIP+4 data
+    if fields.zip4:
+        assert fields.zip4.zip4 is not None
+        assert fields.zip4.delivery_point is not None
+        assert fields.zip4.carrier_route is not None
+
+
+def test_integration_with_ffiec(client):
+    """Test real API call with FFIEC field (Beta)."""
+    # Test address
+    address = "1600 Pennsylvania Ave NW, Washington, DC"
+
+    # Request additional fields
+    response = client.geocode(
+        address,
+        fields=["ffiec"]
+    )
+
+    # Verify response structure
+    assert response is not None
+    assert len(response.results) > 0
+    result = response.results[0]
+
+    # Verify fields data
+    fields = result.fields
+    assert fields is not None
+
+    # Check FFIEC data (Beta feature, so we just verify it exists)
+    if fields.ffiec:
+        assert isinstance(fields.ffiec.extras, dict)
+
+
+def test_integration_with_canadian_fields(client):
+    """Test real API call with Canadian fields."""
+    # Test forward geocoding with Canadian address using q parameter
+    address = "301 Front Street West, Toronto, ON M5V 2T6, Canada"
+    response = client.geocode(
+        address,
+        fields=["provriding"]  # Test with just provriding first
+    )
+
+    # Verify response structure
+    assert response is not None
+    assert len(response.results) > 0
+    result = response.results[0]
+
+    # Verify fields data
+    fields = result.fields
+    assert fields is not None
+
+    # Check provriding (Provincial Electoral District)
+    if fields.provriding:
+        assert fields.provriding.name_english is not None
+        assert fields.provriding.name_french is not None
+        assert fields.provriding.ocd_id is not None
+        assert isinstance(fields.provriding.is_upcoming_district, bool)
+        assert fields.provriding.source is not None
+
+    # Test forward geocoding with structured address parameters
+    structured_address = {
+        "street": "301 Front Street West",
+        "city": "Toronto",
+        "state": "ON",
+        "postal_code": "M5V 2T6",
+        "country": "Canada"
+    }
+    response = client.geocode(
+        structured_address,
+        fields=["provriding"]
+    )
+
+    # Verify response structure
+    assert response is not None
+    assert len(response.results) > 0
+    result = response.results[0]
+
+    # Verify fields data
+    fields = result.fields
+    assert fields is not None
+
+    # Check provriding (Provincial Electoral District)
+    if fields.provriding:
+        assert fields.provriding.name_english is not None
+        assert fields.provriding.name_french is not None
+        assert fields.provriding.ocd_id is not None
+        assert isinstance(fields.provriding.is_upcoming_district, bool)
+        assert fields.provriding.source is not None
+
+    # Test reverse geocoding with Canadian coordinates (CN Tower coordinates)
+    response = client.reverse(
+        (43.6426, -79.3871),
+        fields=["provriding"]
+    )
+
+    # Verify response structure
+    assert response is not None
+    assert len(response.results) > 0
+    result = response.results[0]
+
+    # Verify fields data
+    fields = result.fields
+    assert fields is not None
+
+    # Check provriding (Provincial Electoral District)
+    if fields.provriding:
+        assert fields.provriding.name_english is not None
+        assert fields.provriding.name_french is not None
+        assert fields.provriding.ocd_id is not None
+        assert isinstance(fields.provriding.is_upcoming_district, bool)
+        assert fields.provriding.source is not None
+
+    # Now test with all Canadian fields using country parameter
+    response = client.geocode(
+        "301 Front Street West, Toronto, ON M5V 2T6",
+        fields=["riding", "provriding", "provriding-next", "statcan"],
+        country="CA"  # Use country parameter instead of including in address
+    )
+
+    # Verify fields data for all Canadian fields
+    fields = response.results[0].fields
+    assert fields is not None
+
+    # Check riding (Federal Electoral District)
+    if fields.riding:
+        assert fields.riding.code is not None
+        assert fields.riding.name_english is not None
+        assert fields.riding.name_french is not None
+        assert fields.riding.ocd_id is not None
+        assert isinstance(fields.riding.year, int)
+        assert fields.riding.source is not None
+
+    # Check provriding (Provincial Electoral District)
+    if fields.provriding:
+        assert fields.provriding.name_english is not None
+        assert fields.provriding.name_french is not None
+        assert fields.provriding.ocd_id is not None
+        assert isinstance(fields.provriding.is_upcoming_district, bool)
+        assert fields.provriding.source is not None
+
+    # Check provriding-next (Upcoming Provincial Districts)
+    if fields.provriding_next:
+        assert fields.provriding_next.name_english is not None
+        assert fields.provriding_next.name_french is not None
+        assert fields.provriding_next.ocd_id is not None
+        assert isinstance(fields.provriding_next.is_upcoming_district, bool)
+        assert fields.provriding_next.source is not None
+
+    # Check Statistics Canada data
+    if fields.statcan:
+        assert fields.statcan.division is not None
+        assert fields.statcan.consolidated_subdivision is not None
+        assert fields.statcan.subdivision is not None
+        assert fields.statcan.economic_region is not None
+        assert fields.statcan.statistical_area is not None
+        assert fields.statcan.cma_ca is not None
+        assert fields.statcan.tract is not None
+        assert fields.statcan.population_centre is not None
+        assert fields.statcan.dissemination_area is not None
+        assert fields.statcan.dissemination_block is not None
+        assert isinstance(fields.statcan.census_year, int)
+
+
+def test_integration_with_census_years(client):
+    """Test real API call with various census years."""
+    # Test address
+    address = "1600 Pennsylvania Ave NW, Washington, DC"
+
+    # Request additional fields for various census years
+    response = client.geocode(
+        address,
+        fields=["census2000", "census2010", "census2020", "census2023"]
+    )
+
+    # Verify response structure
+    assert response is not None
+    assert len(response.results) > 0
+    result = response.results[0]
+
+    # Verify fields data
+    fields = result.fields
+    assert fields is not None
+
+    # Check census data for each year
+    for year in [2000, 2010, 2020, 2023]:
+        census_data = getattr(fields, f"census{year}")
+        if census_data:
+            assert census_data.tract is not None
+            assert census_data.block is not None
+            assert census_data.county_fips is not None
+            assert census_data.state_fips is not None
+
+
+def test_integration_with_congressional_district_variants(client):
+    """Test real API call with specific congressional district variants."""
+    # Test address
+    address = "1600 Pennsylvania Ave NW, Washington, DC"
+
+    # Request additional fields for various congress numbers
+    response = client.geocode(
+        address,
+        fields=["cd113", "cd114", "cd115", "cd116", "cd117", "cd118", "cd119"]
+    )
+
+    # Verify response structure
+    assert response is not None
+    assert len(response.results) > 0
+    result = response.results[0]
+
+    # Verify fields data
+    fields = result.fields
+    assert fields is not None
+
+    # Check congressional districts
+    if fields.congressional_districts:
+        for district in fields.congressional_districts:
+            assert district.name is not None
+            assert isinstance(district.district_number, int)
+            assert district.congress_number is not None
+            if district.ocd_id:
+                assert isinstance(district.ocd_id, str)

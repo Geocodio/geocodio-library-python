@@ -14,7 +14,8 @@ from .models import (
     GeocodingResponse, GeocodingResult, AddressComponents,
     Location, GeocodioFields, Timezone, CongressionalDistrict,
     CensusData, ACSSurveyData, StateLegislativeDistrict, SchoolDistrict,
-    Demographics, Economics, Families, Housing
+    Demographics, Economics, Families, Housing, Social,
+    FederalRiding, ProvincialRiding, StatisticsCanadaData
 )
 from .exceptions import InvalidRequestError, AuthenticationError, GeocodioServerError
 
@@ -40,12 +41,18 @@ class GeocodioClient:
         address: Union[str, Dict[str, str], List[Union[str, Dict[str, str]]], Dict[str, Union[str, Dict[str, str]]]],
         fields: Optional[List[str]] = None,
         limit: Optional[int] = None,
+        country: Optional[str] = None,
+        format: Optional[str] = None,
     ) -> GeocodingResponse:
         params: Dict[str, Union[str, int]] = {"api_key": self.api_key}
         if fields:
             params["fields"] = ",".join(fields)
         if limit:
             params["limit"] = int(limit)
+        if country:
+            params["country"] = country
+        if format:
+            params["format"] = format
 
         endpoint: str
         data: Union[List, Dict] | None
@@ -54,7 +61,20 @@ class GeocodioClient:
         if isinstance(address, dict) and not any(isinstance(v, dict) for v in address.values()):
             # Single structured address
             endpoint = f"{self.BASE_PATH}/geocode"
-            params.update(address)
+            # Map our parameter names to API parameter names
+            param_map = {
+                "street": "street",
+                "street2": "street2",
+                "city": "city",
+                "county": "county",
+                "state": "state",
+                "postal_code": "postal_code",
+                "country": "country",
+            }
+            # Only include parameters that are present in the input
+            for key, value in address.items():
+                if key in param_map and value:
+                    params[param_map[key]] = value
             data = None
         elif isinstance(address, list):
             # Batch addresses - send list directly
@@ -244,6 +264,32 @@ class GeocodioClient:
             if "acs-housing" in fields_data else None
         )
 
+        social = (
+            Social.from_api(fields_data["acs-social"])
+            if "acs-social" in fields_data else None
+        )
+
+        # Canadian fields
+        riding = (
+            FederalRiding.from_api(fields_data["riding"])
+            if "riding" in fields_data else None
+        )
+
+        provriding = (
+            ProvincialRiding.from_api(fields_data["provriding"])
+            if "provriding" in fields_data else None
+        )
+
+        provriding_next = (
+            ProvincialRiding.from_api(fields_data["provriding-next"])
+            if "provriding-next" in fields_data else None
+        )
+
+        statcan = (
+            StatisticsCanadaData.from_api(fields_data["statcan"])
+            if "statcan" in fields_data else None
+        )
+
         return GeocodioFields(
             timezone=timezone,
             congressional_districts=congressional_districts,
@@ -258,4 +304,9 @@ class GeocodioClient:
             economics=economics,
             families=families,
             housing=housing,
+            social=social,
+            riding=riding,
+            provriding=provriding,
+            provriding_next=provriding_next,
+            statcan=statcan,
         )
