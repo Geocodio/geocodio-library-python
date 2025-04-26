@@ -1,7 +1,7 @@
 import pytest
 from geocodio.models import (
     AddressComponents, Timezone, CongressionalDistrict,
-    GeocodioFields, GeocodingResult, GeocodingResponse, Location, StateLegislativeDistrict, SchoolDistrict, CensusData, Demographics, Economics, Families, Housing, Social, ZIP4Data, CanadianRiding, StatisticsCanadaData, FFIECData
+    GeocodioFields, GeocodingResult, GeocodingResponse, Location, StateLegislativeDistrict, SchoolDistrict, CensusData, Demographics, Economics, Families, Housing, Social, ZIP4Data, FederalRiding, StatisticsCanadaData, FFIECData
 )
 
 
@@ -304,24 +304,54 @@ def test_zip4_data():
 def test_canadian_riding():
     """Test Canadian riding data model."""
     data = {
-        "name": "Toronto Centre",
-        "number": "35052",
+        "code": "35052",
+        "name_english": "Toronto Centre",
+        "name_french": "Toronto-Centre",
         "ocd_id": "ocd-division/country:ca/ed:35052",
+        "year": 2021,
+        "source": "Elections Canada",
         "extra_field": "extra value"
     }
-    riding = CanadianRiding.from_api(data)
-    assert riding.name == "Toronto Centre"
-    assert riding.number == "35052"
+    riding = FederalRiding.from_api(data)
+    assert riding.code == "35052"
+    assert riding.name_english == "Toronto Centre"
+    assert riding.name_french == "Toronto-Centre"
     assert riding.ocd_id == "ocd-division/country:ca/ed:35052"
+    assert riding.year == 2021
+    assert riding.source == "Elections Canada"
     assert riding.get_extra("extra_field") == "extra value"
 
 
 def test_statistics_canada_data():
     """Test Statistics Canada data model."""
     data = {
+        "division": {"name": "Division 1"},
+        "consolidated_subdivision": {"name": "Subdivision 1"},
+        "subdivision": {"name": "Subdivision A"},
+        "economic_region": "Region 1",
+        "statistical_area": {"name": "Area 1"},
+        "cma_ca": {"name": "CMA 1"},
+        "tract": "0001.00",
+        "population_centre": {"name": "Centre 1"},
+        "dissemination_area": {"code": "12345"},
+        "dissemination_block": {"code": "123456"},
+        "census_year": 2021,
+        "designated_place": {"name": "Place 1"},
         "extra_field": "extra value"
     }
     statcan = StatisticsCanadaData.from_api(data)
+    assert statcan.division == {"name": "Division 1"}
+    assert statcan.consolidated_subdivision == {"name": "Subdivision 1"}
+    assert statcan.subdivision == {"name": "Subdivision A"}
+    assert statcan.economic_region == "Region 1"
+    assert statcan.statistical_area == {"name": "Area 1"}
+    assert statcan.cma_ca == {"name": "CMA 1"}
+    assert statcan.tract == "0001.00"
+    assert statcan.population_centre == {"name": "Centre 1"}
+    assert statcan.dissemination_area == {"code": "12345"}
+    assert statcan.dissemination_block == {"code": "123456"}
+    assert statcan.census_year == 2021
+    assert statcan.designated_place == {"name": "Place 1"}
     assert statcan.get_extra("extra_field") == "extra value"
 
 
