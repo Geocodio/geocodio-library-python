@@ -1,6 +1,6 @@
-# geocodio-python
+# geocodio
 
-A Python client for the Geocodio API.
+The official Python client for the Geocodio API.
 
 Features
 --------
@@ -16,7 +16,27 @@ Installation
 
 Install via pip:
 
-    pip install geocodio-python
+    pip install geocodio
+
+Development Installation
+-----------------------
+
+1. Clone the repository:
+    ```bash
+    git clone https://github.com/funkatron/geocodio-python.git
+    cd geocodio-python
+    ```
+
+2. Create and activate a virtual environment:
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    ```
+
+3. Install development dependencies:
+    ```bash
+    pip install -e ".[dev]"
+    ```
 
 Usage
 -----
@@ -74,8 +94,3 @@ License
 -------
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-Authors
--------
-
-- Your Name <your.email@example.com>
