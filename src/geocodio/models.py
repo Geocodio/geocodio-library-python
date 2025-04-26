@@ -136,6 +136,22 @@ class SchoolDistrict(_HasExtras, ApiModelMixin):
 
 
 @dataclass(slots=True, frozen=True)
+class Demographics(_HasExtras, ApiModelMixin):
+    """
+    American Community Survey demographics data.
+    """
+    total_population: Optional[int] = None
+    male_population: Optional[int] = None
+    female_population: Optional[int] = None
+    median_age: Optional[float] = None
+    white_population: Optional[int] = None
+    black_population: Optional[int] = None
+    asian_population: Optional[int] = None
+    hispanic_population: Optional[int] = None
+    extras: Dict[str, Any] = field(default_factory=dict, repr=False)
+
+
+@dataclass(slots=True, frozen=True)
 class GeocodioFields:
     """
     Container for optional 'fields' returned by the Geocodio API.
@@ -150,6 +166,7 @@ class GeocodioFields:
     census2020: Optional[CensusData] = None
     census2023: Optional[CensusData] = None
     acs: Optional[ACSSurveyData] = None
+    demographics: Optional[Demographics] = None
 
 
 # ──────────────────────────────────────────────────────────────────────────────

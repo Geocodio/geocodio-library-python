@@ -1,7 +1,7 @@
 import pytest
 from geocodio.models import (
     AddressComponents, Timezone, CongressionalDistrict,
-    GeocodioFields, GeocodingResult, GeocodingResponse, Location, StateLegislativeDistrict, SchoolDistrict, CensusData
+    GeocodioFields, GeocodingResult, GeocodingResponse, Location, StateLegislativeDistrict, SchoolDistrict, CensusData, Demographics
 )
 
 
@@ -157,3 +157,31 @@ def test_census_data_extras():
     assert census.csa_code == "548"
     assert census.get_extra("extra_field") == "extra value"
     assert census.get_extra("nonexistent", "default") == "default"
+
+
+def test_demographics_extras():
+    # Test that extra fields are stored in extras
+    data = {
+        "total_population": 1000,
+        "male_population": 500,
+        "female_population": 500,
+        "median_age": 35.5,
+        "white_population": 600,
+        "black_population": 200,
+        "asian_population": 100,
+        "hispanic_population": 100,
+        "extra_field": "extra value"
+    }
+
+    demographics = Demographics.from_api(data)
+
+    assert demographics.total_population == 1000
+    assert demographics.male_population == 500
+    assert demographics.female_population == 500
+    assert demographics.median_age == 35.5
+    assert demographics.white_population == 600
+    assert demographics.black_population == 200
+    assert demographics.asian_population == 100
+    assert demographics.hispanic_population == 100
+    assert demographics.get_extra("extra_field") == "extra value"
+    assert demographics.get_extra("nonexistent", "default") == "default"

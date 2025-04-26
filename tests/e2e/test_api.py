@@ -286,3 +286,43 @@ def test_integration_with_census2023(client):
             assert isinstance(fields.census2023.msa_code, str)
         if fields.census2023.csa_code:
             assert isinstance(fields.census2023.csa_code, str)
+
+
+def test_integration_with_demographics(client):
+    """Test real API call with demographics field."""
+    # Test address
+    address = "1600 Pennsylvania Ave NW, Washington, DC"
+
+    # Request additional fields
+    response = client.geocode(
+        address,
+        fields=["acs-demographics"]
+    )
+
+    # Verify response structure
+    assert response is not None
+    assert len(response.results) > 0
+    result = response.results[0]
+
+    # Verify fields data
+    fields = result.fields
+    assert fields is not None
+
+    # Check demographics data
+    if fields.demographics:
+        if fields.demographics.total_population is not None:
+            assert isinstance(fields.demographics.total_population, int)
+        if fields.demographics.male_population is not None:
+            assert isinstance(fields.demographics.male_population, int)
+        if fields.demographics.female_population is not None:
+            assert isinstance(fields.demographics.female_population, int)
+        if fields.demographics.median_age is not None:
+            assert isinstance(fields.demographics.median_age, float)
+        if fields.demographics.white_population is not None:
+            assert isinstance(fields.demographics.white_population, int)
+        if fields.demographics.black_population is not None:
+            assert isinstance(fields.demographics.black_population, int)
+        if fields.demographics.asian_population is not None:
+            assert isinstance(fields.demographics.asian_population, int)
+        if fields.demographics.hispanic_population is not None:
+            assert isinstance(fields.demographics.hispanic_population, int)
