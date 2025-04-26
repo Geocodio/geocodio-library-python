@@ -1,7 +1,7 @@
 import pytest
 from geocodio.models import (
     AddressComponents, Timezone, CongressionalDistrict,
-    GeocodioFields, GeocodingResult, GeocodingResponse, Location, StateLegislativeDistrict, SchoolDistrict
+    GeocodioFields, GeocodingResult, GeocodingResponse, Location, StateLegislativeDistrict, SchoolDistrict, CensusData
 )
 
 
@@ -131,3 +131,29 @@ def test_school_district_extras():
     assert district.nces_id == "5100000"
     assert district.get_extra("extra_field") == "extra value"
     assert district.get_extra("nonexistent", "default") == "default"
+
+
+def test_census_data_extras():
+    # Test that extra fields are stored in extras
+    data = {
+        "block": "1000",
+        "blockgroup": "1",
+        "tract": "000100",
+        "county_fips": "51013",
+        "state_fips": "51",
+        "msa_code": "47900",
+        "csa_code": "548",
+        "extra_field": "extra value"
+    }
+
+    census = CensusData.from_api(data)
+
+    assert census.block == "1000"
+    assert census.blockgroup == "1"
+    assert census.tract == "000100"
+    assert census.county_fips == "51013"
+    assert census.state_fips == "51"
+    assert census.msa_code == "47900"
+    assert census.csa_code == "548"
+    assert census.get_extra("extra_field") == "extra value"
+    assert census.get_extra("nonexistent", "default") == "default"

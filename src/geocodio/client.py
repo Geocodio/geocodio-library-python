@@ -213,6 +213,11 @@ class GeocodioClient:
             if "census2020" in fields_data else None
         )
 
+        census2023 = (
+            CensusData.from_api(fields_data["census2023"])
+            if "census2023" in fields_data else None
+        )
+
         acs = (
             ACSSurveyData.from_api(fields_data["acs"])
             if "acs" in fields_data else None
@@ -226,5 +231,6 @@ class GeocodioClient:
             school_districts=school_districts,
             census2010=census2010,
             census2020=census2020,
+            census2023=census2023,
             acs=acs,
         )

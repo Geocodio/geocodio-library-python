@@ -254,3 +254,35 @@ def test_integration_with_school_districts(client):
             assert isinstance(district.lea_id, str)
         if district.nces_id:
             assert isinstance(district.nces_id, str)
+
+
+def test_integration_with_census2023(client):
+    """Test real API call with census2023 field."""
+    # Test address
+    address = "1600 Pennsylvania Ave NW, Washington, DC"
+
+    # Request additional fields
+    response = client.geocode(
+        address,
+        fields=["census2023"]
+    )
+
+    # Verify response structure
+    assert response is not None
+    assert len(response.results) > 0
+    result = response.results[0]
+
+    # Verify fields data
+    fields = result.fields
+    assert fields is not None
+
+    # Check census2023 data
+    if fields.census2023:
+        assert fields.census2023.tract is not None
+        assert fields.census2023.block is not None
+        assert fields.census2023.county_fips is not None
+        assert fields.census2023.state_fips is not None
+        if fields.census2023.msa_code:
+            assert isinstance(fields.census2023.msa_code, str)
+        if fields.census2023.csa_code:
+            assert isinstance(fields.census2023.csa_code, str)

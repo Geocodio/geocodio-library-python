@@ -106,6 +106,8 @@ class CensusData(_HasExtras, ApiModelMixin):
     tract: Optional[str] = None
     county_fips: Optional[str] = None
     state_fips: Optional[str] = None
+    msa_code: Optional[str] = None  # Metropolitan Statistical Area
+    csa_code: Optional[str] = None  # Combined Statistical Area
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)
 
 
@@ -146,6 +148,7 @@ class GeocodioFields:
     school_districts: Optional[List[SchoolDistrict]] = None
     census2010: Optional[CensusData] = None
     census2020: Optional[CensusData] = None
+    census2023: Optional[CensusData] = None
     acs: Optional[ACSSurveyData] = None
 
 
