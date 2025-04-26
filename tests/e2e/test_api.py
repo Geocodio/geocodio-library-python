@@ -398,3 +398,41 @@ def test_integration_with_families(client):
             assert isinstance(fields.families.single_female_households, int)
         if fields.families.average_household_size is not None:
             assert isinstance(fields.families.average_household_size, float)
+
+
+def test_integration_with_housing(client):
+    """Test real API call with housing field."""
+    # Test address
+    address = "1600 Pennsylvania Ave NW, Washington, DC"
+
+    # Request additional fields
+    response = client.geocode(
+        address,
+        fields=["acs-housing"]
+    )
+
+    # Verify response structure
+    assert response is not None
+    assert len(response.results) > 0
+    result = response.results[0]
+
+    # Verify fields data
+    fields = result.fields
+    assert fields is not None
+
+    # Check housing data
+    if fields.housing:
+        if fields.housing.total_housing_units is not None:
+            assert isinstance(fields.housing.total_housing_units, int)
+        if fields.housing.occupied_housing_units is not None:
+            assert isinstance(fields.housing.occupied_housing_units, int)
+        if fields.housing.vacant_housing_units is not None:
+            assert isinstance(fields.housing.vacant_housing_units, int)
+        if fields.housing.owner_occupied_units is not None:
+            assert isinstance(fields.housing.owner_occupied_units, int)
+        if fields.housing.renter_occupied_units is not None:
+            assert isinstance(fields.housing.renter_occupied_units, int)
+        if fields.housing.median_home_value is not None:
+            assert isinstance(fields.housing.median_home_value, int)
+        if fields.housing.median_rent is not None:
+            assert isinstance(fields.housing.median_rent, int)

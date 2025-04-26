@@ -1,7 +1,7 @@
 import pytest
 from geocodio.models import (
     AddressComponents, Timezone, CongressionalDistrict,
-    GeocodioFields, GeocodingResult, GeocodingResponse, Location, StateLegislativeDistrict, SchoolDistrict, CensusData, Demographics, Economics, Families
+    GeocodioFields, GeocodingResult, GeocodingResponse, Location, StateLegislativeDistrict, SchoolDistrict, CensusData, Demographics, Economics, Families, Housing
 )
 
 
@@ -233,3 +233,29 @@ def test_families_extras():
     assert families.average_household_size == 2.5
     assert families.get_extra("extra_field") == "extra value"
     assert families.get_extra("nonexistent", "default") == "default"
+
+
+def test_housing_extras():
+    # Test that extra fields are stored in extras
+    data = {
+        "total_housing_units": 1000,
+        "occupied_housing_units": 800,
+        "vacant_housing_units": 200,
+        "owner_occupied_units": 500,
+        "renter_occupied_units": 300,
+        "median_home_value": 350000,
+        "median_rent": 1500,
+        "extra_field": "extra value"
+    }
+
+    housing = Housing.from_api(data)
+
+    assert housing.total_housing_units == 1000
+    assert housing.occupied_housing_units == 800
+    assert housing.vacant_housing_units == 200
+    assert housing.owner_occupied_units == 500
+    assert housing.renter_occupied_units == 300
+    assert housing.median_home_value == 350000
+    assert housing.median_rent == 1500
+    assert housing.get_extra("extra_field") == "extra value"
+    assert housing.get_extra("nonexistent", "default") == "default"
