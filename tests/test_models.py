@@ -1,8 +1,40 @@
 import pytest
 from geocodio.models import (
     AddressComponents, Timezone, CongressionalDistrict,
-    GeocodioFields, GeocodingResult, GeocodingResponse, Location, StateLegislativeDistrict, SchoolDistrict, CensusData, Demographics, Economics, Families, Housing
+    GeocodioFields, GeocodingResult, GeocodingResponse, Location, StateLegislativeDistrict, SchoolDistrict, CensusData, Demographics, Economics, Families, Housing, Social, ZIP4Data, CanadianRiding, StatisticsCanadaData, FFIECData
 )
+
+
+def test_has_extras_mixin():
+    """Test the _HasExtras mixin functionality."""
+    # Test with AddressComponents as an example
+    data = {
+        "number": "1109",
+        "street": "Highland",
+        "suffix": "St",
+        "city": "Arlington",
+        "state": "VA",
+        "zip": "22201",
+        "extra_field": "extra value",
+        "another_extra": 123
+    }
+
+    ac = AddressComponents.from_api(data)
+
+    # Test get_extra with default value
+    assert ac.get_extra("nonexistent", "default") == "default"
+
+    # Test get_extra with existing value
+    assert ac.get_extra("extra_field") == "extra value"
+    assert ac.get_extra("another_extra") == 123
+
+    # Test attribute access for extras
+    assert ac.extra_field == "extra value"
+    assert ac.another_extra == 123
+
+    # Test attribute error for non-existent fields
+    with pytest.raises(AttributeError):
+        _ = ac.nonexistent_field
 
 
 def test_address_components_extras():
@@ -26,9 +58,6 @@ def test_address_components_extras():
     assert ac.city == "Arlington"
     assert ac.state == "VA"
     assert ac.zip == "22201"
-    assert ac.get_extra("extra_field") == "extra value"
-    assert ac.get_extra("another_extra") == 123
-    assert ac.get_extra("nonexistent", "default") == "default"
 
 
 def test_timezone_extras():
@@ -45,16 +74,6 @@ def test_timezone_extras():
     assert tz.name == "America/New_York"
     assert tz.utc_offset == -5
     assert tz.observes_dst is True
-    assert tz.get_extra("extra_field") == "extra value"
-    assert tz.get_extra("nonexistent", "default") == "default"
-
-
-def test_has_extras_attribute_error():
-    # Test that accessing non-existent attributes raises AttributeError
-    ac = AddressComponents.from_api({"number": "1109"})
-
-    with pytest.raises(AttributeError):
-        _ = ac.nonexistent_field
 
 
 def test_geocoding_response_empty_results():
@@ -109,8 +128,6 @@ def test_state_legislative_district_extras():
     assert district.chamber == "house"
     assert district.ocd_id == "ocd-division/country:us/state:va/sldl:8"
     assert district.proportion == 1.0
-    assert district.get_extra("extra_field") == "extra value"
-    assert district.get_extra("nonexistent", "default") == "default"
 
 
 def test_school_district_extras():
@@ -129,8 +146,6 @@ def test_school_district_extras():
     assert district.district_number == "001"
     assert district.lea_id == "5100000"
     assert district.nces_id == "5100000"
-    assert district.get_extra("extra_field") == "extra value"
-    assert district.get_extra("nonexistent", "default") == "default"
 
 
 def test_census_data_extras():
@@ -155,8 +170,6 @@ def test_census_data_extras():
     assert census.state_fips == "51"
     assert census.msa_code == "47900"
     assert census.csa_code == "548"
-    assert census.get_extra("extra_field") == "extra value"
-    assert census.get_extra("nonexistent", "default") == "default"
 
 
 def test_demographics_extras():
@@ -183,8 +196,6 @@ def test_demographics_extras():
     assert demographics.black_population == 200
     assert demographics.asian_population == 100
     assert demographics.hispanic_population == 100
-    assert demographics.get_extra("extra_field") == "extra value"
-    assert demographics.get_extra("nonexistent", "default") == "default"
 
 
 def test_economics_extras():
@@ -205,8 +216,6 @@ def test_economics_extras():
     assert economics.per_capita_income == 35000
     assert economics.poverty_rate == 10.5
     assert economics.unemployment_rate == 5.2
-    assert economics.get_extra("extra_field") == "extra value"
-    assert economics.get_extra("nonexistent", "default") == "default"
 
 
 def test_families_extras():
@@ -231,8 +240,6 @@ def test_families_extras():
     assert families.single_male_households == 100
     assert families.single_female_households == 100
     assert families.average_household_size == 2.5
-    assert families.get_extra("extra_field") == "extra value"
-    assert families.get_extra("nonexistent", "default") == "default"
 
 
 def test_housing_extras():
@@ -257,5 +264,71 @@ def test_housing_extras():
     assert housing.renter_occupied_units == 300
     assert housing.median_home_value == 350000
     assert housing.median_rent == 1500
-    assert housing.get_extra("extra_field") == "extra value"
-    assert housing.get_extra("nonexistent", "default") == "default"
+
+
+def test_social_extras():
+    # Test that extra fields are stored in extras
+    data = {
+        "high_school_graduate_or_higher": 800,
+        "bachelors_degree_or_higher": 400,
+        "graduate_degree_or_higher": 200,
+        "veterans": 100,
+        "veterans_percentage": 10.5,
+        "extra_field": "extra value"
+    }
+
+    social = Social.from_api(data)
+
+    assert social.high_school_graduate_or_higher == 800
+    assert social.bachelors_degree_or_higher == 400
+    assert social.graduate_degree_or_higher == 200
+    assert social.veterans == 100
+    assert social.veterans_percentage == 10.5
+
+
+def test_zip4_data():
+    """Test ZIP+4 data model."""
+    data = {
+        "zip4": "1234",
+        "delivery_point": "01",
+        "carrier_route": "C001",
+        "extra_field": "extra value"
+    }
+    zip4 = ZIP4Data.from_api(data)
+    assert zip4.zip4 == "1234"
+    assert zip4.delivery_point == "01"
+    assert zip4.carrier_route == "C001"
+    assert zip4.get_extra("extra_field") == "extra value"
+
+
+def test_canadian_riding():
+    """Test Canadian riding data model."""
+    data = {
+        "name": "Toronto Centre",
+        "number": "35052",
+        "ocd_id": "ocd-division/country:ca/ed:35052",
+        "extra_field": "extra value"
+    }
+    riding = CanadianRiding.from_api(data)
+    assert riding.name == "Toronto Centre"
+    assert riding.number == "35052"
+    assert riding.ocd_id == "ocd-division/country:ca/ed:35052"
+    assert riding.get_extra("extra_field") == "extra value"
+
+
+def test_statistics_canada_data():
+    """Test Statistics Canada data model."""
+    data = {
+        "extra_field": "extra value"
+    }
+    statcan = StatisticsCanadaData.from_api(data)
+    assert statcan.get_extra("extra_field") == "extra value"
+
+
+def test_ffiec_data():
+    """Test FFIEC data model."""
+    data = {
+        "extra_field": "extra value"
+    }
+    ffiec = FFIECData.from_api(data)
+    assert ffiec.get_extra("extra_field") == "extra value"

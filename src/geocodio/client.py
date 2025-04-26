@@ -42,7 +42,6 @@ class GeocodioClient:
         fields: Optional[List[str]] = None,
         limit: Optional[int] = None,
         country: Optional[str] = None,
-        format: Optional[str] = None,
     ) -> GeocodingResponse:
         params: Dict[str, Union[str, int]] = {"api_key": self.api_key}
         if fields:
@@ -51,8 +50,6 @@ class GeocodioClient:
             params["limit"] = int(limit)
         if country:
             params["country"] = country
-        if format:
-            params["format"] = format
 
         endpoint: str
         data: Union[List, Dict] | None
