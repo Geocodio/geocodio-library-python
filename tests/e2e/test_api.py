@@ -326,3 +326,37 @@ def test_integration_with_demographics(client):
             assert isinstance(fields.demographics.asian_population, int)
         if fields.demographics.hispanic_population is not None:
             assert isinstance(fields.demographics.hispanic_population, int)
+
+
+def test_integration_with_economics(client):
+    """Test real API call with economics field."""
+    # Test address
+    address = "1600 Pennsylvania Ave NW, Washington, DC"
+
+    # Request additional fields
+    response = client.geocode(
+        address,
+        fields=["acs-economics"]
+    )
+
+    # Verify response structure
+    assert response is not None
+    assert len(response.results) > 0
+    result = response.results[0]
+
+    # Verify fields data
+    fields = result.fields
+    assert fields is not None
+
+    # Check economics data
+    if fields.economics:
+        if fields.economics.median_household_income is not None:
+            assert isinstance(fields.economics.median_household_income, int)
+        if fields.economics.mean_household_income is not None:
+            assert isinstance(fields.economics.mean_household_income, int)
+        if fields.economics.per_capita_income is not None:
+            assert isinstance(fields.economics.per_capita_income, int)
+        if fields.economics.poverty_rate is not None:
+            assert isinstance(fields.economics.poverty_rate, float)
+        if fields.economics.unemployment_rate is not None:
+            assert isinstance(fields.economics.unemployment_rate, float)

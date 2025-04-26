@@ -14,7 +14,7 @@ from .models import (
     GeocodingResponse, GeocodingResult, AddressComponents,
     Location, GeocodioFields, Timezone, CongressionalDistrict,
     CensusData, ACSSurveyData, StateLegislativeDistrict, SchoolDistrict,
-    Demographics
+    Demographics, Economics
 )
 from .exceptions import InvalidRequestError, AuthenticationError, GeocodioServerError
 
@@ -229,6 +229,11 @@ class GeocodioClient:
             if "acs-demographics" in fields_data else None
         )
 
+        economics = (
+            Economics.from_api(fields_data["acs-economics"])
+            if "acs-economics" in fields_data else None
+        )
+
         return GeocodioFields(
             timezone=timezone,
             congressional_districts=congressional_districts,
@@ -240,4 +245,5 @@ class GeocodioClient:
             census2023=census2023,
             acs=acs,
             demographics=demographics,
+            economics=economics,
         )
