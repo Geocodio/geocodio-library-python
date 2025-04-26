@@ -222,3 +222,35 @@ def test_integration_with_state_legislative_districts(client):
             assert isinstance(district.ocd_id, str)
         if district.proportion:
             assert isinstance(district.proportion, float)
+
+
+def test_integration_with_school_districts(client):
+    """Test real API call with school district fields."""
+    # Test address
+    address = "1600 Pennsylvania Ave NW, Washington, DC"
+
+    # Request additional fields
+    response = client.geocode(
+        address,
+        fields=["school"]
+    )
+
+    # Verify response structure
+    assert response is not None
+    assert len(response.results) > 0
+    result = response.results[0]
+
+    # Verify fields data
+    fields = result.fields
+    assert fields is not None
+
+    # Check school districts
+    if fields.school_districts:
+        district = fields.school_districts[0]
+        assert district.name is not None
+        if district.district_number:
+            assert isinstance(district.district_number, str)
+        if district.lea_id:
+            assert isinstance(district.lea_id, str)
+        if district.nces_id:
+            assert isinstance(district.nces_id, str)

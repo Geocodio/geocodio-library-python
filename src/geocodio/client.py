@@ -13,7 +13,7 @@ import httpx
 from .models import (
     GeocodingResponse, GeocodingResult, AddressComponents,
     Location, GeocodioFields, Timezone, CongressionalDistrict,
-    CensusData, ACSSurveyData
+    CensusData, ACSSurveyData, StateLegislativeDistrict, SchoolDistrict
 )
 from .exceptions import InvalidRequestError, AuthenticationError, GeocodioServerError
 
@@ -182,6 +182,27 @@ class GeocodioClient:
                 for cd in fields_data["congressional_districts"]
             ]
 
+        state_legislative_districts = None
+        if "stateleg" in fields_data:
+            state_legislative_districts = [
+                StateLegislativeDistrict.from_api(district)
+                for district in fields_data["stateleg"]
+            ]
+
+        state_legislative_districts_next = None
+        if "stateleg-next" in fields_data:
+            state_legislative_districts_next = [
+                StateLegislativeDistrict.from_api(district)
+                for district in fields_data["stateleg-next"]
+            ]
+
+        school_districts = None
+        if "school" in fields_data:
+            school_districts = [
+                SchoolDistrict.from_api(district)
+                for district in fields_data["school"]
+            ]
+
         census2010 = (
             CensusData.from_api(fields_data["census2010"])
             if "census2010" in fields_data else None
@@ -200,6 +221,9 @@ class GeocodioClient:
         return GeocodioFields(
             timezone=timezone,
             congressional_districts=congressional_districts,
+            state_legislative_districts=state_legislative_districts,
+            state_legislative_districts_next=state_legislative_districts_next,
+            school_districts=school_districts,
             census2010=census2010,
             census2020=census2020,
             acs=acs,

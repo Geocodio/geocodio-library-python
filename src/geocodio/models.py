@@ -122,6 +122,18 @@ class ACSSurveyData(_HasExtras, ApiModelMixin):
 
 
 @dataclass(slots=True, frozen=True)
+class SchoolDistrict(_HasExtras, ApiModelMixin):
+    """
+    School district information.
+    """
+    name: str
+    district_number: Optional[str] = None
+    lea_id: Optional[str] = None  # Local Education Agency ID
+    nces_id: Optional[str] = None  # National Center for Education Statistics ID
+    extras: Dict[str, Any] = field(default_factory=dict, repr=False)
+
+
+@dataclass(slots=True, frozen=True)
 class GeocodioFields:
     """
     Container for optional 'fields' returned by the Geocodio API.
@@ -131,6 +143,7 @@ class GeocodioFields:
     congressional_districts: Optional[List[CongressionalDistrict]] = None
     state_legislative_districts: Optional[List[StateLegislativeDistrict]] = None
     state_legislative_districts_next: Optional[List[StateLegislativeDistrict]] = None
+    school_districts: Optional[List[SchoolDistrict]] = None
     census2010: Optional[CensusData] = None
     census2020: Optional[CensusData] = None
     acs: Optional[ACSSurveyData] = None
