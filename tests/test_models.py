@@ -1,7 +1,7 @@
 import pytest
 from geocodio.models import (
     AddressComponents, Timezone, CongressionalDistrict,
-    GeocodioFields, GeocodingResult, GeocodingResponse, Location
+    GeocodioFields, GeocodingResult, GeocodingResponse, Location, StateLegislativeDistrict
 )
 
 
@@ -89,3 +89,25 @@ def test_geocoding_result_without_fields():
     assert result.address_components.city == "Arlington"
     assert result.location.lat == 38.886672
     assert result.location.lng == -77.094735
+
+
+def test_state_legislative_district_extras():
+    # Test that extra fields are stored in extras
+    data = {
+        "name": "Virginia House District 8",
+        "district_number": 8,
+        "chamber": "house",
+        "ocd_id": "ocd-division/country:us/state:va/sldl:8",
+        "proportion": 1.0,
+        "extra_field": "extra value"
+    }
+
+    district = StateLegislativeDistrict.from_api(data)
+
+    assert district.name == "Virginia House District 8"
+    assert district.district_number == 8
+    assert district.chamber == "house"
+    assert district.ocd_id == "ocd-division/country:us/state:va/sldl:8"
+    assert district.proportion == 1.0
+    assert district.get_extra("extra_field") == "extra value"
+    assert district.get_extra("nonexistent", "default") == "default"

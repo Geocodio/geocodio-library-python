@@ -179,3 +179,46 @@ def test_integration_batch_geocode(client):
     assert components.city == "Denver"
     assert components.state == "CO"
     assert components.zip == "80203"
+
+
+def test_integration_with_state_legislative_districts(client):
+    """Test real API call with state legislative district fields."""
+    # Test address
+    address = "1600 Pennsylvania Ave NW, Washington, DC"
+
+    # Request additional fields
+    response = client.geocode(
+        address,
+        fields=["stateleg", "stateleg-next"]
+    )
+
+    # Verify response structure
+    assert response is not None
+    assert len(response.results) > 0
+    result = response.results[0]
+
+    # Verify fields data
+    fields = result.fields
+    assert fields is not None
+
+    # Check state legislative districts
+    if fields.state_legislative_districts:
+        district = fields.state_legislative_districts[0]
+        assert district.name is not None
+        assert isinstance(district.district_number, int)
+        assert district.chamber in ["house", "senate"]
+        if district.ocd_id:
+            assert isinstance(district.ocd_id, str)
+        if district.proportion:
+            assert isinstance(district.proportion, float)
+
+    # Check upcoming state legislative districts
+    if fields.state_legislative_districts_next:
+        district = fields.state_legislative_districts_next[0]
+        assert district.name is not None
+        assert isinstance(district.district_number, int)
+        assert district.chamber in ["house", "senate"]
+        if district.ocd_id:
+            assert isinstance(district.ocd_id, str)
+        if district.proportion:
+            assert isinstance(district.proportion, float)
