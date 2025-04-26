@@ -165,6 +165,21 @@ class Economics(_HasExtras, ApiModelMixin):
 
 
 @dataclass(slots=True, frozen=True)
+class Families(_HasExtras, ApiModelMixin):
+    """
+    American Community Survey families data.
+    """
+    total_households: Optional[int] = None
+    family_households: Optional[int] = None
+    nonfamily_households: Optional[int] = None
+    married_couple_households: Optional[int] = None
+    single_male_households: Optional[int] = None
+    single_female_households: Optional[int] = None
+    average_household_size: Optional[float] = None
+    extras: Dict[str, Any] = field(default_factory=dict, repr=False)
+
+
+@dataclass(slots=True, frozen=True)
 class GeocodioFields:
     """
     Container for optional 'fields' returned by the Geocodio API.
@@ -181,6 +196,7 @@ class GeocodioFields:
     acs: Optional[ACSSurveyData] = None
     demographics: Optional[Demographics] = None
     economics: Optional[Economics] = None
+    families: Optional[Families] = None
 
 
 # ──────────────────────────────────────────────────────────────────────────────

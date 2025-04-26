@@ -360,3 +360,41 @@ def test_integration_with_economics(client):
             assert isinstance(fields.economics.poverty_rate, float)
         if fields.economics.unemployment_rate is not None:
             assert isinstance(fields.economics.unemployment_rate, float)
+
+
+def test_integration_with_families(client):
+    """Test real API call with families field."""
+    # Test address
+    address = "1600 Pennsylvania Ave NW, Washington, DC"
+
+    # Request additional fields
+    response = client.geocode(
+        address,
+        fields=["acs-families"]
+    )
+
+    # Verify response structure
+    assert response is not None
+    assert len(response.results) > 0
+    result = response.results[0]
+
+    # Verify fields data
+    fields = result.fields
+    assert fields is not None
+
+    # Check families data
+    if fields.families:
+        if fields.families.total_households is not None:
+            assert isinstance(fields.families.total_households, int)
+        if fields.families.family_households is not None:
+            assert isinstance(fields.families.family_households, int)
+        if fields.families.nonfamily_households is not None:
+            assert isinstance(fields.families.nonfamily_households, int)
+        if fields.families.married_couple_households is not None:
+            assert isinstance(fields.families.married_couple_households, int)
+        if fields.families.single_male_households is not None:
+            assert isinstance(fields.families.single_male_households, int)
+        if fields.families.single_female_households is not None:
+            assert isinstance(fields.families.single_female_households, int)
+        if fields.families.average_household_size is not None:
+            assert isinstance(fields.families.average_household_size, float)
