@@ -23,8 +23,8 @@ Development Installation
 
 1. Clone the repository:
     ```bash
-    git clone https://github.com/funkatron/geocodio-python.git
-    cd geocodio-python
+    git clone https://github.com/geocodio/geocodio-library-python.git
+    cd geocodio-library-python
     ```
 
 2. Create and activate a virtual environment:
@@ -81,14 +81,14 @@ Error Handling
 Documentation
 -------------
 
-Full documentation is available at <https://geocodio-python.readthedocs.io>.
+Full documentation is available at <https://www.geocod.io/docs/?python>.
 
 Contributing
 ------------
 
 Contributions are welcome! Please open issues and pull requests on GitHub.
 
-Issues: <https://github.com/funkatron/geocodio-python/issues>
+Issues: <https://github.com/geocodio/geocodio-library-python/issues>
 
 License
 -------
