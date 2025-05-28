@@ -259,7 +259,7 @@ class GeocodioClient:
         #   -F "callback"="https://example.com/my-callback"
 
         if not file:
-            ValueError("File data is required to create a list.")
+            raise ValueError("File data is required to create a list.")
         filename = filename or "file.csv"
         files = {
             "file": (filename, file),
