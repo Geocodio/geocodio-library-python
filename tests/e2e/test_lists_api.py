@@ -5,8 +5,10 @@ These tests require a valid GEOCODIO_API_KEY environment variable.
 
 import os
 import pytest
+from unittest.mock import patch, MagicMock
 from geocodio import GeocodioClient
 from geocodio.models import ListResponse, PaginatedResponse
+from geocodio.exceptions import GeocodioServerError
 
 
 @pytest.fixture
@@ -89,3 +91,57 @@ def test_delete_list(client, list_response):
         raise AssertionError(f"List with ID {list_id} was not deleted successfully. It still exists in the list of lists.")
     else:
         print(f"List with ID {list_id} was deleted successfully and is no longer in the list of lists.")
+
+
+@pytest.fixture
+def client():
+    return GeocodioClient(api_key="test_api_key")
+
+@patch("httpx.Client.request")
+def test_download_csv_to_file(mock_request, client, tmp_path):
+    """Test downloading a CSV and saving it to a file."""
+    mock_response = MagicMock()
+    mock_response.headers = {"content-type": "text/csv"}
+    mock_response.content = b"address,city,state,zip\n123 Main St,Anytown,NY,12345"
+    mock_request.return_value = mock_response
+
+    file_path = tmp_path / "test_list.csv"
+    result = client.download(list_id="12345", filename=str(file_path))
+
+    assert result == str(file_path)
+    assert file_path.exists()
+    assert file_path.read_text() == "address,city,state,zip\n123 Main St,Anytown,NY,12345"
+
+@patch("httpx.Client.request")
+def test_download_csv_as_bytes(mock_request, client):
+    """Test downloading a CSV and returning it as bytes."""
+    mock_response = MagicMock()
+    mock_response.headers = {"content-type": "text/csv"}
+    mock_response.content = b"address,city,state,zip\n123 Main St,Anytown,NY,12345"
+    mock_request.return_value = mock_response
+
+    result = client.download(list_id="12345")
+
+    assert result == b"address,city,state,zip\n123 Main St,Anytown,NY,12345"
+
+@patch("httpx.Client.request")
+def test_download_list_still_processing(mock_request, client):
+    """Test handling a list that is still processing."""
+    mock_response = MagicMock()
+    mock_response.headers = {"content-type": "application/json"}
+    mock_response.json.return_value = {"message": "List is still processing", "success": False}
+    mock_request.return_value = mock_response
+
+    with pytest.raises(GeocodioServerError, match="List is still processing"):
+        client.download(list_id="12345")
+
+@patch("httpx.Client.request")
+def test_download_error_parsing_json(mock_request, client):
+    """Test handling an error when JSON parsing fails."""
+    mock_response = MagicMock()
+    mock_response.headers = {"content-type": "application/json"}
+    mock_response.json.side_effect = ValueError("Invalid JSON")
+    mock_request.return_value = mock_response
+
+    with pytest.raises(GeocodioServerError, match="Failed to download list and could not parse error message"):
+        client.download(list_id="12345")

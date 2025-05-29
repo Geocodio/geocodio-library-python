@@ -486,3 +486,57 @@ class GeocodioClient:
             provriding_next=provriding_next,
             statcan=statcan,
         )
+
+    def download(self, list_id: str, filename: Optional[str] = None) -> Optional[bytes]:
+        """
+        This will generate/retrieve the fully geocoded list as a CSV file, and either return the content as bytes
+        or save the file to disk with the provided filename.
+
+        Args:
+            list_id: The ID of the list to download.
+            filename: filename to assign to the file (optional). If provided, the content will be saved to this file.
+
+        Returns:
+            The content of the file as a Bytes object, or the full file path if filename is provided.
+        Raises:
+            GeocodioServerError if the list is still processing or another error occurs.
+        """
+        params = {"api_key": self.api_key}
+        endpoint = f"{self.BASE_PATH}/lists/{list_id}/download"
+
+        response: httpx.Response = self._request("GET", endpoint, params)
+        if response.headers.get("content-type") in ["text/csv", "application/csv"]:
+            # If the response is CSV, we can return the content directly
+            if filename:
+                # If a filename is provided, save the content to a file of that name
+
+                # get the absolute path of the file
+                if not os.path.isabs(filename):
+                    filename = os.path.abspath(filename)
+                # Ensure the directory exists
+                os.makedirs(os.path.dirname(filename), exist_ok=True)
+                logger.debug(f"Saving list {list_id} to {filename}")
+
+                # do not check if the file exists, just overwrite it
+                if os.path.exists(filename):
+                    logger.debug(f"File {filename} already exists; it will be overwritten.")
+
+                try:
+                    with open(filename, "wb") as f:
+                        f.write(response.content)
+                    logger.info(f"List {list_id} downloaded and saved to {filename}")
+                    return filename  # Return the full path of the saved file
+                except IOError as e:
+                    logger.error(f"Failed to save list {list_id} to {filename}: {e}")
+                    raise GeocodioServerError(f"Failed to save list: {e}")
+            else:  # return the bytes content directly
+                return response.content
+        elif response.headers.get("content-type") == "application/json":
+            # If the response is JSON, it means the list is still processing or an error occurred
+            try:
+                error = response.json()
+                logger.error(f"Error downloading list {list_id}: {error}")
+                raise GeocodioServerError(error.get("message", "Failed to download list."))
+            except Exception as e:
+                logger.error(f"Failed to parse error message from response: {response.text}", exc_info=True)
+                raise GeocodioServerError("Failed to download list and could not parse error message.") from e
