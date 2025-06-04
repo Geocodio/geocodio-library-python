@@ -504,7 +504,7 @@ class GeocodioClient:
         endpoint = f"{self.BASE_PATH}/lists/{list_id}/download"
 
         response: httpx.Response = self._request("GET", endpoint, params)
-        if response.headers.get("content-type") == "application/json":
+        if response.headers.get("content-type", "").startswith("application/json"):
             try:
                 error = response.json()
                 logger.error(f"Error downloading list {list_id}: {error}")
