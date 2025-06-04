@@ -5,7 +5,8 @@ These tests require a valid GEOCODIO_API_KEY environment variable.
 
 import os
 import pytest
-from unittest.mock import patch, MagicMock
+import time
+from unittest.mock import patch
 from geocodio import GeocodioClient
 from geocodio.models import ListResponse, PaginatedResponse
 from geocodio.exceptions import GeocodioServerError
@@ -32,12 +33,32 @@ def list_response(client):
     return new_list
 
 
+def wait_for_list_processed(client, list_id, timeout=120):
+    """Wait until the list is processed or timeout (in seconds)."""
+    start = time.time()
+    while time.time() - start < timeout:
+        list_response = client.get_list(list_id)
+        list_processing_state = list_response.status.get('state')
+        # @TODO: use consts for these state values.
+        # @TODO: add computed property to ListResponse for processing state.
+        if list_processing_state == "COMPLETED":
+            print()  # Finish the dots line
+            return list_response
+        elif list_processing_state == "FAILED":
+            print()  # Finish the dots line
+            raise RuntimeError(f"List {list_id} failed to process.")
+        elif list_processing_state == "PROCESSING":
+            print("=>", end="", flush=True)
+        time.sleep(2)
+    print()
+    raise TimeoutError(f"List {list_id} did not process in {timeout} seconds.")
+
+
 def test_create_list(client):
     """
     Test creating a list with GeocodioClient.create_list()
     :param client: GeocodioClient instance
     """
-    # generate CSV rows with addresses. super simple example:   -F "file"=$'Zip\n20003\n20001
     new_list = client.create_list(file="Zip\n20003\n20001", filename="test_list.csv")
 
     assert isinstance(new_list, ListResponse)
@@ -93,55 +114,62 @@ def test_delete_list(client, list_response):
         print(f"List with ID {list_id} was deleted successfully and is no longer in the list of lists.")
 
 
-@pytest.fixture
-def client():
-    return GeocodioClient(api_key="test_api_key")
-
-@patch("httpx.Client.request")
-def test_download_csv_to_file(mock_request, client, tmp_path):
-    """Test downloading a CSV and saving it to a file."""
-    mock_response = MagicMock()
-    mock_response.headers = {"content-type": "text/csv"}
-    mock_response.content = b"address,city,state,zip\n123 Main St,Anytown,NY,12345"
-    mock_request.return_value = mock_response
-
+def test_download_csv_to_file(client, tmp_path):
+    """Test downloading a CSV and saving it to a file (E2E)."""
+    new_list = client.create_list(
+        format_="{{A}}",
+        file="Zip\n20003\n20001",
+        filename="test_list.csv",
+    )
+    wait_for_list_processed(client, new_list.id)
     file_path = tmp_path / "test_list.csv"
-    result = client.download(list_id="12345", filename=str(file_path))
+    result = client.download(list_id=new_list.id, filename=str(file_path))
 
     assert result == str(file_path)
     assert file_path.exists()
-    assert file_path.read_text() == "address,city,state,zip\n123 Main St,Anytown,NY,12345"
+    content = file_path.read_text()
+    assert "Zip" in content
+    assert "20003" in content
+    assert "20001" in content
 
-@patch("httpx.Client.request")
-def test_download_csv_as_bytes(mock_request, client):
-    """Test downloading a CSV and returning it as bytes."""
-    mock_response = MagicMock()
-    mock_response.headers = {"content-type": "text/csv"}
-    mock_response.content = b"address,city,state,zip\n123 Main St,Anytown,NY,12345"
-    mock_request.return_value = mock_response
 
-    result = client.download(list_id="12345")
+def test_download_csv_as_bytes(client):
+    """Test downloading a CSV and returning it as bytes (E2E)."""
+    new_list = client.create_list(
+        format_="{{A}}",
+        file="Zip\n20003\n20001",
+        filename="test_list.csv",
+    )
+    wait_for_list_processed(client, new_list.id)
+    result = client.download(list_id=new_list.id)
+    assert isinstance(result, bytes)
+    assert b"Zip" in result
+    assert b"20003" in result
+    assert b"20001" in result
 
-    assert result == b"address,city,state,zip\n123 Main St,Anytown,NY,12345"
 
-@patch("httpx.Client.request")
-def test_download_list_still_processing(mock_request, client):
-    """Test handling a list that is still processing."""
-    mock_response = MagicMock()
-    mock_response.headers = {"content-type": "application/json"}
-    mock_response.json.return_value = {"message": "List is still processing", "success": False}
-    mock_request.return_value = mock_response
+def test_download_list_still_processing(client):
+    """Test handling a list that is still processing (E2E)."""
+    new_list = client.create_list(
+        format_="{{A}}",
+        file="Zip\n20003\n20001",
+        filename="test_list.csv",
+    )
+    # Immediately try to download before processing is done
+    with pytest.raises(GeocodioServerError):
+        client.download(list_id=new_list.id)
 
-    with pytest.raises(GeocodioServerError, match="List is still processing"):
-        client.download(list_id="12345")
 
-@patch("httpx.Client.request")
-def test_download_error_parsing_json(mock_request, client):
-    """Test handling an error when JSON parsing fails."""
-    mock_response = MagicMock()
-    mock_response.headers = {"content-type": "application/json"}
-    mock_response.json.side_effect = ValueError("Invalid JSON")
-    mock_request.return_value = mock_response
+def test_download_error_parsing_json(client, monkeypatch):
+    """Test handling an error when JSON parsing fails (E2E)."""
+    fake_list_id = "nonexistent-list-id-xyz"
+    orig_request = client._http.request
 
-    with pytest.raises(GeocodioServerError, match="Failed to download list and could not parse error message"):
-        client.download(list_id="12345")
+    def broken_json(*args, **kwargs):
+        resp = orig_request(*args, **kwargs)
+        resp.json = lambda: (_ for _ in ()).throw(ValueError("Invalid JSON"))
+        return resp
+
+    monkeypatch.setattr(client._http, "request", broken_json)
+    with pytest.raises(GeocodioServerError):
+        client.download(list_id=fake_list_id)

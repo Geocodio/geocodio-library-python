@@ -8,6 +8,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, List, Optional, Dict, TypeVar, Type, ClassVar, Union
 
+import httpx
+
 T = TypeVar('T', bound='_HasExtras')
 
 
@@ -341,37 +343,6 @@ class GeocodingResponse:
 @dataclass(slots=True, frozen=True)
 class ListResponse:
     """
-    curl "https://api.geocod.io/v1.8/lists?api_key=YOUR_API_KEY" \
-      -F "file"="@sample_list.csv" \
-      -F "direction"="forward" \
-      -F "format"="{{A}} {{B}} {{C}} {{D}}" \
-      -F "callback"="https://example.com/my-callback"
-
-    curl "https://api.geocod.io/v1.8/lists?api_key=YOUR_API_KEY" \
-      -F "file"="@sample_list.csv" \
-      -F "direction"="forward" \
-      -F "format"="{{A}} {{B}} {{C}} {{D}}" \
-      -F "callback"="https://example.com/my-callback"
-
-    RESP:
-    {
-        "id": 42,
-        "fields": [],
-        "file": {
-            "estimated_rows_count": 39809,
-            "filename": "bigger_list.csv"
-        },
-        "status": {
-            "state": "COMPLETED",
-            "progress": 100,
-            "message": "Completed",
-            "time_left_description": null,
-            "time_left_seconds": null
-        },
-        "download_url": "https://api.geocod.io/v1.8/lists/42/download",
-        "expires_at": "2021-09-23T18:23:29.000000Z"
-    }
-
     status, download_url, expires_at are not always present.
     """
     id: str
@@ -379,48 +350,13 @@ class ListResponse:
     status: Optional[Dict[str, Any]] = None
     download_url: Optional[str] = None
     expires_at: Optional[str] = None
+    http_response: Optional[httpx.Response] = None
 
 
 @dataclass(slots=True, frozen=True)
 class PaginatedResponse():
     """
     Base class for paginated responses.
-
-    {
-        "current_page": 1,
-        "data":
-        [
-            {
-                "id": 48,
-                "fields":
-                [],
-                "file":
-                {
-                    "estimated_rows_count": 24,
-                    "filename": "sample_list.csv"
-                },
-                "status":
-                {
-                    "state": "COMPLETED",
-                    "progress": 100,
-                    "message": "Completed",
-                    "time_left_description": null,
-                    "time_left_seconds": null
-                },
-                "download_url": "https://api.geocod.io/v1.8/lists/48/download",
-                "expires_at": "2021-09-23T12:09:09.000000Z"
-            },
-            ...
-        ],
-        "first_page_url": "https://api.geocod.io/v1.8/lists?page=1",
-        "from": 1,
-        "next_page_url": "https://api.geocod.io/v1.8/lists?page=2",
-        "path": "https://api.geocod.io/v1.8/lists",
-        "per_page": 15,
-        "prev_page_url": null,
-        "to": 15
-    }
-
     """
     current_page: int
     data: List[ListResponse]

@@ -173,10 +173,6 @@ class GeocodioClient:
 
         exception_mappings = self.get_status_exception_mappings()
         # dump the type and content of the exception mappings for debugging
-        logger.debug(f"Exception mappings: {exception_mappings}")
-        logger.debug(f"Response status code: {resp.status_code}")
-        logger.debug(f"Exception mapping for 422: {exception_mappings[422] if 422 in exception_mappings else 'Not found'}")
-
         logger.error(f"Error response: {resp.status_code} - {resp.text}")
         if resp.status_code in exception_mappings:
             exception_class = exception_mappings[resp.status_code]
@@ -275,7 +271,7 @@ class GeocodioClient:
 
         response = self._request("POST", endpoint, params, files=files)
         logger.debug(f"Response content: {response.text}")
-        return self._parse_list_response(response.json())
+        return self._parse_list_response(response.json(), response=response)
 
 
     def get_lists(self) -> PaginatedResponse:
@@ -296,7 +292,7 @@ class GeocodioClient:
         response_lists = []
         for list_item in pagination_info.get("data", []):
             logger.debug(f"List item: {list_item}")
-            response_lists.append(self._parse_list_response(list_item))
+            response_lists.append(self._parse_list_response(list_item, response=response))
 
         return PaginatedResponse(
             data=response_lists,
@@ -324,7 +320,7 @@ class GeocodioClient:
         endpoint = f"{self.BASE_PATH}/lists/{list_id}"
 
         response = self._request("GET", endpoint, params)
-        return self._parse_list_response(response.json())
+        return self._parse_list_response(response.json(), response=response)
 
     def delete_list(self, list_id: str) -> None:
         """
@@ -339,7 +335,8 @@ class GeocodioClient:
         self._request("DELETE", endpoint, params)
 
 
-    def _parse_list_response(self, response_json: dict) -> ListResponse:
+    @staticmethod
+    def _parse_list_response(response_json: dict, response: httpx.Response = None) -> ListResponse:
         """
         Parse a response from the List API.
 
@@ -356,6 +353,7 @@ class GeocodioClient:
             status=response_json.get("status"),
             download_url=response_json.get("download_url"),
             expires_at=response_json.get("expires_at"),
+            http_response=response,
         )
 
 
@@ -487,7 +485,8 @@ class GeocodioClient:
             statcan=statcan,
         )
 
-    def download(self, list_id: str, filename: Optional[str] = None) -> Optional[bytes]:
+    # @TODO add a "keep_trying" parameter to download() to keep trying until the list is processed.
+    def download(self, list_id: str, filename: Optional[str] = None) -> str | bytes:
         """
         This will generate/retrieve the fully geocoded list as a CSV file, and either return the content as bytes
         or save the file to disk with the provided filename.
@@ -497,7 +496,7 @@ class GeocodioClient:
             filename: filename to assign to the file (optional). If provided, the content will be saved to this file.
 
         Returns:
-            The content of the file as a Bytes object, or the full file path if filename is provided.
+            The content of the file as a Bytes object, or the full file path string if filename is provided.
         Raises:
             GeocodioServerError if the list is still processing or another error occurs.
         """
@@ -505,11 +504,17 @@ class GeocodioClient:
         endpoint = f"{self.BASE_PATH}/lists/{list_id}/download"
 
         response: httpx.Response = self._request("GET", endpoint, params)
-        if response.headers.get("content-type") in ["text/csv", "application/csv"]:
-            # If the response is CSV, we can return the content directly
+        if response.headers.get("content-type") == "application/json":
+            try:
+                error = response.json()
+                logger.error(f"Error downloading list {list_id}: {error}")
+                raise GeocodioServerError(error.get("message", "Failed to download list."))
+            except Exception as e:
+                logger.error(f"Failed to parse error message from response: {response.text}", exc_info=True)
+                raise GeocodioServerError("Failed to download list and could not parse error message.") from e
+        else:
             if filename:
-                # If a filename is provided, save the content to a file of that name
-
+                # If a filename is provided, save the response content to a file of that name=
                 # get the absolute path of the file
                 if not os.path.isabs(filename):
                     filename = os.path.abspath(filename)
@@ -527,16 +532,7 @@ class GeocodioClient:
                     logger.info(f"List {list_id} downloaded and saved to {filename}")
                     return filename  # Return the full path of the saved file
                 except IOError as e:
-                    logger.error(f"Failed to save list {list_id} to {filename}: {e}")
+                    logger.error(f"Failed to save list {list_id} to {filename}: {e}", exc_info=True)
                     raise GeocodioServerError(f"Failed to save list: {e}")
             else:  # return the bytes content directly
                 return response.content
-        elif response.headers.get("content-type") == "application/json":
-            # If the response is JSON, it means the list is still processing or an error occurred
-            try:
-                error = response.json()
-                logger.error(f"Error downloading list {list_id}: {error}")
-                raise GeocodioServerError(error.get("message", "Failed to download list."))
-            except Exception as e:
-                logger.error(f"Failed to parse error message from response: {response.text}", exc_info=True)
-                raise GeocodioServerError("Failed to download list and could not parse error message.") from e
