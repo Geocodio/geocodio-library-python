@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from geocodio import GeocodioClient
 from dotenv import load_dotenv
 import os

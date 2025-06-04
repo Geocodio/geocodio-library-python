@@ -6,9 +6,12 @@ Dataclass representations of Geocodio API responses and related objects.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, List, Optional, Dict, TypeVar, Type, ClassVar
+from typing import Any, List, Optional, Dict, TypeVar, Type, ClassVar, Union
+
+import httpx
 
 T = TypeVar('T', bound='_HasExtras')
+
 
 class ApiModelMixin:
     """Mixin to provide additional functionality for API response models."""
@@ -335,3 +338,32 @@ class GeocodingResponse:
     """
     input: Dict[str, Optional[str]]
     results: List[GeocodingResult] = field(default_factory=list)
+
+
+@dataclass(slots=True, frozen=True)
+class ListResponse:
+    """
+    status, download_url, expires_at are not always present.
+    """
+    id: str
+    file: Dict[str, Any]
+    status: Optional[Dict[str, Any]] = None
+    download_url: Optional[str] = None
+    expires_at: Optional[str] = None
+    http_response: Optional[httpx.Response] = None
+
+
+@dataclass(slots=True, frozen=True)
+class PaginatedResponse():
+    """
+    Base class for paginated responses.
+    """
+    current_page: int
+    data: List[ListResponse]
+    from_: int
+    to: int
+    path: str
+    per_page: int
+    first_page_url: str
+    next_page_url: Optional[str] = None
+    prev_page_url: Optional[str] = None

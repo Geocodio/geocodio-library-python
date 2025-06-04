@@ -29,7 +29,7 @@ class GeocodioErrorDetail:
 class GeocodioError(Exception):
     """Root of the library’s exception hierarchy."""
 
-    def __init__(self, detail: str | GeocodioErrorDetail):
+    def __init__(self, detail: Union[str, GeocodioErrorDetail]):
         if isinstance(detail, str):
             self.detail = GeocodioErrorDetail(message=detail)
         else:
@@ -38,6 +38,10 @@ class GeocodioError(Exception):
 
     def __str__(self) -> str:  # prettier default printing
         return self.detail.message
+
+
+class BadRequestError(GeocodioError):
+    """400 Bad Request – invalid input / validation failure."""
 
 
 class InvalidRequestError(GeocodioError):
@@ -52,10 +56,16 @@ class GeocodioServerError(GeocodioError):
     """5xx – Geocodio internal error."""
 
 
+class DefaultHTTPError(GeocodioError):
+    """Other HTTP error – 4xx or 5xx, but not one of the above."""
+
+
 __all__ = [
     "GeocodioErrorDetail",
     "GeocodioError",
+    "BadRequestError",
     "InvalidRequestError",
     "AuthenticationError",
     "GeocodioServerError",
+    "DefaultHTTPError",
 ]

@@ -6,11 +6,14 @@ from geocodio.exceptions import (
 
 
 def _add_err(httpx_mock, status_code):
+    # this should actually make the request and see and error response
+    # but we are mocking it here for testing purposes
     httpx_mock.add_response(
-        url=httpx.URL("https://api.test/v1.7/geocode", params={"api_key": "TEST_KEY", "q": "bad input"}),
+        url=httpx.URL("https://api.test/v1.8/geocode", params={"api_key": "TEST_KEY", "q": "bad input"}),
         json={"error": "boom"},
         status_code=status_code,
     )
+
 
 
 @pytest.mark.parametrize("code,exc", [

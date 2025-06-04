@@ -41,6 +41,8 @@ Development Installation
 Usage
 -----
 
+### Geocoding
+
 ```python
 from geocodio import GeocodioClient
 
@@ -69,6 +71,72 @@ data = client.geocode(
     fields=["cd", "timezone"]
 )
 print(data)
+```
+
+### List API
+
+The List API allows you to manage lists of addresses or coordinates for batch processing.
+
+```python
+from geocodio import GeocodioClient
+
+# Initialize the client with your API key
+client = GeocodioClient("YOUR_API_KEY")
+
+# Create a new list
+new_list = client.create_list(
+    name="My Addresses",
+    description="A list of addresses to geocode",
+    items=[
+        "1600 Pennsylvania Ave, Washington, DC",
+        "1 Infinite Loop, Cupertino, CA"
+    ]
+)
+print(new_list)
+
+# Get all lists
+lists = client.get_lists()
+print(lists)
+
+# Get a specific list
+list_id = new_list.list.id
+list_details = client.get_list(list_id)
+print(list_details)
+
+# Update a list
+updated_list = client.update_list(
+    list_id=list_id,
+    name="Updated List Name",
+    description="Updated description"
+)
+print(updated_list)
+
+# Add items to a list
+added_items = client.add_items_to_list(
+    list_id=list_id,
+    items=[
+        "123 Anywhere St, Chicago, IL",
+        "456 Oak St, Los Angeles, CA"
+    ]
+)
+print(added_items)
+
+# Geocode all items in a list
+geocoded_list = client.geocode_list(
+    list_id=list_id,
+    fields=["timezone", "cd"]
+)
+print(geocoded_list)
+
+# Remove items from a list
+item_ids = [item.id for item in added_items.items]
+client.remove_items_from_list(
+    list_id=list_id,
+    item_ids=item_ids
+)
+
+# Delete a list
+client.delete_list(list_id)
 ```
 
 Error Handling
