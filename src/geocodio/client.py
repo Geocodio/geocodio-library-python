@@ -267,7 +267,7 @@ class GeocodioClient:
         if callback_url:
             params["callback"] = callback_url
         if fields:  # this is a URL param!
-            logger.error("NOT YET IMPLEMENTED")
+            raise NotImplementedError("The 'fields' parameter is not yet supported.")
 
         response = self._request("POST", endpoint, params, files=files)
         logger.debug(f"Response content: {response.text}")
