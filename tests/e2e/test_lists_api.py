@@ -11,6 +11,7 @@ from geocodio import GeocodioClient
 from geocodio.models import ListResponse, PaginatedResponse, ListProcessingState
 from geocodio.exceptions import GeocodioServerError
 import logging
+import io
 
 logger = logging.getLogger(__name__)
 
@@ -175,3 +176,35 @@ def test_download_error_parsing_json(client, monkeypatch):
     monkeypatch.setattr(client._http, "request", broken_json)
     with pytest.raises(GeocodioServerError):
         client.download(list_id=fake_list_id)
+
+
+def test_create_list_with_fields(client):
+    """Test creating a list with fields parameter."""
+    # Create a test CSV file
+    csv_content = "Zip\n20003\n20001"
+    csv_file = io.BytesIO(csv_content.encode("utf-8"))
+
+    # Create list with specific fields
+    response = client.create_list(
+        file=csv_file,
+        filename="test_list.csv",
+        fields=["census2020", "timezone", "cd"]
+    )
+
+    assert isinstance(response, ListResponse)
+    assert response.id is not None
+    assert response.file is not None
+
+    # Wait for processing to complete
+    while True:
+        list_response = client.get_list(response.id)
+        logger.debug(f"List status: {list_response.status.get('state')}")
+        if list_response.status.get('state') in ["COMPLETED", "FAILED"]:
+            logger.info(f"List processed. {list_response.status.get('state')}")
+            break
+        time.sleep(2)
+
+    # Download and verify the list
+    csv_content = client.download(response.id)
+    assert csv_content is not None
+    assert len(csv_content) > 0

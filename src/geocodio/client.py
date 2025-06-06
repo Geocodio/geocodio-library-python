@@ -231,28 +231,40 @@ class GeocodioClient:
             callback_url: Optional[str] = None,
             fields: list[str] | None = None
     ) -> ListResponse:
+        """
+        Create a new geocoding list.
 
-        params: Dict[str, Union[str, int]] = {
-            "api_key": self.api_key
-        }
+        Args:
+            file: The file content as a string. Required.
+            filename: The name of the file. Defaults to "file.csv".
+            direction: The direction of geocoding. Either "forward" or "reverse". Defaults to "forward".
+            format_: The format string for the output. Defaults to "{{A}}".
+            callback_url: Optional URL to call when processing is complete.
+            fields: Optional list of fields to include in the response. Valid fields include:
+                   - census2010, census2020, census2023
+                   - cd, cd113-cd119 (congressional districts)
+                   - stateleg, stateleg-next (state legislative districts)
+                   - school (school districts)
+                   - timezone
+                   - acs, acs-demographics, acs-economics, acs-families, acs-housing, acs-social
+                   - riding, provriding, provriding-next (Canadian data)
+                   - statcan (Statistics Canada data)
+                   - zip4 (ZIP+4 data)
+                   - ffiec (FFIEC data, beta)
+
+        Returns:
+            A ListResponse object containing the created list information.
+
+        Raises:
+            ValueError: If file is not provided.
+            InvalidRequestError: If the API request is invalid.
+            AuthenticationError: If the API key is invalid.
+            GeocodioServerError: If the server encounters an error.
+        """
+        # @TODO we repeat building the params here; prob should move the API key
+        #    to the self._request() method.
+        params: Dict[str, Union[str, int]] = {"api_key": self.api_key}
         endpoint = f"{self.BASE_PATH}/lists"
-
-        # follow these examples
-        #
-        # Create a new list from a file called "sample_list.csv"
-        # curl "https://api.geocod.io/v1.8/lists?api_key=YOUR_API_KEY" \
-        #   -F "file"="@sample_list.csv" \
-        #   -F "direction"="forward" \
-        #   -F "format"="{{A}} {{B}} {{C}} {{D}}" \
-        #   -F "callback"="https://example.com/my-callback"
-        #
-        # Create a new list from inline data
-        # curl "https://api.geocod.io/v1.8/lists?api_key=YOUR_API_KEY" \
-        #   -F "file"=$'Zip\n20003\n20001' \
-        #   -F "filename"="file.csv" \
-        #   -F "direction"="forward" \
-        #   -F "format"="{{A}}" \
-        #   -F "callback"="https://example.com/my-callback"
 
         if not file:
             raise ValueError("File data is required to create a list.")
@@ -266,8 +278,9 @@ class GeocodioClient:
             params["format"] = format_
         if callback_url:
             params["callback"] = callback_url
-        if fields:  # this is a URL param!
-            raise NotImplementedError("The 'fields' parameter is not yet supported.")
+        if fields:
+            # Join fields with commas as required by the API
+            params["fields"] = ",".join(fields)
 
         response = self._request("POST", endpoint, params, files=files)
         logger.debug(f"Response content: {response.text}")
