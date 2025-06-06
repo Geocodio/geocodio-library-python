@@ -341,6 +341,16 @@ class GeocodingResponse:
 
 
 @dataclass(slots=True, frozen=True)
+class ListProcessingState:
+    """
+    Constants for list processing states returned by the Geocodio API.
+    """
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    PROCESSING = "PROCESSING"
+
+
+@dataclass(slots=True, frozen=True)
 class ListResponse:
     """
     status, download_url, expires_at are not always present.

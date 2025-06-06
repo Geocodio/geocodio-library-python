@@ -8,8 +8,11 @@ import pytest
 import time
 from unittest.mock import patch
 from geocodio import GeocodioClient
-from geocodio.models import ListResponse, PaginatedResponse
+from geocodio.models import ListResponse, PaginatedResponse, ListProcessingState
 from geocodio.exceptions import GeocodioServerError
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
@@ -39,15 +42,14 @@ def wait_for_list_processed(client, list_id, timeout=120):
     while time.time() - start < timeout:
         list_response = client.get_list(list_id)
         list_processing_state = list_response.status.get('state')
-        # @TODO: use consts for these state values.
-        # @TODO: add computed property to ListResponse for processing state.
-        if list_processing_state == "COMPLETED":
-            print()  # Finish the dots line
+        logger.debug(f"List status: {list_processing_state}")
+        if list_processing_state == ListProcessingState.COMPLETED:
+            logger.info(f"List processed. {list_processing_state}")
             return list_response
-        elif list_processing_state == "FAILED":
+        elif list_processing_state == ListProcessingState.FAILED:
             print()  # Finish the dots line
             raise RuntimeError(f"List {list_id} failed to process.")
-        elif list_processing_state == "PROCESSING":
+        elif list_processing_state == ListProcessingState.PROCESSING:
             print("=>", end="", flush=True)
         time.sleep(2)
     print()
