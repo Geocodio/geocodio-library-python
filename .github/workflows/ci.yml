@@ -24,7 +24,8 @@ jobs:
       - name: Install dependencies
         run: |
           uv sync
-          uv sync requirements-dev.txt
+          uv pip install .
+          uv pip install .[dev]
 
       - name: Run tests
         run: |

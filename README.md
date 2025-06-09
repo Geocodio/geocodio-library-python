@@ -35,8 +35,9 @@ Development Installation
 
 3. Install development dependencies:
     ```bash
-    pip install -e ".[dev]"
-    pip install -r pyproject.toml -r requirements-dev.txt
+    pip install .
+    pip install .[dev]
+    pip install -r pyproject.toml
     ```
 
 Usage
