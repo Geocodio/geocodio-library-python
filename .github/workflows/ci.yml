@@ -29,8 +29,8 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest
+          uv run pytest
 
       - name: Lint with flake8
         run: |
-          flake8 .
+          uv run flake8 .
