@@ -87,5 +87,3 @@ def test_delete_list(client, list_response):
 
     if list_id in all_list_ids:
         raise AssertionError(f"List with ID {list_id} was not deleted successfully. It still exists in the list of lists.")
-    else:
-        print(f"List with ID {list_id} was deleted successfully and is no longer in the list of lists.")
