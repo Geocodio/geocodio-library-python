@@ -37,7 +37,7 @@ Development Installation
     ```bash
     pip install .
     pip install .[dev]
-    pip install -r pyproject.toml
+    pip install -r requirements-dev.txt
     ```
 
 Usage
