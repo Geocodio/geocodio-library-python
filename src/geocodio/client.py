@@ -14,6 +14,7 @@ import httpx
 # Set up logger early to capture all logs
 logger = logging.getLogger("geocodio")
 
+# flake8: noqa: F401
 from geocodio.models import (
     GeocodingResponse, GeocodingResult, AddressComponents,
     Location, GeocodioFields, Timezone, CongressionalDistrict,
@@ -28,7 +29,9 @@ class GeocodioClient:
     BASE_PATH = "/v1.8"  # keep in sync with Geocodio's current version
 
     @staticmethod
-    def get_status_exception_mappings() -> Dict[int, type[BadRequestError | InvalidRequestError | AuthenticationError | GeocodioServerError]]:
+    def get_status_exception_mappings() -> Dict[
+        int, type[BadRequestError | InvalidRequestError | AuthenticationError | GeocodioServerError]
+    ]:
         """
         Returns a list of status code to exception mappings.
         This is used to map HTTP status codes to specific exceptions.
@@ -39,7 +42,6 @@ class GeocodioClient:
             403: AuthenticationError,
             500: GeocodioServerError,
         }
-
 
     def __init__(self, api_key: Optional[str] = None, hostname: str = "api.geocod.io"):
         self.api_key: str = api_key or os.getenv("GEOCODIO_API_KEY", "")
@@ -286,7 +288,6 @@ class GeocodioClient:
         logger.debug(f"Response content: {response.text}")
         return self._parse_list_response(response.json(), response=response)
 
-
     def get_lists(self) -> PaginatedResponse:
         """
         Retrieve all lists.
@@ -347,7 +348,6 @@ class GeocodioClient:
 
         self._request("DELETE", endpoint, params)
 
-
     @staticmethod
     def _parse_list_response(response_json: dict, response: httpx.Response = None) -> ListResponse:
         """
@@ -368,7 +368,6 @@ class GeocodioClient:
             expires_at=response_json.get("expires_at"),
             http_response=response,
         )
-
 
     def _parse_fields(self, fields_data: dict | None) -> GeocodioFields | None:
         if not fields_data:

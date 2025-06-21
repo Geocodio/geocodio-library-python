@@ -6,7 +6,7 @@ Dataclass representations of Geocodio API responses and related objects.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, List, Optional, Dict, TypeVar, Type, ClassVar, Union
+from typing import Any, List, Optional, Dict, TypeVar, Type
 
 import httpx
 
@@ -51,19 +51,19 @@ class Location:
 @dataclass(frozen=True)
 class AddressComponents(_HasExtras, ApiModelMixin):
     # core / always-present
-    number:           Optional[str] = None
-    predirectional:   Optional[str] = None   # e.g. "N"
-    street:           Optional[str] = None
-    suffix:           Optional[str] = None   # e.g. "St"
-    postdirectional:  Optional[str] = None
-    formatted_street: Optional[str] = None   # full street line
+    number: Optional[str] = None
+    predirectional: Optional[str] = None  # e.g. "N"
+    street: Optional[str] = None
+    suffix: Optional[str] = None  # e.g. "St"
+    postdirectional: Optional[str] = None
+    formatted_street: Optional[str] = None  # full street line
 
-    city:        Optional[str] = None
-    county:      Optional[str] = None
-    state:       Optional[str] = None
-    zip:         Optional[str] = None        # Geocodio returns "zip"
-    postal_code: Optional[str] = None        # alias for completeness
-    country:     Optional[str] = None
+    city: Optional[str] = None
+    county: Optional[str] = None
+    state: Optional[str] = None
+    zip: Optional[str] = None  # Geocodio returns "zip"
+    postal_code: Optional[str] = None  # alias for completeness
+    country: Optional[str] = None
 
     # catch‑all for anything Geocodio adds later
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)
@@ -73,7 +73,7 @@ class AddressComponents(_HasExtras, ApiModelMixin):
 class Timezone(_HasExtras, ApiModelMixin):
     name: str
     utc_offset: int
-    observes_dst: Optional[bool] = None   # new key documented by Geocodio
+    observes_dst: Optional[bool] = None  # new key documented by Geocodio
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)
 
 
