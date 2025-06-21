@@ -4,8 +4,9 @@ Structured exception hierarchy for the Geocodio Python client.
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Optional, List
+from typing import Optional, List, Union
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -18,7 +19,7 @@ class GeocodioErrorDetail:
     A typed record returned by Geocodio on errors.
     """
     message: str
-    code: Optional[int] = None          # e.g. HTTP status or internal
+    code: Optional[int] = None  # e.g. HTTP status or internal
     errors: Optional[List[str]] = None  # field‑specific validation messages
 
 

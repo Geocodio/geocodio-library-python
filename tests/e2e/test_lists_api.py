@@ -5,8 +5,15 @@ These tests require a valid GEOCODIO_API_KEY environment variable.
 
 import os
 import pytest
+import time
+from unittest.mock import patch
 from geocodio import GeocodioClient
-from geocodio.models import ListResponse, PaginatedResponse
+from geocodio.models import ListResponse, PaginatedResponse, ListProcessingState
+from geocodio.exceptions import GeocodioServerError
+import logging
+import io
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
@@ -30,12 +37,31 @@ def list_response(client):
     return new_list
 
 
+def wait_for_list_processed(client, list_id, timeout=120):
+    """Wait until the list is processed or timeout (in seconds)."""
+    start = time.time()
+    while time.time() - start < timeout:
+        list_response = client.get_list(list_id)
+        list_processing_state = list_response.status.get('state')
+        logger.debug(f"List status: {list_processing_state}")
+        if list_processing_state == ListProcessingState.COMPLETED:
+            logger.info(f"List processed. {list_processing_state}")
+            return list_response
+        elif list_processing_state == ListProcessingState.FAILED:
+            print()  # Finish the dots line
+            raise RuntimeError(f"List {list_id} failed to process.")
+        elif list_processing_state == ListProcessingState.PROCESSING:
+            print("=>", end="", flush=True)
+        time.sleep(2)
+    print()
+    raise TimeoutError(f"List {list_id} did not process in {timeout} seconds.")
+
+
 def test_create_list(client):
     """
     Test creating a list with GeocodioClient.create_list()
     :param client: GeocodioClient instance
     """
-    # generate CSV rows with addresses. super simple example:   -F "file"=$'Zip\n20003\n20001
     new_list = client.create_list(file="Zip\n20003\n20001", filename="test_list.csv")
 
     assert isinstance(new_list, ListResponse)
@@ -87,3 +113,96 @@ def test_delete_list(client, list_response):
 
     if list_id in all_list_ids:
         raise AssertionError(f"List with ID {list_id} was not deleted successfully. It still exists in the list of lists.")
+
+
+def test_download_csv_to_file(client, tmp_path):
+    """Test downloading a CSV and saving it to a file (E2E)."""
+    new_list = client.create_list(
+        format_="{{A}}",
+        file="Zip\n20003\n20001",
+        filename="test_list.csv",
+    )
+    wait_for_list_processed(client, new_list.id)
+    file_path = tmp_path / "test_list.csv"
+    result = client.download(list_id=new_list.id, filename=str(file_path))
+
+    assert result == str(file_path)
+    assert file_path.exists()
+    content = file_path.read_text()
+    assert "Zip" in content
+    assert "20003" in content
+    assert "20001" in content
+
+
+def test_download_csv_as_bytes(client):
+    """Test downloading a CSV and returning it as bytes (E2E)."""
+    new_list = client.create_list(
+        format_="{{A}}",
+        file="Zip\n20003\n20001",
+        filename="test_list.csv",
+    )
+    wait_for_list_processed(client, new_list.id)
+    result = client.download(list_id=new_list.id)
+    assert isinstance(result, bytes)
+    assert b"Zip" in result
+    assert b"20003" in result
+    assert b"20001" in result
+
+
+def test_download_list_still_processing(client):
+    """Test handling a list that is still processing (E2E)."""
+    new_list = client.create_list(
+        format_="{{A}}",
+        file="Zip\n20003\n20001",
+        filename="test_list.csv",
+    )
+    # Immediately try to download before processing is done
+    with pytest.raises(GeocodioServerError):
+        client.download(list_id=new_list.id)
+
+
+def test_download_error_parsing_json(client, monkeypatch):
+    """Test handling an error when JSON parsing fails (E2E)."""
+    fake_list_id = "nonexistent-list-id-xyz"
+    orig_request = client._http.request
+
+    def broken_json(*args, **kwargs):
+        resp = orig_request(*args, **kwargs)
+        resp.json = lambda: (_ for _ in ()).throw(ValueError("Invalid JSON"))
+        return resp
+
+    monkeypatch.setattr(client._http, "request", broken_json)
+    with pytest.raises(GeocodioServerError):
+        client.download(list_id=fake_list_id)
+
+
+def test_create_list_with_fields(client):
+    """Test creating a list with fields parameter."""
+    # Create a test CSV file
+    csv_content = "Zip\n20003\n20001"
+    csv_file = io.BytesIO(csv_content.encode("utf-8"))
+
+    # Create list with specific fields
+    response = client.create_list(
+        file=csv_file,
+        filename="test_list.csv",
+        fields=["census2020", "timezone", "cd"]
+    )
+
+    assert isinstance(response, ListResponse)
+    assert response.id is not None
+    assert response.file is not None
+
+    # Wait for processing to complete
+    while True:
+        list_response = client.get_list(response.id)
+        logger.debug(f"List status: {list_response.status.get('state')}")
+        if list_response.status.get('state') in ["COMPLETED", "FAILED"]:
+            logger.info(f"List processed. {list_response.status.get('state')}")
+            break
+        time.sleep(2)
+
+    # Download and verify the list
+    csv_content = client.download(response.id)
+    assert csv_content is not None
+    assert len(csv_content) > 0

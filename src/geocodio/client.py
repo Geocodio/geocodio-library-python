@@ -14,6 +14,7 @@ import httpx
 # Set up logger early to capture all logs
 logger = logging.getLogger("geocodio")
 
+# flake8: noqa: F401
 from geocodio.models import (
     GeocodingResponse, GeocodingResult, AddressComponents,
     Location, GeocodioFields, Timezone, CongressionalDistrict,
@@ -28,7 +29,9 @@ class GeocodioClient:
     BASE_PATH = "/v1.8"  # keep in sync with Geocodio's current version
 
     @staticmethod
-    def get_status_exception_mappings() -> Dict[int, type[BadRequestError | InvalidRequestError | AuthenticationError | GeocodioServerError]]:
+    def get_status_exception_mappings() -> Dict[
+        int, type[BadRequestError | InvalidRequestError | AuthenticationError | GeocodioServerError]
+    ]:
         """
         Returns a list of status code to exception mappings.
         This is used to map HTTP status codes to specific exceptions.
@@ -39,7 +42,6 @@ class GeocodioClient:
             403: AuthenticationError,
             500: GeocodioServerError,
         }
-
 
     def __init__(self, api_key: Optional[str] = None, hostname: str = "api.geocod.io"):
         self.api_key: str = api_key or os.getenv("GEOCODIO_API_KEY", "")
@@ -173,10 +175,6 @@ class GeocodioClient:
 
         exception_mappings = self.get_status_exception_mappings()
         # dump the type and content of the exception mappings for debugging
-        logger.debug(f"Exception mappings: {exception_mappings}")
-        logger.debug(f"Response status code: {resp.status_code}")
-        logger.debug(f"Exception mapping for 422: {exception_mappings[422] if 422 in exception_mappings else 'Not found'}")
-
         logger.error(f"Error response: {resp.status_code} - {resp.text}")
         if resp.status_code in exception_mappings:
             exception_class = exception_mappings[resp.status_code]
@@ -235,31 +233,43 @@ class GeocodioClient:
             callback_url: Optional[str] = None,
             fields: list[str] | None = None
     ) -> ListResponse:
+        """
+        Create a new geocoding list.
 
-        params: Dict[str, Union[str, int]] = {
-            "api_key": self.api_key
-        }
+        Args:
+            file: The file content as a string. Required.
+            filename: The name of the file. Defaults to "file.csv".
+            direction: The direction of geocoding. Either "forward" or "reverse". Defaults to "forward".
+            format_: The format string for the output. Defaults to "{{A}}".
+            callback_url: Optional URL to call when processing is complete.
+            fields: Optional list of fields to include in the response. Valid fields include:
+                   - census2010, census2020, census2023
+                   - cd, cd113-cd119 (congressional districts)
+                   - stateleg, stateleg-next (state legislative districts)
+                   - school (school districts)
+                   - timezone
+                   - acs, acs-demographics, acs-economics, acs-families, acs-housing, acs-social
+                   - riding, provriding, provriding-next (Canadian data)
+                   - statcan (Statistics Canada data)
+                   - zip4 (ZIP+4 data)
+                   - ffiec (FFIEC data, beta)
+
+        Returns:
+            A ListResponse object containing the created list information.
+
+        Raises:
+            ValueError: If file is not provided.
+            InvalidRequestError: If the API request is invalid.
+            AuthenticationError: If the API key is invalid.
+            GeocodioServerError: If the server encounters an error.
+        """
+        # @TODO we repeat building the params here; prob should move the API key
+        #    to the self._request() method.
+        params: Dict[str, Union[str, int]] = {"api_key": self.api_key}
         endpoint = f"{self.BASE_PATH}/lists"
 
-        # follow these examples
-        #
-        # Create a new list from a file called "sample_list.csv"
-        # curl "https://api.geocod.io/v1.8/lists?api_key=YOUR_API_KEY" \
-        #   -F "file"="@sample_list.csv" \
-        #   -F "direction"="forward" \
-        #   -F "format"="{{A}} {{B}} {{C}} {{D}}" \
-        #   -F "callback"="https://example.com/my-callback"
-        #
-        # Create a new list from inline data
-        # curl "https://api.geocod.io/v1.8/lists?api_key=YOUR_API_KEY" \
-        #   -F "file"=$'Zip\n20003\n20001' \
-        #   -F "filename"="file.csv" \
-        #   -F "direction"="forward" \
-        #   -F "format"="{{A}}" \
-        #   -F "callback"="https://example.com/my-callback"
-
         if not file:
-            ValueError("File data is required to create a list.")
+            raise ValueError("File data is required to create a list.")
         filename = filename or "file.csv"
         files = {
             "file": (filename, file),
@@ -270,13 +280,13 @@ class GeocodioClient:
             params["format"] = format_
         if callback_url:
             params["callback"] = callback_url
-        if fields:  # this is a URL param!
-            logger.error("NOT YET IMPLEMENTED")
+        if fields:
+            # Join fields with commas as required by the API
+            params["fields"] = ",".join(fields)
 
         response = self._request("POST", endpoint, params, files=files)
         logger.debug(f"Response content: {response.text}")
-        return self._parse_list_response(response.json())
-
+        return self._parse_list_response(response.json(), response=response)
 
     def get_lists(self) -> PaginatedResponse:
         """
@@ -296,7 +306,7 @@ class GeocodioClient:
         response_lists = []
         for list_item in pagination_info.get("data", []):
             logger.debug(f"List item: {list_item}")
-            response_lists.append(self._parse_list_response(list_item))
+            response_lists.append(self._parse_list_response(list_item, response=response))
 
         return PaginatedResponse(
             data=response_lists,
@@ -324,7 +334,7 @@ class GeocodioClient:
         endpoint = f"{self.BASE_PATH}/lists/{list_id}"
 
         response = self._request("GET", endpoint, params)
-        return self._parse_list_response(response.json())
+        return self._parse_list_response(response.json(), response=response)
 
     def delete_list(self, list_id: str) -> None:
         """
@@ -338,8 +348,8 @@ class GeocodioClient:
 
         self._request("DELETE", endpoint, params)
 
-
-    def _parse_list_response(self, response_json: dict) -> ListResponse:
+    @staticmethod
+    def _parse_list_response(response_json: dict, response: httpx.Response = None) -> ListResponse:
         """
         Parse a response from the List API.
 
@@ -356,8 +366,8 @@ class GeocodioClient:
             status=response_json.get("status"),
             download_url=response_json.get("download_url"),
             expires_at=response_json.get("expires_at"),
+            http_response=response,
         )
-
 
     def _parse_fields(self, fields_data: dict | None) -> GeocodioFields | None:
         if not fields_data:
@@ -486,3 +496,55 @@ class GeocodioClient:
             provriding_next=provriding_next,
             statcan=statcan,
         )
+
+    # @TODO add a "keep_trying" parameter to download() to keep trying until the list is processed.
+    def download(self, list_id: str, filename: Optional[str] = None) -> str | bytes:
+        """
+        This will generate/retrieve the fully geocoded list as a CSV file, and either return the content as bytes
+        or save the file to disk with the provided filename.
+
+        Args:
+            list_id: The ID of the list to download.
+            filename: filename to assign to the file (optional). If provided, the content will be saved to this file.
+
+        Returns:
+            The content of the file as a Bytes object, or the full file path string if filename is provided.
+        Raises:
+            GeocodioServerError if the list is still processing or another error occurs.
+        """
+        params = {"api_key": self.api_key}
+        endpoint = f"{self.BASE_PATH}/lists/{list_id}/download"
+
+        response: httpx.Response = self._request("GET", endpoint, params)
+        if response.headers.get("content-type", "").startswith("application/json"):
+            try:
+                error = response.json()
+                logger.error(f"Error downloading list {list_id}: {error}")
+                raise GeocodioServerError(error.get("message", "Failed to download list."))
+            except Exception as e:
+                logger.error(f"Failed to parse error message from response: {response.text}", exc_info=True)
+                raise GeocodioServerError("Failed to download list and could not parse error message.") from e
+        else:
+            if filename:
+                # If a filename is provided, save the response content to a file of that name=
+                # get the absolute path of the file
+                if not os.path.isabs(filename):
+                    filename = os.path.abspath(filename)
+                # Ensure the directory exists
+                os.makedirs(os.path.dirname(filename), exist_ok=True)
+                logger.debug(f"Saving list {list_id} to {filename}")
+
+                # do not check if the file exists, just overwrite it
+                if os.path.exists(filename):
+                    logger.debug(f"File {filename} already exists; it will be overwritten.")
+
+                try:
+                    with open(filename, "wb") as f:
+                        f.write(response.content)
+                    logger.info(f"List {list_id} downloaded and saved to {filename}")
+                    return filename  # Return the full path of the saved file
+                except IOError as e:
+                    logger.error(f"Failed to save list {list_id} to {filename}: {e}", exc_info=True)
+                    raise GeocodioServerError(f"Failed to save list: {e}")
+            else:  # return the bytes content directly
+                return response.content

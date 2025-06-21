@@ -29,13 +29,15 @@ Development Installation
 
 2. Create and activate a virtual environment:
     ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    python -m .venv venv
+    source .venv/bin/activate  # On Windows: venv\Scripts\activate
     ```
 
 3. Install development dependencies:
     ```bash
-    pip install -e ".[dev]"
+    pip install .
+    pip install .[dev]
+    pip install -r requirements-dev.txt
     ```
 
 Usage

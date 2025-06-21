@@ -6,7 +6,9 @@ Dataclass representations of Geocodio API responses and related objects.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, List, Optional, Dict, TypeVar, Type, ClassVar, Union
+from typing import Any, List, Optional, Dict, TypeVar, Type
+
+import httpx
 
 T = TypeVar("T", bound="ExtrasMixin")
 
@@ -358,16 +360,35 @@ class GeocodingResponse:
 
 
 @dataclass(slots=True, frozen=True)
+class ListProcessingState:
+    """
+    Constants for list processing states returned by the Geocodio API.
+    """
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    PROCESSING = "PROCESSING"
+
+
+@dataclass(slots=True, frozen=True)
 class ListResponse:
+    """
+    status, download_url, expires_at are not always present.
+    """
+
     id: str
     file: Dict[str, Any]
     status: Optional[Dict[str, Any]] = None
     download_url: Optional[str] = None
     expires_at: Optional[str] = None
+    http_response: Optional[httpx.Response] = None
 
 
 @dataclass(slots=True, frozen=True)
-class PaginatedResponse:
+class PaginatedResponse():
+    """
+    Base class for paginated responses.
+    """
+
     current_page: int
     data: List[ListResponse]
     from_: int
