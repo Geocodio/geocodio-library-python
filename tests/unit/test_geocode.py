@@ -53,8 +53,6 @@ def sample_payload() -> dict:
 def test_geocode_single(client, httpx_mock):
     # Arrange: stub the API call with a callback to inspect the request
     def response_callback(request):
-        print("\nActual request:", request.url)
-        print("Actual request headers:", dict(request.headers))
         return httpx.Response(200, json=sample_payload())
 
     httpx_mock.add_callback(

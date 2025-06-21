@@ -10,10 +10,25 @@ from typing import Any, List, Optional, Dict, TypeVar, Type
 
 import httpx
 
-T = TypeVar('T', bound='_HasExtras')
+T = TypeVar("T", bound="ExtrasMixin")
 
 
-class ApiModelMixin:
+class ExtrasMixin:
+    """Mixin to provide additional functionality for API response models."""
+
+    extras: Dict[str, Any]
+
+    def get_extra(self, key: str, default=None):
+        return self.extras.get(key, default)
+
+    def __getattr__(self, item):
+        try:
+            return self.extras[item]
+        except KeyError as exc:
+            raise AttributeError(item) from exc
+
+
+class ApiModelMixin(ExtrasMixin):
     """Mixin to provide additional functionality for API response models."""
 
     @classmethod
@@ -29,19 +44,6 @@ class ApiModelMixin:
         return cls(**core, extras=extra)
 
 
-class _HasExtras:
-    extras: Dict[str, Any]
-
-    def get_extra(self, key: str, default=None):
-        return self.extras.get(key, default)
-
-    def __getattr__(self, item):
-        try:
-            return self.extras[item]
-        except KeyError as exc:
-            raise AttributeError(item) from exc
-
-
 @dataclass(slots=True, frozen=True)
 class Location:
     lat: float
@@ -49,7 +51,7 @@ class Location:
 
 
 @dataclass(frozen=True)
-class AddressComponents(_HasExtras, ApiModelMixin):
+class AddressComponents(ApiModelMixin):
     # core / always-present
     number: Optional[str] = None
     predirectional: Optional[str] = None  # e.g. "N"
@@ -70,7 +72,7 @@ class AddressComponents(_HasExtras, ApiModelMixin):
 
 
 @dataclass(frozen=True)
-class Timezone(_HasExtras, ApiModelMixin):
+class Timezone(ApiModelMixin):
     name: str
     utc_offset: int
     observes_dst: Optional[bool] = None  # new key documented by Geocodio
@@ -78,7 +80,7 @@ class Timezone(_HasExtras, ApiModelMixin):
 
 
 @dataclass(slots=True, frozen=True)
-class CongressionalDistrict(_HasExtras, ApiModelMixin):
+class CongressionalDistrict(ApiModelMixin):
     name: str
     district_number: int
     congress_number: str
@@ -87,10 +89,11 @@ class CongressionalDistrict(_HasExtras, ApiModelMixin):
 
 
 @dataclass(slots=True, frozen=True)
-class StateLegislativeDistrict(_HasExtras, ApiModelMixin):
+class StateLegislativeDistrict(ApiModelMixin):
     """
     State legislative district information.
     """
+
     name: str
     district_number: int
     chamber: str  # 'house' or 'senate'
@@ -100,10 +103,11 @@ class StateLegislativeDistrict(_HasExtras, ApiModelMixin):
 
 
 @dataclass(slots=True, frozen=True)
-class CensusData(_HasExtras, ApiModelMixin):
+class CensusData(ApiModelMixin):
     """
     Census data for a location.
     """
+
     block: Optional[str] = None
     blockgroup: Optional[str] = None
     tract: Optional[str] = None
@@ -115,10 +119,11 @@ class CensusData(_HasExtras, ApiModelMixin):
 
 
 @dataclass(slots=True, frozen=True)
-class ACSSurveyData(_HasExtras, ApiModelMixin):
+class ACSSurveyData(ApiModelMixin):
     """
     American Community Survey data for a location.
     """
+
     population: Optional[int] = None
     households: Optional[int] = None
     median_income: Optional[int] = None
@@ -127,10 +132,11 @@ class ACSSurveyData(_HasExtras, ApiModelMixin):
 
 
 @dataclass(slots=True, frozen=True)
-class SchoolDistrict(_HasExtras, ApiModelMixin):
+class SchoolDistrict(ApiModelMixin):
     """
     School district information.
     """
+
     name: str
     district_number: Optional[str] = None
     lea_id: Optional[str] = None  # Local Education Agency ID
@@ -139,10 +145,11 @@ class SchoolDistrict(_HasExtras, ApiModelMixin):
 
 
 @dataclass(slots=True, frozen=True)
-class Demographics(_HasExtras, ApiModelMixin):
+class Demographics(ApiModelMixin):
     """
     American Community Survey demographics data.
     """
+
     total_population: Optional[int] = None
     male_population: Optional[int] = None
     female_population: Optional[int] = None
@@ -155,10 +162,11 @@ class Demographics(_HasExtras, ApiModelMixin):
 
 
 @dataclass(slots=True, frozen=True)
-class Economics(_HasExtras, ApiModelMixin):
+class Economics(ApiModelMixin):
     """
     American Community Survey economics data.
     """
+
     median_household_income: Optional[int] = None
     mean_household_income: Optional[int] = None
     per_capita_income: Optional[int] = None
@@ -168,10 +176,11 @@ class Economics(_HasExtras, ApiModelMixin):
 
 
 @dataclass(slots=True, frozen=True)
-class Families(_HasExtras, ApiModelMixin):
+class Families(ApiModelMixin):
     """
     American Community Survey families data.
     """
+
     total_households: Optional[int] = None
     family_households: Optional[int] = None
     nonfamily_households: Optional[int] = None
@@ -183,10 +192,11 @@ class Families(_HasExtras, ApiModelMixin):
 
 
 @dataclass(slots=True, frozen=True)
-class Housing(_HasExtras, ApiModelMixin):
+class Housing(ApiModelMixin):
     """
     American Community Survey housing data.
     """
+
     total_housing_units: Optional[int] = None
     occupied_housing_units: Optional[int] = None
     vacant_housing_units: Optional[int] = None
@@ -198,10 +208,11 @@ class Housing(_HasExtras, ApiModelMixin):
 
 
 @dataclass(slots=True, frozen=True)
-class Social(_HasExtras, ApiModelMixin):
+class Social(ApiModelMixin):
     """
     American Community Survey social data.
     """
+
     high_school_graduate_or_higher: Optional[int] = None
     bachelors_degree_or_higher: Optional[int] = None
     graduate_degree_or_higher: Optional[int] = None
@@ -211,8 +222,9 @@ class Social(_HasExtras, ApiModelMixin):
 
 
 @dataclass(slots=True, frozen=True)
-class ZIP4Data(_HasExtras, ApiModelMixin):
+class ZIP4Data(ApiModelMixin):
     """USPS ZIP+4 code and delivery information."""
+
     zip4: str
     delivery_point: str
     carrier_route: str
@@ -220,8 +232,9 @@ class ZIP4Data(_HasExtras, ApiModelMixin):
 
 
 @dataclass(slots=True, frozen=True)
-class FederalRiding(_HasExtras, ApiModelMixin):
+class FederalRiding(ApiModelMixin):
     """Canadian federal electoral district information."""
+
     code: str
     name_english: str
     name_french: str
@@ -232,8 +245,9 @@ class FederalRiding(_HasExtras, ApiModelMixin):
 
 
 @dataclass(slots=True, frozen=True)
-class ProvincialRiding(_HasExtras, ApiModelMixin):
+class ProvincialRiding(ApiModelMixin):
     """Canadian provincial electoral district information."""
+
     name_english: str
     name_french: str
     ocd_id: str
@@ -243,8 +257,9 @@ class ProvincialRiding(_HasExtras, ApiModelMixin):
 
 
 @dataclass(slots=True, frozen=True)
-class StatisticsCanadaData(_HasExtras, ApiModelMixin):
+class StatisticsCanadaData(ApiModelMixin):
     """Canadian statistical boundaries from Statistics Canada."""
+
     division: Dict[str, Any]
     consolidated_subdivision: Dict[str, Any]
     subdivision: Dict[str, Any]
@@ -261,8 +276,9 @@ class StatisticsCanadaData(_HasExtras, ApiModelMixin):
 
 
 @dataclass(slots=True, frozen=True)
-class FFIECData(_HasExtras, ApiModelMixin):
+class FFIECData(ApiModelMixin):
     """FFIEC CRA/HMDA Data (Beta)."""
+
     # Add FFIEC specific fields as they become available
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)
 
@@ -273,6 +289,7 @@ class GeocodioFields:
     Container for optional 'fields' returned by the Geocodio API.
     Add new attributes as additional data‑append endpoints become useful.
     """
+
     timezone: Optional[Timezone] = None
     congressional_districts: Optional[List[CongressionalDistrict]] = None
     state_legislative_districts: Optional[List[StateLegislativeDistrict]] = None
@@ -320,6 +337,7 @@ class GeocodioFields:
 # Main result objects
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 @dataclass(slots=True, frozen=True)
 class GeocodingResult:
     address_components: AddressComponents
@@ -336,6 +354,7 @@ class GeocodingResponse:
     """
     Top‑level structure returned by client.geocode() / client.reverse().
     """
+
     input: Dict[str, Optional[str]]
     results: List[GeocodingResult] = field(default_factory=list)
 
@@ -355,6 +374,7 @@ class ListResponse:
     """
     status, download_url, expires_at are not always present.
     """
+
     id: str
     file: Dict[str, Any]
     status: Optional[Dict[str, Any]] = None
@@ -368,6 +388,7 @@ class PaginatedResponse():
     """
     Base class for paginated responses.
     """
+
     current_page: int
     data: List[ListResponse]
     from_: int
