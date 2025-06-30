@@ -27,9 +27,21 @@ jobs:
           uv pip install .
           uv pip install .[dev]
 
-      - name: Run tests
+      - name: Run unit tests
         run: |
-          uv run pytest
+          uv run pytest tests/unit/
+
+      - name: Run e2e tests
+        env:
+          GEOCODIO_API_KEY: ${{ secrets.GEOCODIO_API_KEY }}
+        run: |
+          if [ -n "$GEOCODIO_API_KEY" ]; then
+            echo "Running e2e tests with API key"
+            uv run pytest tests/e2e/ -v
+          else
+            echo "No API key provided, skipping e2e tests"
+            uv run pytest tests/e2e/ --collect-only
+          fi
 
       - name: Lint with flake8
         run: |
