@@ -1,0 +1,66 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 1.0.0)'
+        required: true
+        default: '1.0.0'
+      publish_to:
+        description: 'Where to publish'
+        required: true
+        default: 'testpypi'
+        type: choice
+        options:
+        - testpypi
+        - pypi
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install dependencies
+      run: |
+        uv sync
+        uv pip install build twine
+
+    - name: Update version
+      if: github.event.inputs.version
+      run: |
+        # Update version in pyproject.toml
+        sed -i 's/^version = ".*"/version = "${{ github.event.inputs.version }}"/' pyproject.toml
+
+    - name: Build package
+      run: |
+        uv run python -m build
+
+    - name: Publish to TestPyPI
+      if: github.event.inputs.publish_to == 'testpypi' || github.event_name == 'release'
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        TWINE_REPOSITORY_URL: https://test.pypi.org/legacy/
+      run: |
+        uv run twine upload --verbose dist/*
+
+    - name: Publish to PyPI
+      if: github.event.inputs.publish_to == 'pypi'
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        uv run twine upload --verbose dist/*

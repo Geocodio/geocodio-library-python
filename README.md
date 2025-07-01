@@ -29,14 +29,13 @@ Development Installation
 
 2. Create and activate a virtual environment:
     ```bash
-    python -m .venv venv
-    source .venv/bin/activate  # On Windows: venv\Scripts\activate
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
     ```
 
 3. Install development dependencies:
     ```bash
-    pip install .
-    pip install .[dev]
+    pip install -e .
     pip install -r requirements-dev.txt
     ```
 
@@ -52,27 +51,28 @@ from geocodio import GeocodioClient
 client = GeocodioClient("YOUR_API_KEY")
 
 # Single forward geocode
-response = client.geocode("123 Anywhere St, Chicago, IL")
-print(response)
+response = client.geocode("1600 Pennsylvania Ave, Washington, DC")
+print(response.results[0].formatted_address)
 
 # Batch forward geocode
 addresses = [
-    "123 Anywhere St, Chicago, IL",
-    "456 Oak St, Los Angeles, CA"
+    "1600 Pennsylvania Ave, Washington, DC",
+    "1 Infinite Loop, Cupertino, CA"
 ]
 batch_response = client.geocode(addresses)
-print(batch_response)
+for result in batch_response.results:
+    print(result.formatted_address)
 
 # Single reverse geocode
 rev = client.reverse("38.9002898,-76.9990361")
-print(rev)
+print(rev.results[0].formatted_address)
 
 # Append additional fields
 data = client.geocode(
-    "123 Anywhere St, Chicago, IL",
+    "1600 Pennsylvania Ave, Washington, DC",
     fields=["cd", "timezone"]
 )
-print(data)
+print(data.results[0].fields.timezone.name if data.results[0].fields.timezone else "No timezone data")
 ```
 
 ### List API
@@ -85,68 +85,50 @@ from geocodio import GeocodioClient
 # Initialize the client with your API key
 client = GeocodioClient("YOUR_API_KEY")
 
-# Create a new list
-new_list = client.create_list(
-    name="My Addresses",
-    description="A list of addresses to geocode",
-    items=[
-        "1600 Pennsylvania Ave, Washington, DC",
-        "1 Infinite Loop, Cupertino, CA"
-    ]
-)
-print(new_list)
-
 # Get all lists
 lists = client.get_lists()
-print(lists)
+print(f"Found {len(lists.data)} lists")
+
+# Create a new list from a file
+with open("addresses.csv", "rb") as f:
+    new_list = client.create_list(
+        file=f,
+        filename="addresses.csv",
+        direction="forward"
+    )
+print(f"Created list: {new_list.id}")
 
 # Get a specific list
-list_id = new_list.list.id
-list_details = client.get_list(list_id)
-print(list_details)
+list_details = client.get_list(new_list.id)
+print(f"List status: {list_details.status}")
 
-# Update a list
-updated_list = client.update_list(
-    list_id=list_id,
-    name="Updated List Name",
-    description="Updated description"
-)
-print(updated_list)
-
-# Add items to a list
-added_items = client.add_items_to_list(
-    list_id=list_id,
-    items=[
-        "123 Anywhere St, Chicago, IL",
-        "456 Oak St, Los Angeles, CA"
-    ]
-)
-print(added_items)
-
-# Geocode all items in a list
-geocoded_list = client.geocode_list(
-    list_id=list_id,
-    fields=["timezone", "cd"]
-)
-print(geocoded_list)
-
-# Remove items from a list
-item_ids = [item.id for item in added_items.items]
-client.remove_items_from_list(
-    list_id=list_id,
-    item_ids=item_ids
-)
+# Download a completed list
+if list_details.status and list_details.status.get("state") == "COMPLETED":
+    file_content = client.download(new_list.id, "downloaded_results.csv")
+    print("List downloaded successfully")
 
 # Delete a list
-client.delete_list(list_id)
+client.delete_list(new_list.id)
 ```
 
 Error Handling
 --------------
 
-- `GeocodioAuthError` is raised for authentication failures (HTTP 403).
-- `GeocodioDataError` is raised for invalid requests (HTTP 422).
-- `GeocodioServerError` is raised for server-side errors (HTTP 5xx).
+```python
+from geocodio import GeocodioClient, AuthenticationError, InvalidRequestError
+
+try:
+    client = GeocodioClient("INVALID_API_KEY")
+    response = client.geocode("1600 Pennsylvania Ave, Washington, DC")
+except AuthenticationError as e:
+    print(f"Authentication failed: {e}")
+
+try:
+    client = GeocodioClient("YOUR_API_KEY")
+    response = client.geocode("")  # Empty address
+except InvalidRequestError as e:
+    print(f"Invalid request: {e}")
+```
 
 Documentation
 -------------
@@ -164,3 +146,30 @@ License
 -------
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+CI & Publishing
+---------------
+
+- CI runs unit tests and linting on every push. E2E tests run if `GEOCODIO_API_KEY` is set as a secret.
+- PyPI publishing workflow supports both TestPyPI and PyPI. See `.github/workflows/publish.yml`.
+- Use `test_pypi_release.py` for local packaging and dry-run upload.
+
+### Testing GitHub Actions Workflows
+
+The project includes tests for GitHub Actions workflows using `act` for local development:
+
+```bash
+# Test all workflows (requires act and Docker)
+pytest tests/test_workflows.py
+
+# Test specific workflow
+pytest tests/test_workflows.py::test_ci_workflow
+pytest tests/test_workflows.py::test_publish_workflow
+```
+
+**Prerequisites:**
+- Install [act](https://github.com/nektos/act) for local GitHub Actions testing
+- Docker must be running
+- For publish workflow tests: Set `TEST_PYPI_API_TOKEN` environment variable
+
+**Note:** Workflow tests are automatically skipped in CI environments.
