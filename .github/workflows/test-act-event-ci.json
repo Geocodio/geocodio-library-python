@@ -1,0 +1,9 @@
+{
+    "event": "workflow_dispatch",
+    "workflow": "publish.yml",
+    "ref": "refs/heads/feature/ci-pipeline-tasks",
+    "inputs": {
+      "version": "0.0.1",
+      "publish_to": "testpypi"
+    }
+  }
