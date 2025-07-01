@@ -153,3 +153,23 @@ CI & Publishing
 - CI runs unit tests and linting on every push. E2E tests run if `GEOCODIO_API_KEY` is set as a secret.
 - PyPI publishing workflow supports both TestPyPI and PyPI. See `.github/workflows/publish.yml`.
 - Use `test_pypi_release.py` for local packaging and dry-run upload.
+
+### Testing GitHub Actions Workflows
+
+The project includes tests for GitHub Actions workflows using `act` for local development:
+
+```bash
+# Test all workflows (requires act and Docker)
+pytest tests/test_workflows.py
+
+# Test specific workflow
+pytest tests/test_workflows.py::test_ci_workflow
+pytest tests/test_workflows.py::test_publish_workflow
+```
+
+**Prerequisites:**
+- Install [act](https://github.com/nektos/act) for local GitHub Actions testing
+- Docker must be running
+- For publish workflow tests: Set `TEST_PYPI_API_TOKEN` environment variable
+
+**Note:** Workflow tests are automatically skipped in CI environments.
