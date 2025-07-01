@@ -31,7 +31,7 @@ def main():
         return False
 
     # Step 2: Check the built files
-    if not os.path.exists("dist/"):
+    if not os.path.isdir("dist/"):
         print("✗ Build directory not found")
         return False
 
