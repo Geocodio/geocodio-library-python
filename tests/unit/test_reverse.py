@@ -58,37 +58,51 @@ def test_reverse_batch_coordinates(client, httpx_mock):
         return httpx.Response(200, json={
             "results": [
                 {
-                    "address_components": {
-                        "number": "1109",
-                        "predirectional": "N",
-                        "street": "Highland",
-                        "suffix": "St",
-                        "formatted_street": "N Highland St",
-                        "city": "Arlington",
-                        "state": "VA",
-                        "zip": "22201"
-                    },
-                    "formatted_address": "1109 N Highland St, Arlington, VA 22201",
-                    "location": {"lat": 38.886672, "lng": -77.094735},
-                    "accuracy": 1,
-                    "accuracy_type": "rooftop",
-                    "source": "Arlington"
+                    "query": "38.886672,-77.094735",
+                    "response": {
+                        "results": [
+                            {
+                                "address_components": {
+                                    "number": "1109",
+                                    "predirectional": "N",
+                                    "street": "Highland",
+                                    "suffix": "St",
+                                    "formatted_street": "N Highland St",
+                                    "city": "Arlington",
+                                    "state": "VA",
+                                    "zip": "22201"
+                                },
+                                "formatted_address": "1109 N Highland St, Arlington, VA 22201",
+                                "location": {"lat": 38.886672, "lng": -77.094735},
+                                "accuracy": 1,
+                                "accuracy_type": "rooftop",
+                                "source": "Arlington"
+                            }
+                        ]
+                    }
                 },
                 {
-                    "address_components": {
-                        "number": "1600",
-                        "street": "Pennsylvania",
-                        "suffix": "Ave",
-                        "postdirectional": "NW",
-                        "city": "Washington",
-                        "state": "DC",
-                        "zip": "20500"
-                    },
-                    "formatted_address": "1600 Pennsylvania Ave NW, Washington, DC 20500",
-                    "location": {"lat": 38.898719, "lng": -77.036547},
-                    "accuracy": 1,
-                    "accuracy_type": "rooftop",
-                    "source": "DC"
+                    "query": "38.898719,-77.036547",
+                    "response": {
+                        "results": [
+                            {
+                                "address_components": {
+                                    "number": "1600",
+                                    "street": "Pennsylvania",
+                                    "suffix": "Ave",
+                                    "postdirectional": "NW",
+                                    "city": "Washington",
+                                    "state": "DC",
+                                    "zip": "20500"
+                                },
+                                "formatted_address": "1600 Pennsylvania Ave NW, Washington, DC 20500",
+                                "location": {"lat": 38.898719, "lng": -77.036547},
+                                "accuracy": 1,
+                                "accuracy_type": "rooftop",
+                                "source": "DC"
+                            }
+                        ]
+                    }
                 }
             ]
         })
