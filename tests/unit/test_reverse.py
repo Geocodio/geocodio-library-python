@@ -32,7 +32,7 @@ def test_reverse_single_coordinate(client, httpx_mock):
 
     httpx_mock.add_callback(
         callback=response_callback,
-        url=httpx.URL("https://api.test/v1.8/reverse", params={"api_key": "TEST_KEY", "q": "38.886672,-77.094735"}),
+        url=httpx.URL("https://api.test/v1.9/reverse", params={"api_key": "TEST_KEY", "q": "38.886672,-77.094735"}),
     )
 
     # Act
@@ -109,7 +109,7 @@ def test_reverse_batch_coordinates(client, httpx_mock):
 
     httpx_mock.add_callback(
         callback=batch_response_callback,
-        url=httpx.URL("https://api.test/v1.8/reverse", params={"api_key": "TEST_KEY"}),
+        url=httpx.URL("https://api.test/v1.9/reverse", params={"api_key": "TEST_KEY"}),
     )
 
     # Act
@@ -160,7 +160,7 @@ def test_reverse_with_fields(client, httpx_mock):
 
     httpx_mock.add_callback(
         callback=response_callback,
-        url=httpx.URL("https://api.test/v1.8/reverse", params={
+        url=httpx.URL("https://api.test/v1.9/reverse", params={
             "api_key": "TEST_KEY",
             "q": "38.886672,-77.094735",
             "fields": "timezone,cd"
@@ -223,7 +223,7 @@ def test_reverse_with_limit(client, httpx_mock):
 
     httpx_mock.add_callback(
         callback=response_callback,
-        url=httpx.URL("https://api.test/v1.8/reverse", params={
+        url=httpx.URL("https://api.test/v1.9/reverse", params={
             "api_key": "TEST_KEY",
             "q": "38.886672,-77.094735",
             "limit": "2"
@@ -242,7 +242,7 @@ def test_reverse_with_limit(client, httpx_mock):
 def test_reverse_invalid_coordinate(client, httpx_mock):
     # Arrange: stub the API call with error response
     httpx_mock.add_response(
-        url=httpx.URL("https://api.test/v1.8/reverse", params={
+        url=httpx.URL("https://api.test/v1.9/reverse", params={
             "api_key": "TEST_KEY",
             "q": "invalid,coordinate"
         }),

@@ -57,7 +57,7 @@ def main():
     logger.info("Creating a new list...")
     file_content = "Zip\n20003\n20001"
     # --- Capture request details ---
-    logger.info("REQUEST: POST /v1.8/lists")
+    logger.info("REQUEST: POST /v1.9/lists")
     logger.info(f"Request params: {{'api_key': '***', 'direction': 'forward', 'format': '{{A}}'}}")
     logger.info(f"Request files: {{'file': ('smoke_test_list.csv', {repr(file_content)})}}")
     new_list_response = client.create_list(
@@ -66,7 +66,7 @@ def main():
         format_="{{A}}"
     )
     # --- Capture response details ---
-    logger.info("RESPONSE: POST /v1.8/lists")
+    logger.info("RESPONSE: POST /v1.9/lists")
     print_headers_and_body("Response", {
         "id": new_list_response.id,
         "file": new_list_response.file,

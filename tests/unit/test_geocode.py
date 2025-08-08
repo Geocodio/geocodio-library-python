@@ -57,7 +57,7 @@ def test_geocode_single(client, httpx_mock):
 
     httpx_mock.add_callback(
         callback=response_callback,
-        url=httpx.URL("https://api.test/v1.8/geocode", params={"api_key": "TEST_KEY", "q": "1109 N Highland St, Arlington, VA"}),
+        url=httpx.URL("https://api.test/v1.9/geocode", params={"api_key": "TEST_KEY", "q": "1109 N Highland St, Arlington, VA"}),
     )
 
     # Act
@@ -139,7 +139,7 @@ def test_geocode_batch(client, httpx_mock):
 
     httpx_mock.add_callback(
         callback=batch_response_callback,
-        url=httpx.URL("https://api.test/v1.8/geocode", params={"api_key": "TEST_KEY"}),
+        url=httpx.URL("https://api.test/v1.9/geocode", params={"api_key": "TEST_KEY"}),
     )
 
     # Act
@@ -170,7 +170,7 @@ def test_geocode_structured_address(client, httpx_mock):
 
     httpx_mock.add_callback(
         callback=response_callback,
-        url=httpx.URL("https://api.test/v1.8/geocode", params={
+        url=httpx.URL("https://api.test/v1.9/geocode", params={
             "api_key": "TEST_KEY",
             "street": "1109 N Highland St",
             "city": "Arlington",
@@ -227,7 +227,7 @@ def test_geocode_with_fields(client, httpx_mock):
 
     httpx_mock.add_callback(
         callback=response_callback,
-        url=httpx.URL("https://api.test/v1.8/geocode", params={
+        url=httpx.URL("https://api.test/v1.9/geocode", params={
             "api_key": "TEST_KEY",
             "q": "1109 Highland St, Arlington, VA",
             "fields": "timezone,cd"
@@ -290,7 +290,7 @@ def test_geocode_with_limit(client, httpx_mock):
 
     httpx_mock.add_callback(
         callback=response_callback,
-        url=httpx.URL("https://api.test/v1.8/geocode", params={
+        url=httpx.URL("https://api.test/v1.9/geocode", params={
             "api_key": "TEST_KEY",
             "q": "1109 Highland St, Arlington, VA",
             "limit": "2"
@@ -369,7 +369,7 @@ def test_geocode_batch_with_nested_response(client, httpx_mock):
 
     httpx_mock.add_callback(
         callback=batch_response_callback,
-        url=httpx.URL("https://api.test/v1.8/geocode", params={"api_key": "TEST_KEY"}),
+        url=httpx.URL("https://api.test/v1.9/geocode", params={"api_key": "TEST_KEY"}),
     )
 
     # Act
@@ -475,7 +475,7 @@ def test_geocode_batch_with_fields(client, httpx_mock):
 
     httpx_mock.add_callback(
         callback=batch_response_callback,
-        url=httpx.URL("https://api.test/v1.8/geocode", params={"api_key": "TEST_KEY", "fields": "timezone,cd"}),
+        url=httpx.URL("https://api.test/v1.9/geocode", params={"api_key": "TEST_KEY", "fields": "timezone,cd"}),
     )
 
     # Act
