@@ -124,12 +124,18 @@ class GeocodioClient:
             params["limit"] = int(limit)
 
         endpoint: str
-        data: Dict[str, list] | None
+        data: Union[List[str], None]
 
         # Batch vs single coordinate
         if isinstance(coordinate, list):
             endpoint = f"{self.BASE_PATH}/reverse"
-            data = {"coordinates": coordinate}
+            coords_as_strings = []
+            for coord in coordinate:
+                if isinstance(coord, tuple):
+                    coords_as_strings.append(f"{coord[0]},{coord[1]}")
+                else:
+                    coords_as_strings.append(coord)
+            data = coords_as_strings
         else:
             endpoint = f"{self.BASE_PATH}/reverse"
             if isinstance(coordinate, tuple):
