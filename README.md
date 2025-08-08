@@ -18,27 +18,6 @@ Install via pip:
 
     pip install geocodio-library-python
 
-Development Installation
------------------------
-
-1. Clone the repository:
-    ```bash
-    git clone https://github.com/geocodio/geocodio-library-python.git
-    cd geocodio-library-python
-    ```
-
-2. Create and activate a virtual environment:
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows: venv\Scripts\activate
-    ```
-
-3. Install development dependencies:
-    ```bash
-    pip install -e .
-    pip install -r requirements-dev.txt
-    ```
-
 Usage
 -----
 
@@ -166,6 +145,27 @@ License
 -------
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+Development Installation
+-----------------------
+
+1. Clone the repository:
+    ```bash
+    git clone https://github.com/geocodio/geocodio-library-python.git
+    cd geocodio-library-python
+    ```
+
+2. Create and activate a virtual environment:
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    ```
+
+3. Install development dependencies:
+    ```bash
+    pip install -e .
+    pip install -r requirements-dev.txt
+    ```
 
 CI & Publishing
 ---------------
