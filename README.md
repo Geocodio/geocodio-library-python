@@ -115,7 +115,8 @@ Error Handling
 --------------
 
 ```python
-from geocodio import GeocodioClient, AuthenticationError, InvalidRequestError
+from geocodio import GeocodioClient
+from geocodio.exceptions import AuthenticationError, InvalidRequestError
 
 try:
     client = GeocodioClient("INVALID_API_KEY")
