@@ -77,7 +77,7 @@ class GeocodioClient:
             limit: Optional[int] = None,
             country: Optional[str] = None,
     ) -> GeocodingResponse:
-        params: Dict[str, Union[str, int]] = {"api_key": self.api_key}
+        params: Dict[str, Union[str, int]] = {}
         if fields:
             params["fields"] = ",".join(fields)
         if limit:
@@ -131,7 +131,7 @@ class GeocodioClient:
             fields: Optional[List[str]] = None,
             limit: Optional[int] = None,
     ) -> GeocodingResponse:
-        params: Dict[str, Union[str, int]] = {"api_key": self.api_key}
+        params: Dict[str, Union[str, int]] = {}
         if fields:
             params["fields"] = ",".join(fields)
         if limit:
@@ -170,7 +170,7 @@ class GeocodioClient:
             self,
             method: str,
             endpoint: str,
-            params: dict,
+            params: Optional[dict] = None,
             json: Optional[dict] = None,
             files: Optional[dict] = None,
             timeout: Optional[float] = None,
@@ -183,8 +183,11 @@ class GeocodioClient:
         if timeout is None:
             timeout = self.single_timeout
         
+        # Set up authorization header
+        headers = {"Authorization": f"Bearer {self.api_key}"}
+        
         logger.debug(f"Using timeout: {timeout}s")
-        resp = self._http.request(method, endpoint, params=params, json=json, files=files, timeout=timeout)
+        resp = self._http.request(method, endpoint, params=params, json=json, files=files, headers=headers, timeout=timeout)
 
         logger.debug(f"Response status code: {resp.status_code}")
         logger.debug(f"Response headers: {resp.headers}")
@@ -289,9 +292,7 @@ class GeocodioClient:
             AuthenticationError: If the API key is invalid.
             GeocodioServerError: If the server encounters an error.
         """
-        # @TODO we repeat building the params here; prob should move the API key
-        #    to the self._request() method.
-        params: Dict[str, Union[str, int]] = {"api_key": self.api_key}
+        params: Dict[str, Union[str, int]] = {}
         endpoint = f"{self.BASE_PATH}/lists"
 
         if not file:
@@ -321,7 +322,7 @@ class GeocodioClient:
         Returns:
             A ListResponse object containing all lists.
         """
-        params: Dict[str, Union[str, int]] = {"api_key": self.api_key}
+        params: Dict[str, Union[str, int]] = {}
         endpoint = f"{self.BASE_PATH}/lists"
 
         response = self._request("GET", endpoint, params, timeout=self.list_timeout)
@@ -356,7 +357,7 @@ class GeocodioClient:
         Returns:
             A ListResponse object containing the retrieved list.
         """
-        params: Dict[str, Union[str, int]] = {"api_key": self.api_key}
+        params: Dict[str, Union[str, int]] = {}
         endpoint = f"{self.BASE_PATH}/lists/{list_id}"
 
         response = self._request("GET", endpoint, params, timeout=self.list_timeout)
@@ -369,7 +370,7 @@ class GeocodioClient:
         Args:
             list_id: The ID of the list to delete.
         """
-        params: Dict[str, Union[str, int]] = {"api_key": self.api_key}
+        params: Dict[str, Union[str, int]] = {}
         endpoint = f"{self.BASE_PATH}/lists/{list_id}"
 
         self._request("DELETE", endpoint, params, timeout=self.list_timeout)
@@ -538,7 +539,7 @@ class GeocodioClient:
         Raises:
             GeocodioServerError if the list is still processing or another error occurs.
         """
-        params = {"api_key": self.api_key}
+        params = {}
         endpoint = f"{self.BASE_PATH}/lists/{list_id}/download"
 
         response: httpx.Response = self._request("GET", endpoint, params, timeout=self.list_timeout)
