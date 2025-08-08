@@ -131,6 +131,25 @@ except InvalidRequestError as e:
     print(f"Invalid request: {e}")
 ```
 
+Geocodio Enterprise
+-------------------
+
+To use this library with Geocodio Enterprise, pass `api.enterprise.geocod.io` as the `hostname` parameter when initializing the client:
+
+```python
+from geocodio import GeocodioClient
+
+# Initialize client for Geocodio Enterprise
+client = GeocodioClient(
+    "YOUR_API_KEY",
+    hostname="api.enterprise.geocod.io"
+)
+
+# All methods work the same as with the standard API
+response = client.geocode("1600 Pennsylvania Ave, Washington, DC")
+print(response.results[0].formatted_address)
+```
+
 Documentation
 -------------
 
