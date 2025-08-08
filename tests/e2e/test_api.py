@@ -5,7 +5,7 @@ These tests require a valid GEOCODIO_API_KEY environment variable.
 
 import os
 import pytest
-from geocodio import GeocodioClient
+from geocodio import Geocodio
 from geocodio.exceptions import GeocodioError
 
 
@@ -15,7 +15,7 @@ def client():
     api_key = os.getenv("GEOCODIO_API_KEY")
     if not api_key:
         pytest.skip("GEOCODIO_API_KEY environment variable not set")
-    return GeocodioClient(api_key)
+    return Geocodio(api_key)
 
 
 def test_integration_geocode(client):

@@ -3,7 +3,7 @@ End-to-end tests for batch reverse geocoding functionality.
 """
 
 import pytest
-from geocodio import GeocodioClient
+from geocodio import Geocodio
 
 
 def test_batch_reverse_geocoding(client):

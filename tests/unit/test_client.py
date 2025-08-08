@@ -1,22 +1,22 @@
 """
-Tests for the GeocodioClient class
+Tests for the Geocodio class
 """
 
 import pytest
 import httpx
-from geocodio import GeocodioClient
+from geocodio import Geocodio
 from geocodio.exceptions import AuthenticationError
 
 
 @pytest.fixture
 def mock_request(mocker):
     """Mock the _request method."""
-    return mocker.patch('geocodio.client.GeocodioClient._request')
+    return mocker.patch('geocodio.client.Geocodio._request')
 
 
 def test_client_initialization():
     """Test that the client can be initialized with an API key"""
-    client = GeocodioClient(api_key="test-key")
+    client = Geocodio(api_key="test-key")
     assert client.api_key == "test-key"
     assert client.hostname == "api.geocod.io"
 
@@ -24,7 +24,7 @@ def test_client_initialization():
 def test_client_initialization_with_env_var(monkeypatch):
     """Test that the client can be initialized with an environment variable"""
     monkeypatch.setenv("GEOCODIO_API_KEY", "env-key")
-    client = GeocodioClient()
+    client = Geocodio()
     assert client.api_key == "env-key"
 
 
@@ -33,7 +33,7 @@ def test_client_initialization_no_key(monkeypatch):
     # Ensure environment variable is not set
     monkeypatch.delenv("GEOCODIO_API_KEY", raising=False)
     with pytest.raises(AuthenticationError, match="No API key supplied and GEOCODIO_API_KEY is not set"):
-        GeocodioClient()
+        Geocodio()
 
 
 def test_geocode_with_census_data(mock_request):
@@ -64,7 +64,7 @@ def test_geocode_with_census_data(mock_request):
         }]
     })
 
-    client = GeocodioClient("fake-key")
+    client = Geocodio("fake-key")
     response = client.geocode(
         {"street": "1109 N Highland St", "city": "Arlington", "state": "VA"},
         fields=["census2010"]
@@ -102,7 +102,7 @@ def test_geocode_with_acs_data(mock_request):
         }]
     })
 
-    client = GeocodioClient("fake-key")
+    client = Geocodio("fake-key")
     response = client.geocode(
         {"street": "1109 N Highland St", "city": "Arlington", "state": "VA"},
         fields=["acs"]
@@ -154,7 +154,7 @@ def test_geocode_batch_with_custom_keys(mock_request):
         ]
     })
 
-    client = GeocodioClient("fake-key")
+    client = Geocodio("fake-key")
     response = client.geocode({
         "address1": "1109 N Highland St, Arlington, VA",
         "address2": "525 University Ave, Toronto, ON, Canada"
@@ -193,7 +193,7 @@ def test_geocode_with_congressional_districts(mock_request):
         }]
     })
 
-    client = GeocodioClient("fake-key")
+    client = Geocodio("fake-key")
     response = client.geocode(
         {"street": "1109 N Highland St", "city": "Arlington", "state": "VA"},
         fields=["cd"]
@@ -229,7 +229,7 @@ def test_user_agent_header_in_request(mocker):
         }]
     })
     
-    client = GeocodioClient("test-api-key")
+    client = Geocodio("test-api-key")
     client.geocode("1109 N Highland St, Arlington, VA")
     
     # Verify request was made with correct headers
@@ -247,7 +247,7 @@ def test_user_agent_header_format():
     """Test that the User-Agent header has the correct format."""
     from geocodio import __version__
     
-    client = GeocodioClient("test-api-key")
+    client = Geocodio("test-api-key")
     expected_user_agent = f"geocodio-library-python/{__version__}"
     assert client.USER_AGENT == expected_user_agent
 
@@ -262,7 +262,7 @@ def test_user_agent_header_in_batch_request(mocker):
         "results": []
     })
     
-    client = GeocodioClient("test-api-key")
+    client = Geocodio("test-api-key")
     client.geocode(["Address 1", "Address 2"])
     
     # Verify headers in batch request
@@ -295,7 +295,7 @@ def test_user_agent_header_in_reverse_geocode(mocker):
         }]
     })
     
-    client = GeocodioClient("test-api-key")
+    client = Geocodio("test-api-key")
     client.reverse("38.886665,-77.094733")
     
     # Verify headers in reverse geocode request
@@ -321,7 +321,7 @@ def test_user_agent_header_in_list_api(mocker):
         "per_page": 10
     })
     
-    client = GeocodioClient("test-api-key")
+    client = Geocodio("test-api-key")
     client.get_lists()
     
     # Verify headers in list API request

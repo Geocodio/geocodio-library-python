@@ -3,7 +3,7 @@
 import os
 import time
 import logging
-from geocodio import GeocodioClient
+from geocodio import Geocodio
 from geocodio.models import ListProcessingState
 from dotenv import load_dotenv
 
@@ -51,7 +51,7 @@ def main():
         logger.error("GEOCODIO_API_KEY not set in environment.")
         exit(1)
 
-    client = GeocodioClient(api_key)
+    client = Geocodio(api_key)
 
     # Step 1: Create a list
     logger.info("Creating a new list...")
