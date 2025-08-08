@@ -11,6 +11,8 @@ from typing import List, Union, Dict, Tuple, Optional
 
 import httpx
 
+from geocodio._version import __version__
+
 # Set up logger early to capture all logs
 logger = logging.getLogger("geocodio")
 
@@ -30,6 +32,7 @@ class GeocodioClient:
     DEFAULT_SINGLE_TIMEOUT = 5.0
     DEFAULT_BATCH_TIMEOUT = 1800.0  # 30 minutes
     LIST_API_TIMEOUT = 60.0
+    USER_AGENT = f"geocodio-library-python/{__version__}"
 
     @staticmethod
     def get_status_exception_mappings() -> Dict[
@@ -183,8 +186,11 @@ class GeocodioClient:
         if timeout is None:
             timeout = self.single_timeout
         
-        # Set up authorization header
-        headers = {"Authorization": f"Bearer {self.api_key}"}
+        # Set up authorization and user-agent headers
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "User-Agent": self.USER_AGENT
+        }
         
         logger.debug(f"Using timeout: {timeout}s")
         resp = self._http.request(method, endpoint, params=params, json=json, files=files, headers=headers, timeout=timeout)
