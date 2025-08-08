@@ -32,7 +32,8 @@ def test_reverse_single_coordinate(client, httpx_mock):
 
     httpx_mock.add_callback(
         callback=response_callback,
-        url=httpx.URL("https://api.test/v1.9/reverse", params={"api_key": "TEST_KEY", "q": "38.886672,-77.094735"}),
+        url=httpx.URL("https://api.test/v1.9/reverse", params={"q": "38.886672,-77.094735"}),
+        match_headers={"Authorization": "Bearer TEST_KEY"},
     )
 
     # Act
@@ -54,7 +55,7 @@ def test_reverse_batch_coordinates(client, httpx_mock):
 
     def batch_response_callback(request):
         assert request.method == "POST"
-        assert request.url.params["api_key"] == "TEST_KEY"
+        assert request.headers["Authorization"] == "Bearer TEST_KEY"
         return httpx.Response(200, json={
             "results": [
                 {
@@ -109,7 +110,8 @@ def test_reverse_batch_coordinates(client, httpx_mock):
 
     httpx_mock.add_callback(
         callback=batch_response_callback,
-        url=httpx.URL("https://api.test/v1.9/reverse", params={"api_key": "TEST_KEY"}),
+        url=httpx.URL("https://api.test/v1.9/reverse"),
+        match_headers={"Authorization": "Bearer TEST_KEY"},
     )
 
     # Act
@@ -161,10 +163,10 @@ def test_reverse_with_fields(client, httpx_mock):
     httpx_mock.add_callback(
         callback=response_callback,
         url=httpx.URL("https://api.test/v1.9/reverse", params={
-            "api_key": "TEST_KEY",
             "q": "38.886672,-77.094735",
             "fields": "timezone,cd"
         }),
+        match_headers={"Authorization": "Bearer TEST_KEY"},
     )
 
     # Act
@@ -224,10 +226,10 @@ def test_reverse_with_limit(client, httpx_mock):
     httpx_mock.add_callback(
         callback=response_callback,
         url=httpx.URL("https://api.test/v1.9/reverse", params={
-            "api_key": "TEST_KEY",
             "q": "38.886672,-77.094735",
             "limit": "2"
         }),
+        match_headers={"Authorization": "Bearer TEST_KEY"},
     )
 
     # Act
@@ -243,9 +245,9 @@ def test_reverse_invalid_coordinate(client, httpx_mock):
     # Arrange: stub the API call with error response
     httpx_mock.add_response(
         url=httpx.URL("https://api.test/v1.9/reverse", params={
-            "api_key": "TEST_KEY",
             "q": "invalid,coordinate"
         }),
+        match_headers={"Authorization": "Bearer TEST_KEY"},
         json={"error": "Invalid coordinate format"},
         status_code=422
     )
