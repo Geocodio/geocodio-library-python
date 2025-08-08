@@ -7,7 +7,7 @@ import os
 import pytest
 import time
 from unittest.mock import patch
-from geocodio import GeocodioClient
+from geocodio import Geocodio
 from geocodio.models import ListResponse, PaginatedResponse, ListProcessingState
 from geocodio.exceptions import GeocodioServerError
 import logging
@@ -22,7 +22,7 @@ def client():
     api_key = os.getenv("GEOCODIO_API_KEY")
     if not api_key:
         pytest.skip("GEOCODIO_API_KEY environment variable not set")
-    return GeocodioClient(api_key)
+    return Geocodio(api_key)
 
 
 @pytest.fixture
@@ -59,8 +59,8 @@ def wait_for_list_processed(client, list_id, timeout=120):
 
 def test_create_list(client):
     """
-    Test creating a list with GeocodioClient.create_list()
-    :param client: GeocodioClient instance
+    Test creating a list with Geocodio.create_list()
+    :param client: Geocodio instance
     """
     new_list = client.create_list(file="Zip\n20003\n20001", filename="test_list.csv")
 
@@ -69,8 +69,8 @@ def test_create_list(client):
 
 def test_get_list_status(client, list_response):
     """
-    Test retrieving the status of a list with GeocodioClient.get_list_status()
-    :param client: GeocodioClient instance
+    Test retrieving the status of a list with Geocodio.get_list_status()
+    :param client: Geocodio instance
     :param list_response: List object created in the fixture
     """
     # Get the status of the test list

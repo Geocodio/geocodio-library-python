@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from geocodio import GeocodioClient
+from geocodio import Geocodio
 from dotenv import load_dotenv
 import os
 import json
@@ -10,7 +10,7 @@ from dataclasses import asdict
 load_dotenv()
 
 # Initialize the client with your API key
-client = GeocodioClient(os.getenv("GEOCODIO_API_KEY"))
+client = Geocodio(os.getenv("GEOCODIO_API_KEY"))
 
 # Single forward geocode
 print("\nSingle forward geocode:")

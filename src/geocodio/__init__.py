@@ -4,6 +4,6 @@ A Python client for the Geocodio API.
 """
 
 from ._version import __version__
-from .client import GeocodioClient
+from .client import Geocodio
 
-__all__ = ["GeocodioClient", "__version__"]
+__all__ = ["Geocodio", "__version__"]

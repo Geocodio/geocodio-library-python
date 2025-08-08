@@ -24,10 +24,10 @@ Usage
 ### Geocoding
 
 ```python
-from geocodio import GeocodioClient
+from geocodio import Geocodio
 
 # Initialize the client with your API key
-client = GeocodioClient("YOUR_API_KEY")
+client = Geocodio("YOUR_API_KEY")
 
 # Single forward geocode
 response = client.geocode("1600 Pennsylvania Ave, Washington, DC")
@@ -59,10 +59,10 @@ print(data.results[0].fields.timezone.name if data.results[0].fields.timezone el
 The List API allows you to manage lists of addresses or coordinates for batch processing.
 
 ```python
-from geocodio import GeocodioClient
+from geocodio import Geocodio
 
 # Initialize the client with your API key
-client = GeocodioClient("YOUR_API_KEY")
+client = Geocodio("YOUR_API_KEY")
 
 # Get all lists
 lists = client.get_lists()
@@ -94,17 +94,17 @@ Error Handling
 --------------
 
 ```python
-from geocodio import GeocodioClient
+from geocodio import Geocodio
 from geocodio.exceptions import AuthenticationError, InvalidRequestError
 
 try:
-    client = GeocodioClient("INVALID_API_KEY")
+    client = Geocodio("INVALID_API_KEY")
     response = client.geocode("1600 Pennsylvania Ave, Washington, DC")
 except AuthenticationError as e:
     print(f"Authentication failed: {e}")
 
 try:
-    client = GeocodioClient("YOUR_API_KEY")
+    client = Geocodio("YOUR_API_KEY")
     response = client.geocode("")  # Empty address
 except InvalidRequestError as e:
     print(f"Invalid request: {e}")
@@ -116,10 +116,10 @@ Geocodio Enterprise
 To use this library with Geocodio Enterprise, pass `api.enterprise.geocod.io` as the `hostname` parameter when initializing the client:
 
 ```python
-from geocodio import GeocodioClient
+from geocodio import Geocodio
 
 # Initialize client for Geocodio Enterprise
-client = GeocodioClient(
+client = Geocodio(
     "YOUR_API_KEY",
     hostname="api.enterprise.geocod.io"
 )

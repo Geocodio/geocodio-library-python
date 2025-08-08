@@ -7,19 +7,19 @@ from typing import List
 import pytest
 from dotenv import load_dotenv
 
-from geocodio import GeocodioClient
+from geocodio import Geocodio
 from geocodio.exceptions import AuthenticationError
 
 # Load environment variables from .env file
 load_dotenv()
 
 @pytest.fixture
-def client() -> GeocodioClient:
-    """Create a GeocodioClient instance for testing."""
+def client() -> Geocodio:
+    """Create a Geocodio instance for testing."""
     api_key = os.getenv("GEOCODIO_API_KEY")
     if not api_key:
         pytest.skip("GEOCODIO_API_KEY environment variable not set")
-    return GeocodioClient(api_key)
+    return Geocodio(api_key)
 
 def test_client_requires_api_key():
     """Test that client raises AuthenticationError when no API key is provided."""
@@ -30,13 +30,13 @@ def test_client_requires_api_key():
 
     try:
         with pytest.raises(AuthenticationError):
-            GeocodioClient("")
+            Geocodio("")
     finally:
         # Restore the environment variable
         if original_key:
             os.environ["GEOCODIO_API_KEY"] = original_key
 
-def test_single_forward_geocode(client: GeocodioClient):
+def test_single_forward_geocode(client: Geocodio):
     """Test forward geocoding of a single address."""
     response = client.geocode("3730 N Clark St, Chicago, IL")
 
@@ -63,7 +63,7 @@ def test_single_forward_geocode(client: GeocodioClient):
     assert components.state == "IL"
     assert components.zip == "60613"
 
-def test_batch_forward_geocode(client: GeocodioClient):
+def test_batch_forward_geocode(client: Geocodio):
     """Test forward geocoding of multiple addresses."""
     addresses: List[str] = [
         "3730 N Clark St, Chicago, IL",
@@ -85,7 +85,7 @@ def test_batch_forward_geocode(client: GeocodioClient):
     assert denver.accuracy > 0.9
     assert denver.accuracy_type == "rooftop"
 
-def test_single_reverse_geocode(client: GeocodioClient):
+def test_single_reverse_geocode(client: Geocodio):
     """Test reverse geocoding of coordinates."""
     response = client.reverse("38.9002898,-76.9990361")
 
@@ -102,7 +102,7 @@ def test_single_reverse_geocode(client: GeocodioClient):
     assert 38.89 < result.location.lat < 38.91
     assert -77.00 < result.location.lng < -76.99
 
-def test_geocode_with_fields(client: GeocodioClient):
+def test_geocode_with_fields(client: Geocodio):
     """Test geocoding with additional data fields."""
     response = client.geocode(
         "3730 N Clark St, Chicago, IL",
