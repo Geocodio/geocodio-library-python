@@ -164,7 +164,7 @@ class GeocodioClient:
         logger.debug(f"JSON body: {json}")
         logger.debug(f"Files: {files}")
 
-        resp = self._http.request(method, endpoint, params=params, json=json, files=files, timeout=30)
+        resp = self._http.request(method, endpoint, params=params, json=json, files=files, timeout=60)
 
         logger.debug(f"Response status code: {resp.status_code}")
         logger.debug(f"Response headers: {resp.headers}")
