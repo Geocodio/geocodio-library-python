@@ -204,3 +204,129 @@ def test_geocode_with_congressional_districts(mock_request):
     assert response.results[0].fields.congressional_districts[0].name == "Virginia's 8th congressional district"
     assert response.results[0].fields.congressional_districts[0].district_number == 8
     assert response.results[0].fields.congressional_districts[0].congress_number == "118"
+
+
+def test_user_agent_header_in_request(mocker):
+    """Test that the User-Agent header is included in all requests."""
+    from geocodio import __version__
+    
+    # Mock the httpx.Client.request method to capture headers
+    mock_httpx_request = mocker.patch('httpx.Client.request')
+    mock_httpx_request.return_value = httpx.Response(200, json={
+        "input": {"address_components": {"q": "1109 N Highland St, Arlington, VA"}},
+        "results": [{
+            "address_components": {
+                "number": "1109",
+                "street": "N Highland St",
+                "city": "Arlington",
+                "state": "VA"
+            },
+            "formatted_address": "1109 N Highland St, Arlington, VA",
+            "location": {"lat": 38.886665, "lng": -77.094733},
+            "accuracy": 1.0,
+            "accuracy_type": "rooftop",
+            "source": "Virginia GIS Clearinghouse"
+        }]
+    })
+    
+    client = GeocodioClient("test-api-key")
+    client.geocode("1109 N Highland St, Arlington, VA")
+    
+    # Verify request was made with correct headers
+    mock_httpx_request.assert_called_once()
+    call_args = mock_httpx_request.call_args
+    headers = call_args.kwargs.get('headers', {})
+    
+    assert 'User-Agent' in headers
+    assert headers['User-Agent'] == f"geocodio-library-python/{__version__}"
+    assert 'Authorization' in headers
+    assert headers['Authorization'] == "Bearer test-api-key"
+
+
+def test_user_agent_header_format():
+    """Test that the User-Agent header has the correct format."""
+    from geocodio import __version__
+    
+    client = GeocodioClient("test-api-key")
+    expected_user_agent = f"geocodio-library-python/{__version__}"
+    assert client.USER_AGENT == expected_user_agent
+
+
+def test_user_agent_header_in_batch_request(mocker):
+    """Test that the User-Agent header is included in batch requests."""
+    from geocodio import __version__
+    
+    # Mock the httpx.Client.request method
+    mock_httpx_request = mocker.patch('httpx.Client.request')
+    mock_httpx_request.return_value = httpx.Response(200, json={
+        "results": []
+    })
+    
+    client = GeocodioClient("test-api-key")
+    client.geocode(["Address 1", "Address 2"])
+    
+    # Verify headers in batch request
+    mock_httpx_request.assert_called_once()
+    call_args = mock_httpx_request.call_args
+    headers = call_args.kwargs.get('headers', {})
+    
+    assert headers['User-Agent'] == f"geocodio-library-python/{__version__}"
+
+
+def test_user_agent_header_in_reverse_geocode(mocker):
+    """Test that the User-Agent header is included in reverse geocoding requests."""
+    from geocodio import __version__
+    
+    # Mock the httpx.Client.request method
+    mock_httpx_request = mocker.patch('httpx.Client.request')
+    mock_httpx_request.return_value = httpx.Response(200, json={
+        "results": [{
+            "address_components": {
+                "number": "1109",
+                "street": "N Highland St",
+                "city": "Arlington",
+                "state": "VA"
+            },
+            "formatted_address": "1109 N Highland St, Arlington, VA",
+            "location": {"lat": 38.886665, "lng": -77.094733},
+            "accuracy": 1.0,
+            "accuracy_type": "rooftop",
+            "source": "Virginia GIS Clearinghouse"
+        }]
+    })
+    
+    client = GeocodioClient("test-api-key")
+    client.reverse("38.886665,-77.094733")
+    
+    # Verify headers in reverse geocode request
+    mock_httpx_request.assert_called_once()
+    call_args = mock_httpx_request.call_args
+    headers = call_args.kwargs.get('headers', {})
+    
+    assert headers['User-Agent'] == f"geocodio-library-python/{__version__}"
+
+
+def test_user_agent_header_in_list_api(mocker):
+    """Test that the User-Agent header is included in List API requests."""
+    from geocodio import __version__
+    
+    # Mock the httpx.Client.request method
+    mock_httpx_request = mocker.patch('httpx.Client.request')
+    mock_httpx_request.return_value = httpx.Response(200, json={
+        "data": [],
+        "current_page": 1,
+        "from": 0,
+        "to": 0,
+        "path": "",
+        "per_page": 10
+    })
+    
+    client = GeocodioClient("test-api-key")
+    client.get_lists()
+    
+    # Verify headers in list API request
+    mock_httpx_request.assert_called_once()
+    call_args = mock_httpx_request.call_args
+    headers = call_args.kwargs.get('headers', {})
+    
+    assert headers['User-Agent'] == f"geocodio-library-python/{__version__}"
