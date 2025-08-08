@@ -16,7 +16,7 @@ Installation
 
 Install via pip:
 
-    pip install geocodio
+    pip install geocodio-library-python
 
 Development Installation
 -----------------------

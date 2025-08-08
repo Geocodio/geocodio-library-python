@@ -53,8 +53,16 @@ jobs:
       run: |
         uv run python -m build
 
-    - name: Publish to TestPyPI
-      if: github.event.inputs.publish_to == 'testpypi' || github.event_name == 'release'
+    - name: Publish to PyPI (on release)
+      if: github.event_name == 'release'
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        uv run twine upload --verbose dist/*
+    
+    - name: Publish to TestPyPI (manual)
+      if: github.event.inputs.publish_to == 'testpypi'
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
@@ -62,7 +70,7 @@ jobs:
       run: |
         uv run twine upload --verbose dist/*
 
-    - name: Publish to PyPI
+    - name: Publish to PyPI (manual)
       if: github.event.inputs.publish_to == 'pypi'
       env:
         TWINE_USERNAME: __token__
