@@ -283,7 +283,7 @@ class FFIECData(ApiModelMixin):
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(frozen=True)
 class GeocodioFields:
     """
     Container for optional 'fields' returned by the Geocodio API.
