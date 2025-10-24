@@ -443,20 +443,17 @@ class Geocodio:
                 for district in fields_data["school"]
             ]
 
-        census2010 = (
-            CensusData.from_api(fields_data["census2010"])
-            if "census2010" in fields_data else None
-        )
+        # Dynamically parse all census fields (e.g., census2010, census2020, census2024, etc.)
+        # This supports any census year returned by the API
+        from dataclasses import fields as dataclass_fields
+        valid_field_names = {f.name for f in dataclass_fields(GeocodioFields)}
 
-        census2020 = (
-            CensusData.from_api(fields_data["census2020"])
-            if "census2020" in fields_data else None
-        )
-
-        census2023 = (
-            CensusData.from_api(fields_data["census2023"])
-            if "census2023" in fields_data else None
-        )
+        census_fields = {}
+        for key in fields_data:
+            if key.startswith("census") and key[6:].isdigit():  # e.g., "census2024"
+                # Only include if it's a defined field in GeocodioFields
+                if key in valid_field_names:
+                    census_fields[key] = CensusData.from_api(fields_data[key])
 
         acs = (
             ACSSurveyData.from_api(fields_data["acs"])
@@ -515,9 +512,6 @@ class Geocodio:
             state_legislative_districts=state_legislative_districts,
             state_legislative_districts_next=state_legislative_districts_next,
             school_districts=school_districts,
-            census2010=census2010,
-            census2020=census2020,
-            census2023=census2023,
             acs=acs,
             demographics=demographics,
             economics=economics,
@@ -528,6 +522,7 @@ class Geocodio:
             provriding=provriding,
             provriding_next=provriding_next,
             statcan=statcan,
+            **census_fields,  # Dynamically include all census year fields
         )
 
     # @TODO add a "keep_trying" parameter to download() to keep trying until the list is processed.

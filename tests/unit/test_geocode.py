@@ -499,3 +499,101 @@ def test_geocode_batch_with_fields(client, httpx_mock):
     assert resp.results[1].fields.timezone.name == "America/Denver"
     assert resp.results[1].fields.timezone.utc_offset == -7
     assert resp.results[1].fields.congressional_districts[0].district_number == 1
+
+
+def test_geocode_with_census_fields(client, httpx_mock):
+    """Test geocoding with census field appends including all census years."""
+    # Arrange: stub the API call with multiple census years
+    def response_callback(request):
+        assert request.method == "GET"
+        assert request.url.params["fields"] == "census2010,census2020,census2023,census2024"
+        return httpx.Response(200, json={
+            "results": [{
+                "address_components": {
+                    "number": "1640",
+                    "street": "Main",
+                    "suffix": "St",
+                    "city": "Sheldon",
+                    "state": "VT",
+                    "zip": "05483",
+                    "country": "US"
+                },
+                "formatted_address": "1640 Main St, Sheldon, VT 05483",
+                "location": {"lat": 44.895469, "lng": -72.953264},
+                "accuracy": 1,
+                "accuracy_type": "rooftop",
+                "source": "Vermont",
+                "fields": {
+                    "census2010": {
+                        "tract": "960100",
+                        "block": "2001",
+                        "blockgroup": "2",
+                        "county_fips": "50011",
+                        "state_fips": "50"
+                    },
+                    "census2020": {
+                        "tract": "960100",
+                        "block": "2002",
+                        "blockgroup": "2",
+                        "county_fips": "50011",
+                        "state_fips": "50"
+                    },
+                    "census2023": {
+                        "tract": "960100",
+                        "block": "2003",
+                        "blockgroup": "2",
+                        "county_fips": "50011",
+                        "state_fips": "50"
+                    },
+                    "census2024": {
+                        "tract": "960100",
+                        "block": "2004",
+                        "blockgroup": "2",
+                        "county_fips": "50011",
+                        "state_fips": "50"
+                    }
+                }
+            }]
+        })
+
+    httpx_mock.add_callback(
+        callback=response_callback,
+        url=httpx.URL("https://api.test/v1.9/geocode", params={
+            "street": "1640 Main St",
+            "city": "Sheldon",
+            "state": "VT",
+            "postal_code": "05483",
+            "fields": "census2010,census2020,census2023,census2024"
+        }),
+        match_headers={"Authorization": "Bearer TEST_KEY"},
+    )
+
+    # Act
+    resp = client.geocode(
+        {"city": "Sheldon", "state": "VT", "street": "1640 Main St", "postal_code": "05483"},
+        fields=["census2010", "census2020", "census2023", "census2024"],
+    )
+
+    # Assert
+    assert len(resp.results) == 1
+    result = resp.results[0]
+    assert result.formatted_address == "1640 Main St, Sheldon, VT 05483"
+
+    # Check that all census fields are present and parsed correctly
+    assert result.fields.census2010 is not None
+    assert result.fields.census2010.tract == "960100"
+    assert result.fields.census2010.block == "2001"
+    assert result.fields.census2010.county_fips == "50011"
+
+    assert result.fields.census2020 is not None
+    assert result.fields.census2020.tract == "960100"
+    assert result.fields.census2020.block == "2002"
+
+    assert result.fields.census2023 is not None
+    assert result.fields.census2023.tract == "960100"
+    assert result.fields.census2023.block == "2003"
+
+    # This will fail until we fix the parsing logic
+    assert result.fields.census2024 is not None
+    assert result.fields.census2024.tract == "960100"
+    assert result.fields.census2024.block == "2004"
