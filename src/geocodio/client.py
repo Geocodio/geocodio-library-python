@@ -18,11 +18,28 @@ logger = logging.getLogger("geocodio")
 
 # flake8: noqa: F401
 from geocodio.models import (
-    GeocodingResponse, GeocodingResult, AddressComponents,
-    Location, GeocodioFields, Timezone, CongressionalDistrict,
-    CensusData, ACSSurveyData, StateLegislativeDistrict, SchoolDistrict,
-    Demographics, Economics, Families, Housing, Social,
-    FederalRiding, ProvincialRiding, StatisticsCanadaData, ListResponse, PaginatedResponse
+    GeocodingResponse,
+    GeocodingResult,
+    AddressComponents,
+    Location,
+    GeocodioFields,
+    Timezone,
+    CongressionalDistrict,
+    CensusData,
+    StateLegislativeDistrict,
+    SchoolDistrict,
+    Demographics,
+    Economics,
+    Families,
+    Housing,
+    Social,
+    FederalRiding,
+    ProvincialRiding,
+    StatisticsCanadaData,
+    ListResponse,
+    PaginatedResponse,
+    FFIECData,
+    ZIP4Data,
 )
 from geocodio.exceptions import InvalidRequestError, AuthenticationError, GeocodioServerError, BadRequestError
 
@@ -402,6 +419,33 @@ class Geocodio:
             http_response=response,
         )
 
+
+    @staticmethod
+    def _parse_acs_metric(metric: str, acs_data: dict):
+        if metric == "demographics":
+            return Demographics.from_api(acs_data)
+        elif metric == "economics":
+            return Economics.from_api(acs_data)
+        elif metric == "families":
+            return Families.from_api(acs_data)
+        elif metric == "housing":
+            return Housing.from_api(acs_data)
+        elif metric == "social":
+            return Social.from_api(acs_data)
+        else:
+            return ValueError(f"Unknown ACS metric: {metric}")
+
+
+    @property
+    def _valid_field_names(self) -> set[str]:
+        from dataclasses import fields as dataclass_fields
+        return {f.name for f in dataclass_fields(GeocodioFields)}
+
+
+    def _filter_dict_for_valid_fields(self, data: dict) -> dict:
+        return {k: v for k, v in data.items() if k in self._valid_field_names}
+
+
     def _parse_fields(self, fields_data: dict | None) -> GeocodioFields | None:
         if not fields_data:
             return None
@@ -443,46 +487,24 @@ class Geocodio:
                 for district in fields_data["school"]
             ]
 
-        # Dynamically parse all census fields (e.g., census2010, census2020, census2024, etc.)
-        # This supports any census year returned by the API
-        from dataclasses import fields as dataclass_fields
-        valid_field_names = {f.name for f in dataclass_fields(GeocodioFields)}
+        census_fields = self._filter_dict_for_valid_fields({
+            f"census{yr}": CensusData.from_api(census_data)
+            for yr, census_data in fields_data.get("census", dict()).items()
+        })
 
-        census_fields = {}
-        for key in fields_data:
-            if key.startswith("census") and key[6:].isdigit():  # e.g., "census2024"
-                # Only include if it's a defined field in GeocodioFields
-                if key in valid_field_names:
-                    census_fields[key] = CensusData.from_api(fields_data[key])
+        acs_fields = self._filter_dict_for_valid_fields({
+            metric: self._parse_acs_metric(metric, acs_data)
+            for metric, acs_data in fields_data.get("acs", dict()).items()
+        })
 
-        acs = (
-            ACSSurveyData.from_api(fields_data["acs"])
-            if "acs" in fields_data else None
+        ffiec = (
+            FFIECData.from_api(fields_data["ffiec"])
+            if "ffiec" in fields_data else None
         )
 
-        demographics = (
-            Demographics.from_api(fields_data["acs-demographics"])
-            if "acs-demographics" in fields_data else None
-        )
-
-        economics = (
-            Economics.from_api(fields_data["acs-economics"])
-            if "acs-economics" in fields_data else None
-        )
-
-        families = (
-            Families.from_api(fields_data["acs-families"])
-            if "acs-families" in fields_data else None
-        )
-
-        housing = (
-            Housing.from_api(fields_data["acs-housing"])
-            if "acs-housing" in fields_data else None
-        )
-
-        social = (
-            Social.from_api(fields_data["acs-social"])
-            if "acs-social" in fields_data else None
+        zip4 = (
+            ZIP4Data.from_api(fields_data["zip4"])
+            if "zip4" in fields_data else None
         )
 
         # Canadian fields
@@ -512,17 +534,26 @@ class Geocodio:
             state_legislative_districts=state_legislative_districts,
             state_legislative_districts_next=state_legislative_districts_next,
             school_districts=school_districts,
-            acs=acs,
-            demographics=demographics,
-            economics=economics,
-            families=families,
-            housing=housing,
-            social=social,
             riding=riding,
             provriding=provriding,
             provriding_next=provriding_next,
             statcan=statcan,
-            **census_fields,  # Dynamically include all census year fields
+            ffiec=ffiec,
+            zip4=zip4,
+            extras={
+                k: v for k, v in
+                fields_data.items() if k not in {
+                    # add other keys here as we support them natively
+                    "timezone",
+                    "congressional_districts",
+                    "ffiec",
+                    "census",
+                    "acs",
+                    "zip4",
+                }
+            },
+            **census_fields,
+            **acs_fields,
         )
 
     # @TODO add a "keep_trying" parameter to download() to keep trying until the list is processed.
