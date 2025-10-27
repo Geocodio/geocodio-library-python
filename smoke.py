@@ -10,7 +10,7 @@ from dataclasses import asdict
 load_dotenv()
 
 # Initialize the client with your API key
-client = Geocodio(os.getenv("GEOCODIO_API_KEY"))
+client = Geocodio(os.getenv("GEOCODIO_API_KEY"), hostname=os.getenv("GEOCODIO_HOST"))
 
 # Single forward geocode
 print("\nSingle forward geocode:")
