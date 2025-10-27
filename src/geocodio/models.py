@@ -108,13 +108,19 @@ class CensusData(ApiModelMixin):
     Census data for a location.
     """
 
-    block: Optional[str] = None
-    blockgroup: Optional[str] = None
-    tract: Optional[str] = None
+    census_year: Optional[int] = None
+    block_code: Optional[str] = None
+    block_group: Optional[str] = None
+    tract_code: Optional[str] = None
+    full_fips: Optional[str] = None
     county_fips: Optional[str] = None
     state_fips: Optional[str] = None
-    msa_code: Optional[str] = None  # Metropolitan Statistical Area
-    csa_code: Optional[str] = None  # Combined Statistical Area
+    place: Optional[dict] = None
+    metro_micro_statistical_area: Optional[dict] = None
+    combined_statistical_area: Optional[dict] = None
+    metropolitan_division: Optional[dict] = None
+    county_subdivision: Optional[dict] = None
+    source: Optional[str] = None
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)
 
 
@@ -225,9 +231,18 @@ class Social(ApiModelMixin):
 class ZIP4Data(ApiModelMixin):
     """USPS ZIP+4 code and delivery information."""
 
-    zip4: str
-    delivery_point: str
-    carrier_route: str
+    record_type: Optional[Dict[str, Any]]
+    residential: Optional[bool]
+    carrier_route: Optional[Dict[str, Any]]
+    plus4: Optional[list]
+    zip9: Optional[list]
+    facility_code: Optional[Dict[str, Any]]
+    city_delivery: Optional[bool]
+    valid_delivery_area: Optional[bool]
+    exact_match: Optional[bool]
+    building_or_firm_name: Optional[str]
+    government_building: Optional[bool]
+
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)
 
 
@@ -280,6 +295,28 @@ class FFIECData(ApiModelMixin):
     """FFIEC CRA/HMDA Data (Beta)."""
 
     # Add FFIEC specific fields as they become available
+    collection_year: Optional[int]
+    msa_md_code: Optional[str]
+    fips_state_code: Optional[str]
+    fips_county_code: Optional[str]
+    census_tract: Optional[str]
+    principal_city: Optional[bool]
+    small_county: Optional[Dict[str, Any]]
+    split_tract: Optional[Dict[str, Any]]
+    demographic_data: Optional[Dict[str, Any]]
+    urban_rural_flag: Optional[Dict[str, Any]]
+    msa_md_median_family_income: Optional[int]
+    msa_md_median_household_income: Optional[int]
+    tract_median_family_income_percentage: Optional[float]
+    ffiec_estimated_msa_md_median_family_income: Optional[int]
+    income_indicator: Optional[str]
+    cra_poverty_criteria: Optional[bool]
+    cra_unemployment_criteria: Optional[bool]
+    cra_distressed_criteria: Optional[bool]
+    cra_remote_rural_low_density_criteria: Optional[bool]
+    previous_year_cra_distressed_criteria: Optional[bool]
+    previous_year_cra_underserved_criterion: Optional[bool]
+    meets_current_previous_criteria: Optional[bool]
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)
 
 
@@ -331,6 +368,9 @@ class GeocodioFields:
     provriding: Optional[ProvincialRiding] = None
     provriding_next: Optional[ProvincialRiding] = None
     statcan: Optional[StatisticsCanadaData] = None
+
+    # catch‑all for any future fields
+    extras: Dict[str, Any] = field(default_factory=dict, repr=False)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
