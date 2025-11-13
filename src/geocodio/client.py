@@ -438,10 +438,20 @@ class Geocodio:
 
         school_districts = None
         if "school" in fields_data:
-            school_districts = [
-                SchoolDistrict.from_api(district)
-                for district in fields_data["school"]
-            ]
+            school_data = fields_data["school"]
+            if isinstance(school_data, dict):
+                school_districts = [
+                    SchoolDistrict.from_api(district)
+                    for district in school_data.values()
+                ]
+        elif "school_districts" in fields_data:
+            school_data = fields_data["school_districts"]
+            if isinstance(school_data, dict):
+                school_districts = [
+                    SchoolDistrict.from_api(district)
+                    for district in school_data.values()
+                ]
+            
 
         # Dynamically parse all census fields (e.g., census2010, census2020, census2024, etc.)
         # This supports any census year returned by the API

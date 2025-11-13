@@ -252,8 +252,14 @@ def test_integration_with_school_districts(client):
             assert isinstance(district.district_number, str)
         if district.lea_id:
             assert isinstance(district.lea_id, str)
+        if district.lea_code:  #added to match actual api response
+            assert isinstance(district.lea_code, str)
         if district.nces_id:
             assert isinstance(district.nces_id, str)
+        if district.grade_low: #added to match actual api response
+            assert isinstance(district.grade_low, str)
+        if district.grade_high: #added to match actual api response
+            assert isinstance(district.grade_high, str)
 
 
 def test_integration_with_census2023(client):
