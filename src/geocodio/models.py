@@ -140,7 +140,10 @@ class SchoolDistrict(ApiModelMixin):
     name: str
     district_number: Optional[str] = None
     lea_id: Optional[str] = None  # Local Education Agency ID
+    lea_code: Optional[str] = None  # Local Education Agency Code
     nces_id: Optional[str] = None  # National Center for Education Statistics ID
+    grade_low: Optional[str] = None  # Lowest grade served
+    grade_high: Optional[str] = None  # Highest grade served
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)
 
 
