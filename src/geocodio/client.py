@@ -22,7 +22,8 @@ from geocodio.models import (
     Location, GeocodioFields, Timezone, CongressionalDistrict,
     CensusData, ACSSurveyData, StateLegislativeDistrict, SchoolDistrict,
     Demographics, Economics, Families, Housing, Social,
-    FederalRiding, ProvincialRiding, StatisticsCanadaData, ListResponse, PaginatedResponse
+    FederalRiding, ProvincialRiding, StatisticsCanadaData, ListResponse, PaginatedResponse,
+    ZIP4Data, FFIECData
 )
 from geocodio.exceptions import InvalidRequestError, AuthenticationError, GeocodioServerError, BadRequestError
 
@@ -402,7 +403,15 @@ class Geocodio:
             http_response=response,
         )
 
+
     def _parse_fields(self, fields_data: dict | None) -> GeocodioFields | None:
+        """
+        Parse fields data from API response.
+
+        Supports both nested and flat field structures for backward compatibility:
+        - Nested: census: {2010: {...}, 2020: {...}}, acs: {demographics: {...}}
+        - Flat: census2010: {...}, acs-demographics: {...}
+        """
         if not fields_data:
             return None
 
@@ -436,30 +445,84 @@ class Geocodio:
                 for district in fields_data["stateleg-next"]
             ]
 
+        # School districts - support both nested dict and flat list formats
         school_districts = None
-        if "school" in fields_data:
-            school_districts = [
-                SchoolDistrict.from_api(district)
-                for district in fields_data["school"]
-            ]
 
-        # Dynamically parse all census fields (e.g., census2010, census2020, census2024, etc.)
-        # This supports any census year returned by the API
-        from dataclasses import fields as dataclass_fields
-        valid_field_names = {f.name for f in dataclass_fields(GeocodioFields)}
+        # Check for nested dict format: school_districts: {elementary: {...}, secondary: {...}}
+        if "school_districts" in fields_data:
+            school_data = fields_data["school_districts"]
+            if isinstance(school_data, dict):
+                # Nested dict format - iterate over dict values
+                school_districts = [
+                    SchoolDistrict.from_api(district)
+                    for district in school_data.values()
+                ]
+            elif isinstance(school_data, list):
+                # List format (backward compatibility)
+                school_districts = [
+                    SchoolDistrict.from_api(district)
+                    for district in school_data
+                ]
 
-        census_fields = {}
+        # Also check for flat list format: school: [...]
+        elif "school" in fields_data:
+            school_data = fields_data["school"]
+            if isinstance(school_data, dict):
+                # Dict format
+                school_districts = [
+                    SchoolDistrict.from_api(district)
+                    for district in school_data.values()
+                ]
+            elif isinstance(school_data, list):
+                # List format
+                school_districts = [
+                    SchoolDistrict.from_api(district)
+                    for district in school_data
+                ]
+
+        # Census fields - support both nested and flat structures
+        # Store in dict for dynamic access (fields.census2020, fields.census2031, etc.)
+        census_data_dict = {}
+
+        def parse_census_data(data: dict) -> dict:
+            """
+            Parse census data and map new field names to old field names for backward compatibility.
+
+            API used to send: block, blockgroup, tract
+            API now sends: block_code, block_group, tract_code
+
+            We populate both so existing code using old names continues to work.
+            """
+            parsed = dict(data)  # Copy original data
+
+            # Map new field names to old field names if old names not present
+            if "block_code" in data and "block" not in data:
+                parsed["block"] = data["block_code"]
+            if "block_group" in data and "blockgroup" not in data:
+                parsed["blockgroup"] = data["block_group"]
+            if "tract_code" in data and "tract" not in data:
+                parsed["tract"] = data["tract_code"]
+
+            return parsed
+
+        # Check for nested census structure: census: {2010: {...}, 2020: {...}}
+        if "census" in fields_data and isinstance(fields_data["census"], dict):
+            for year, census_data in fields_data["census"].items():
+                field_name = f"census{year}"
+                # Map new field names to old for backward compatibility
+                parsed_data = parse_census_data(census_data)
+                census_data_dict[field_name] = CensusData.from_api(parsed_data)
+
+        # Also check for flat structure: census2010: {...}, census2020: {...}
+        # This ensures backward compatibility if API sends both formats
         for key in fields_data:
-            if key.startswith("census") and key[6:].isdigit():  # e.g., "census2024"
-                # Only include if it's a defined field in GeocodioFields
-                if key in valid_field_names:
-                    census_fields[key] = CensusData.from_api(fields_data[key])
+            if key.startswith("census") and key[6:].isdigit() and key not in census_data_dict:
+                # Map new field names to old for backward compatibility
+                parsed_data = parse_census_data(fields_data[key])
+                census_data_dict[key] = CensusData.from_api(parsed_data)
 
-        acs = (
-            ACSSurveyData.from_api(fields_data["acs"])
-            if "acs" in fields_data else None
-        )
-
+        # Parse flat ACS structure for backward compatibility
+        # These will be merged with nested structure later if both exist
         demographics = (
             Demographics.from_api(fields_data["acs-demographics"])
             if "acs-demographics" in fields_data else None
@@ -485,6 +548,58 @@ class Geocodio:
             if "acs-social" in fields_data else None
         )
 
+        # ACS fields - support both nested and flat structures
+        acs_fields = {}
+        acs = None
+
+        # Check for ACS field
+        if "acs" in fields_data and isinstance(fields_data["acs"], dict):
+            acs_data = fields_data["acs"]
+
+            # Check if this is nested ACS structure (contains metric keys)
+            # or simple ACS structure (contains population, households, etc.)
+            acs_metric_keys = {"demographics", "economics", "families", "housing", "social"}
+
+            if any(key in acs_data for key in acs_metric_keys):
+                # Nested structure: acs: {demographics: {...}, economics: {...}}
+                acs_metric_map = {
+                    "demographics": Demographics,
+                    "economics": Economics,
+                    "families": Families,
+                    "housing": Housing,
+                    "social": Social,
+                }
+
+                for metric, model_class in acs_metric_map.items():
+                    if metric in acs_data:
+                        acs_fields[metric] = model_class.from_api(acs_data[metric])
+            else:
+                # Simple structure: acs: {population: ..., households: ..., median_income: ...}
+                acs = ACSSurveyData.from_api(acs_data)
+
+        # Also preserve flat structure parsing for backward compatibility
+        if demographics and "demographics" not in acs_fields:
+            acs_fields["demographics"] = demographics
+        if economics and "economics" not in acs_fields:
+            acs_fields["economics"] = economics
+        if families and "families" not in acs_fields:
+            acs_fields["families"] = families
+        if housing and "housing" not in acs_fields:
+            acs_fields["housing"] = housing
+        if social and "social" not in acs_fields:
+            acs_fields["social"] = social
+
+        # ZIP4 and FFIEC data
+        zip4 = (
+            ZIP4Data.from_api(fields_data["zip4"])
+            if "zip4" in fields_data else None
+        )
+
+        ffiec = (
+            FFIECData.from_api(fields_data["ffiec"])
+            if "ffiec" in fields_data else None
+        )
+
         # Canadian fields
         riding = (
             FederalRiding.from_api(fields_data["riding"])
@@ -506,6 +621,29 @@ class Geocodio:
             if "statcan" in fields_data else None
         )
 
+        # Collect all known field keys that were parsed
+        parsed_keys = {
+            "timezone", "cd", "congressional_districts",
+            "stateleg", "stateleg-next",
+            "school", "school_districts",  # Both school formats
+            "census",  # Nested census structure
+            "acs",  # Nested ACS structure
+            "acs-demographics", "acs-economics", "acs-families", "acs-housing", "acs-social",
+            "zip4", "ffiec",
+            "riding", "provriding", "provriding-next",
+            "statcan",
+        }
+        # Add flat census keys that were parsed (census2000, census2020, etc.)
+        # All census years are now stored in _census dict for dynamic access
+        parsed_keys.update(census_data_dict.keys())
+
+        # Extras - capture any fields not explicitly handled
+        # This is now mainly for truly unknown API fields (not census years)
+        extras = {
+            k: v for k, v in fields_data.items()
+            if k not in parsed_keys
+        }
+
         return GeocodioFields(
             timezone=timezone,
             congressional_districts=congressional_districts,
@@ -513,16 +651,15 @@ class Geocodio:
             state_legislative_districts_next=state_legislative_districts_next,
             school_districts=school_districts,
             acs=acs,
-            demographics=demographics,
-            economics=economics,
-            families=families,
-            housing=housing,
-            social=social,
+            zip4=zip4,
+            ffiec=ffiec,
             riding=riding,
             provriding=provriding,
             provriding_next=provriding_next,
             statcan=statcan,
-            **census_fields,  # Dynamically include all census year fields
+            extras=extras,
+            _census=census_data_dict,  # All census years stored here
+            **acs_fields,  # Dynamically include all ACS metric fields
         )
 
     # @TODO add a "keep_trying" parameter to download() to keep trying until the list is processed.

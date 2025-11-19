@@ -460,9 +460,11 @@ def test_integration_with_zip4(client):
 
     # Check ZIP+4 data
     if fields.zip4:
-        assert fields.zip4.zip4 is not None
-        assert fields.zip4.delivery_point is not None
+        assert fields.zip4.plus4 is not None
+        assert fields.zip4.zip9 is not None
         assert fields.zip4.carrier_route is not None
+        assert fields.zip4.city_delivery is not None
+        assert fields.zip4.valid_delivery_area is not None
 
 
 def test_integration_with_ffiec(client):
