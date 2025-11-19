@@ -106,15 +106,33 @@ class StateLegislativeDistrict(ApiModelMixin):
 class CensusData(ApiModelMixin):
     """
     Census data for a location.
+
+    Supports both legacy field names (block, blockgroup, tract) and
+    current API field names (block_code, block_group, tract_code).
     """
 
+    # Current API field names
+    census_year: Optional[int] = None
+    block_code: Optional[str] = None
+    block_group: Optional[str] = None
+    tract_code: Optional[str] = None
+    full_fips: Optional[str] = None
+    county_fips: Optional[str] = None
+    state_fips: Optional[str] = None
+    place: Optional[Dict[str, Any]] = None
+    metro_micro_statistical_area: Optional[Dict[str, Any]] = None
+    combined_statistical_area: Optional[Dict[str, Any]] = None
+    metropolitan_division: Optional[Dict[str, Any]] = None
+    county_subdivision: Optional[Dict[str, Any]] = None
+    source: Optional[str] = None
+
+    # Legacy field names (for backward compatibility)
     block: Optional[str] = None
     blockgroup: Optional[str] = None
     tract: Optional[str] = None
-    county_fips: Optional[str] = None
-    state_fips: Optional[str] = None
     msa_code: Optional[str] = None  # Metropolitan Statistical Area
     csa_code: Optional[str] = None  # Combined Statistical Area
+
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)
 
 
@@ -135,12 +153,17 @@ class ACSSurveyData(ApiModelMixin):
 class SchoolDistrict(ApiModelMixin):
     """
     School district information.
+
+    Supports both legacy and current API field names for backward compatibility.
     """
 
     name: str
     district_number: Optional[str] = None
-    lea_id: Optional[str] = None  # Local Education Agency ID
+    lea_id: Optional[str] = None  # Local Education Agency ID (legacy)
+    lea_code: Optional[str] = None  # Local Education Agency Code (current)
     nces_id: Optional[str] = None  # National Center for Education Statistics ID
+    grade_low: Optional[str] = None  # Lowest grade served
+    grade_high: Optional[str] = None  # Highest grade served
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)
 
 
@@ -225,9 +248,17 @@ class Social(ApiModelMixin):
 class ZIP4Data(ApiModelMixin):
     """USPS ZIP+4 code and delivery information."""
 
-    zip4: str
-    delivery_point: str
-    carrier_route: str
+    record_type: Optional[Dict[str, Any]] = None
+    residential: Optional[bool] = None
+    carrier_route: Optional[Dict[str, Any]] = None
+    plus4: Optional[List[str]] = None
+    zip9: Optional[List[str]] = None
+    facility_code: Optional[Dict[str, Any]] = None
+    city_delivery: Optional[bool] = None
+    valid_delivery_area: Optional[bool] = None
+    exact_match: Optional[bool] = None
+    building_or_firm_name: Optional[str] = None
+    government_building: Optional[bool] = None
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)
 
 
@@ -279,7 +310,28 @@ class StatisticsCanadaData(ApiModelMixin):
 class FFIECData(ApiModelMixin):
     """FFIEC CRA/HMDA Data (Beta)."""
 
-    # Add FFIEC specific fields as they become available
+    collection_year: Optional[int] = None
+    msa_md_code: Optional[str] = None
+    fips_state_code: Optional[str] = None
+    fips_county_code: Optional[str] = None
+    census_tract: Optional[str] = None
+    principal_city: Optional[bool] = None
+    small_county: Optional[Dict[str, Any]] = None
+    split_tract: Optional[Dict[str, Any]] = None
+    demographic_data: Optional[Dict[str, Any]] = None
+    urban_rural_flag: Optional[Dict[str, Any]] = None
+    msa_md_median_family_income: Optional[int] = None
+    msa_md_median_household_income: Optional[int] = None
+    tract_median_family_income_percentage: Optional[float] = None
+    ffiec_estimated_msa_md_median_family_income: Optional[int] = None
+    income_indicator: Optional[str] = None
+    cra_poverty_criteria: Optional[bool] = None
+    cra_unemployment_criteria: Optional[bool] = None
+    cra_distressed_criteria: Optional[bool] = None
+    cra_remote_rural_low_density_criteria: Optional[bool] = None
+    previous_year_cra_distressed_criteria: Optional[bool] = None
+    previous_year_cra_underserved_criterion: Optional[bool] = None
+    meets_current_previous_criteria: Optional[bool] = None
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)
 
 
@@ -287,7 +339,11 @@ class FFIECData(ApiModelMixin):
 class GeocodioFields:
     """
     Container for optional 'fields' returned by the Geocodio API.
-    Add new attributes as additional data‑append endpoints become useful.
+
+    Census years are handled dynamically - access any year with fields.census2020,
+    fields.census2025, etc. without needing to predefine every year.
+
+    Note: slots removed to support dynamic field passing via **kwargs
     """
 
     timezone: Optional[Timezone] = None
@@ -295,24 +351,6 @@ class GeocodioFields:
     state_legislative_districts: Optional[List[StateLegislativeDistrict]] = None
     state_legislative_districts_next: Optional[List[StateLegislativeDistrict]] = None
     school_districts: Optional[List[SchoolDistrict]] = None
-
-    # Census data for all available years
-    census2000: Optional[CensusData] = None
-    census2010: Optional[CensusData] = None
-    census2011: Optional[CensusData] = None
-    census2012: Optional[CensusData] = None
-    census2013: Optional[CensusData] = None
-    census2014: Optional[CensusData] = None
-    census2015: Optional[CensusData] = None
-    census2016: Optional[CensusData] = None
-    census2017: Optional[CensusData] = None
-    census2018: Optional[CensusData] = None
-    census2019: Optional[CensusData] = None
-    census2020: Optional[CensusData] = None
-    census2021: Optional[CensusData] = None
-    census2022: Optional[CensusData] = None
-    census2023: Optional[CensusData] = None
-    census2024: Optional[CensusData] = None
 
     # ACS data
     acs: Optional[ACSSurveyData] = None
@@ -331,6 +369,30 @@ class GeocodioFields:
     provriding: Optional[ProvincialRiding] = None
     provriding_next: Optional[ProvincialRiding] = None
     statcan: Optional[StatisticsCanadaData] = None
+
+    # Catch-all for any future or unknown fields from the API
+    extras: Dict[str, Any] = field(default_factory=dict, repr=False)
+
+    # Internal storage for census data (all years dynamically accessible)
+    _census: Dict[str, CensusData] = field(default_factory=dict, repr=False)
+
+    def __getattr__(self, name: str):
+        """
+        Dynamic attribute access for census years (census2020, census2025, etc.).
+
+        This allows accessing census data for any year without hardcoding fields:
+        - fields.census2020 → CensusData for 2020
+        - fields.census2031 → CensusData for 2031 (future-proof)
+        """
+        # Handle censusXXXX attributes dynamically
+        if name.startswith("census") and len(name) > 6 and name[6:].isdigit():
+            return self._census.get(name)
+
+        # Fall back to extras for any other unknown attributes
+        if name in self.extras:
+            return self.extras[name]
+
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
