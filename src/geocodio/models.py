@@ -6,7 +6,7 @@ Dataclass representations of Geocodio API responses and related objects.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, List, Optional, Dict, TypeVar, Type
+from typing import Any, List, Optional, Dict, Tuple, TypeVar, Type
 
 import httpx
 
@@ -393,6 +393,261 @@ class GeocodioFields:
             return self.extras[name]
 
         raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Distance API models
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+@dataclass(slots=True, frozen=True)
+class DistanceDestination(ApiModelMixin):
+    """
+    A destination with calculated distance from the origin.
+
+    Attributes:
+        query: The original query string for this destination.
+        location: The [lat, lng] coordinates as a tuple.
+        distance_miles: Distance from origin in miles.
+        distance_km: Distance from origin in kilometers.
+        id: Optional identifier for this destination.
+        duration_seconds: Travel time in seconds (only when mode='driving').
+        extras: Additional fields from the API response.
+    """
+
+    query: str
+    location: Tuple[float, float]
+    distance_miles: float
+    distance_km: float
+    id: Optional[str] = None
+    duration_seconds: Optional[int] = None
+    extras: Dict[str, Any] = field(default_factory=dict, repr=False)
+
+    @classmethod
+    def from_api(cls, data: Dict[str, Any]) -> "DistanceDestination":
+        """Create from API response data."""
+        location = data.get("location", [0.0, 0.0])
+        if isinstance(location, dict):
+            location = (location.get("lat", 0.0), location.get("lng", 0.0))
+        elif isinstance(location, list):
+            location = tuple(location) if len(location) >= 2 else (0.0, 0.0)
+
+        known_fields = {
+            "query", "location", "distance_miles", "distance_km",
+            "id", "duration_seconds"
+        }
+        extras = {k: v for k, v in data.items() if k not in known_fields}
+
+        return cls(
+            query=data.get("query", ""),
+            location=location,
+            distance_miles=data.get("distance_miles", 0.0),
+            distance_km=data.get("distance_km", 0.0),
+            id=data.get("id"),
+            duration_seconds=data.get("duration_seconds"),
+            extras=extras,
+        )
+
+
+@dataclass(slots=True, frozen=True)
+class DistanceOrigin(ApiModelMixin):
+    """
+    An origin point in distance response.
+
+    Attributes:
+        query: The original query string for this origin.
+        location: The [lat, lng] coordinates as a tuple.
+        id: Optional identifier for this origin.
+        extras: Additional fields from the API response.
+    """
+
+    query: str
+    location: Tuple[float, float]
+    id: Optional[str] = None
+    extras: Dict[str, Any] = field(default_factory=dict, repr=False)
+
+    @classmethod
+    def from_api(cls, data: Dict[str, Any]) -> "DistanceOrigin":
+        """Create from API response data."""
+        location = data.get("location", [0.0, 0.0])
+        if isinstance(location, dict):
+            location = (location.get("lat", 0.0), location.get("lng", 0.0))
+        elif isinstance(location, list):
+            location = tuple(location) if len(location) >= 2 else (0.0, 0.0)
+
+        known_fields = {"query", "location", "id"}
+        extras = {k: v for k, v in data.items() if k not in known_fields}
+
+        return cls(
+            query=data.get("query", ""),
+            location=location,
+            id=data.get("id"),
+            extras=extras,
+        )
+
+
+@dataclass(slots=True, frozen=True)
+class DistanceResponse:
+    """
+    Response from single origin distance calculation (GET /distance).
+
+    Attributes:
+        origin: The origin point with coordinates.
+        mode: The distance calculation mode used ('straightline' or 'driving').
+        destinations: List of destinations with calculated distances.
+    """
+
+    origin: DistanceOrigin
+    mode: str
+    destinations: List[DistanceDestination]
+
+    @classmethod
+    def from_api(cls, data: Dict[str, Any]) -> "DistanceResponse":
+        """Create from API response data."""
+        origin = DistanceOrigin.from_api(data.get("origin", {}))
+        destinations = [
+            DistanceDestination.from_api(dest)
+            for dest in data.get("destinations", [])
+        ]
+        return cls(
+            origin=origin,
+            mode=data.get("mode", ""),
+            destinations=destinations,
+        )
+
+
+@dataclass(slots=True, frozen=True)
+class DistanceMatrixResult:
+    """
+    A single origin result in distance matrix response.
+
+    Attributes:
+        origin: The origin point with coordinates.
+        destinations: List of destinations with calculated distances.
+    """
+
+    origin: DistanceOrigin
+    destinations: List[DistanceDestination]
+
+    @classmethod
+    def from_api(cls, data: Dict[str, Any]) -> "DistanceMatrixResult":
+        """Create from API response data."""
+        origin = DistanceOrigin.from_api(data.get("origin", {}))
+        destinations = [
+            DistanceDestination.from_api(dest)
+            for dest in data.get("destinations", [])
+        ]
+        return cls(origin=origin, destinations=destinations)
+
+
+@dataclass(slots=True, frozen=True)
+class DistanceMatrixResponse:
+    """
+    Response from distance matrix calculation (POST /distance-matrix).
+
+    Attributes:
+        mode: The distance calculation mode used ('straightline' or 'driving').
+        results: List of results, one per origin.
+    """
+
+    mode: str
+    results: List[DistanceMatrixResult]
+
+    @classmethod
+    def from_api(cls, data: Dict[str, Any]) -> "DistanceMatrixResponse":
+        """Create from API response data."""
+        results = [
+            DistanceMatrixResult.from_api(result)
+            for result in data.get("results", [])
+        ]
+        return cls(
+            mode=data.get("mode", ""),
+            results=results,
+        )
+
+
+@dataclass(slots=True, frozen=True)
+class DistanceJobStatus:
+    """
+    Status information for a distance matrix job.
+
+    Attributes:
+        state: Current state (e.g., 'ENQUEUED', 'PROCESSING', 'COMPLETED', 'FAILED').
+        progress: Completion percentage (0-100).
+        message: Optional status message.
+    """
+
+    state: str
+    progress: int = 0
+    message: Optional[str] = None
+
+    @classmethod
+    def from_api(cls, data: Dict[str, Any]) -> "DistanceJobStatus":
+        """Create from API response data."""
+        if isinstance(data, str):
+            return cls(state=data)
+        return cls(
+            state=data.get("state", data.get("status", "")),
+            progress=data.get("progress", 0),
+            message=data.get("message"),
+        )
+
+
+@dataclass(slots=True, frozen=True)
+class DistanceJobResponse:
+    """
+    Response from creating a distance matrix job.
+
+    Attributes:
+        id: The job ID.
+        identifier: Unique string identifier for the job.
+        status: Current status of the job.
+        name: User-provided name for the job.
+        created_at: Timestamp when the job was created.
+        origins_count: Number of origin coordinates.
+        destinations_count: Number of destination coordinates.
+        total_calculations: Total number of distance calculations.
+        download_url: URL to download results (when completed).
+        calculations_completed: Number of completed calculations.
+    """
+
+    id: int
+    identifier: str
+    status: str
+    name: str
+    created_at: str
+    origins_count: int
+    destinations_count: int
+    total_calculations: int
+    download_url: Optional[str] = None
+    calculations_completed: Optional[int] = None
+    progress: Optional[int] = None
+
+    @classmethod
+    def from_api(cls, data: Dict[str, Any]) -> "DistanceJobResponse":
+        """Create from API response data."""
+        # Handle nested "data" key for status responses
+        if "data" in data and isinstance(data["data"], dict):
+            data = data["data"]
+
+        # Status can be a string or dict
+        status = data.get("status", "")
+        if isinstance(status, dict):
+            status = status.get("state", "")
+
+        return cls(
+            id=data.get("id", 0),
+            identifier=data.get("identifier", ""),
+            status=status,
+            name=data.get("name", ""),
+            created_at=data.get("created_at", ""),
+            origins_count=data.get("origins_count", 0),
+            destinations_count=data.get("destinations_count", 0),
+            total_calculations=data.get("total_calculations", 0),
+            download_url=data.get("download_url"),
+            calculations_completed=data.get("calculations_completed"),
+            progress=data.get("progress"),
+        )
 
 
 # ──────────────────────────────────────────────────────────────────────────────

@@ -23,7 +23,21 @@ from geocodio.models import (
     CensusData, ACSSurveyData, StateLegislativeDistrict, SchoolDistrict,
     Demographics, Economics, Families, Housing, Social,
     FederalRiding, ProvincialRiding, StatisticsCanadaData, ListResponse, PaginatedResponse,
-    ZIP4Data, FFIECData
+    ZIP4Data, FFIECData,
+    DistanceResponse, DistanceMatrixResponse, DistanceJobResponse,
+)
+from geocodio.distance import (
+    Coordinate,
+    DISTANCE_MODE_STRAIGHTLINE,
+    DISTANCE_MODE_DRIVING,
+    DISTANCE_MODE_HAVERSINE,
+    DISTANCE_UNITS_MILES,
+    DISTANCE_UNITS_KM,
+    DISTANCE_ORDER_BY_DISTANCE,
+    DISTANCE_ORDER_BY_DURATION,
+    DISTANCE_SORT_ASC,
+    DISTANCE_SORT_DESC,
+    normalize_distance_mode,
 )
 from geocodio.exceptions import InvalidRequestError, AuthenticationError, GeocodioServerError, BadRequestError
 
@@ -57,6 +71,7 @@ class Geocodio:
         single_timeout: Optional[float] = None,
         batch_timeout: Optional[float] = None,
         list_timeout: Optional[float] = None,
+        verify_ssl: bool = True,
     ):
         self.api_key: str = api_key or os.getenv("GEOCODIO_API_KEY", "")
         if not self.api_key:
@@ -67,7 +82,7 @@ class Geocodio:
         self.single_timeout = single_timeout or self.DEFAULT_SINGLE_TIMEOUT
         self.batch_timeout = batch_timeout or self.DEFAULT_BATCH_TIMEOUT
         self.list_timeout = list_timeout or self.LIST_API_TIMEOUT
-        self._http = httpx.Client(base_url=f"https://{self.hostname}")
+        self._http = httpx.Client(base_url=f"https://{self.hostname}", verify=verify_ssl)
 
     # ──────────────────────────────────────────────────────────────────────────
     # Public methods
@@ -80,14 +95,51 @@ class Geocodio:
             fields: Optional[List[str]] = None,
             limit: Optional[int] = None,
             country: Optional[str] = None,
+            # Distance parameters
+            destinations: Optional[List[Union[str, Tuple[float, float], "Coordinate"]]] = None,
+            distance_mode: Optional[str] = None,
+            distance_units: Optional[str] = None,
+            distance_max_results: Optional[int] = None,
+            distance_max_distance: Optional[float] = None,
+            distance_max_duration: Optional[int] = None,
+            distance_min_distance: Optional[float] = None,
+            distance_min_duration: Optional[int] = None,
+            distance_order_by: Optional[str] = None,
+            distance_sort_order: Optional[str] = None,
     ) -> GeocodingResponse:
-        params: Dict[str, Union[str, int]] = {}
+        params: Dict[str, Union[str, int, List[str]]] = {}
         if fields:
             params["fields"] = ",".join(fields)
         if limit:
             params["limit"] = int(limit)
         if country:
             params["country"] = country
+
+        # Add distance parameters if destinations provided
+        if destinations:
+            dest_strs = [
+                self._coordinate_to_string(self._normalize_coordinate(d))
+                for d in destinations
+            ]
+            params["destinations[]"] = dest_strs
+            if distance_mode:
+                params["distance_mode"] = normalize_distance_mode(distance_mode)
+            if distance_units:
+                params["distance_units"] = distance_units
+            if distance_max_results is not None:
+                params["distance_max_results"] = distance_max_results
+            if distance_max_distance is not None:
+                params["distance_max_distance"] = distance_max_distance
+            if distance_max_duration is not None:
+                params["distance_max_duration"] = distance_max_duration
+            if distance_min_distance is not None:
+                params["distance_min_distance"] = distance_min_distance
+            if distance_min_duration is not None:
+                params["distance_min_duration"] = distance_min_duration
+            if distance_order_by:
+                params["distance_order_by"] = distance_order_by
+            if distance_sort_order:
+                params["distance_sort"] = distance_sort_order
 
         endpoint: str
         data: Union[List, Dict] | None
@@ -134,12 +186,49 @@ class Geocodio:
             coordinate: Union[str, Tuple[float, float], List[Union[str, Tuple[float, float]]]],
             fields: Optional[List[str]] = None,
             limit: Optional[int] = None,
+            # Distance parameters
+            destinations: Optional[List[Union[str, Tuple[float, float], "Coordinate"]]] = None,
+            distance_mode: Optional[str] = None,
+            distance_units: Optional[str] = None,
+            distance_max_results: Optional[int] = None,
+            distance_max_distance: Optional[float] = None,
+            distance_max_duration: Optional[int] = None,
+            distance_min_distance: Optional[float] = None,
+            distance_min_duration: Optional[int] = None,
+            distance_order_by: Optional[str] = None,
+            distance_sort_order: Optional[str] = None,
     ) -> GeocodingResponse:
-        params: Dict[str, Union[str, int]] = {}
+        params: Dict[str, Union[str, int, List[str]]] = {}
         if fields:
             params["fields"] = ",".join(fields)
         if limit:
             params["limit"] = int(limit)
+
+        # Add distance parameters if destinations provided
+        if destinations:
+            dest_strs = [
+                self._coordinate_to_string(self._normalize_coordinate(d))
+                for d in destinations
+            ]
+            params["destinations[]"] = dest_strs
+            if distance_mode:
+                params["distance_mode"] = normalize_distance_mode(distance_mode)
+            if distance_units:
+                params["distance_units"] = distance_units
+            if distance_max_results is not None:
+                params["distance_max_results"] = distance_max_results
+            if distance_max_distance is not None:
+                params["distance_max_distance"] = distance_max_distance
+            if distance_max_duration is not None:
+                params["distance_max_duration"] = distance_max_duration
+            if distance_min_distance is not None:
+                params["distance_min_distance"] = distance_min_distance
+            if distance_min_duration is not None:
+                params["distance_min_duration"] = distance_min_duration
+            if distance_order_by:
+                params["distance_order_by"] = distance_order_by
+            if distance_sort_order:
+                params["distance_sort"] = distance_sort_order
 
         endpoint: str
         data: Union[List[str], None]
@@ -713,3 +802,417 @@ class Geocodio:
                     raise GeocodioServerError(f"Failed to save list: {e}")
             else:  # return the bytes content directly
                 return response.content
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # Distance API methods
+    # ──────────────────────────────────────────────────────────────────────────
+
+    def _normalize_coordinate(
+        self,
+        coord: Union[str, Tuple[float, float], Dict, "Coordinate"],
+    ) -> "Coordinate":
+        """Convert various input formats to Coordinate object."""
+        return Coordinate.from_input(coord)
+
+    def _coordinate_to_string(self, coord: "Coordinate") -> str:
+        """Convert Coordinate to string for GET requests: 'lat,lng' or 'lat,lng,id'."""
+        return coord.to_string()
+
+    def _coordinate_to_dict(self, coord: "Coordinate") -> Dict:
+        """Convert Coordinate to dict for POST requests."""
+        return coord.to_dict()
+
+    def distance(
+        self,
+        origin: Union[str, Tuple[float, float], "Coordinate"],
+        destinations: List[Union[str, Tuple[float, float], "Coordinate"]],
+        mode: str = DISTANCE_MODE_STRAIGHTLINE,
+        units: str = DISTANCE_UNITS_MILES,
+        max_results: Optional[int] = None,
+        max_distance: Optional[float] = None,
+        max_duration: Optional[int] = None,
+        min_distance: Optional[float] = None,
+        min_duration: Optional[int] = None,
+        order_by: str = DISTANCE_ORDER_BY_DISTANCE,
+        sort_order: str = DISTANCE_SORT_ASC,
+    ) -> DistanceResponse:
+        """
+        Calculate distance from single origin to multiple destinations.
+
+        Uses GET request with coordinates as query parameters.
+
+        Args:
+            origin: The origin coordinate (string, tuple, or Coordinate).
+            destinations: List of destination coordinates.
+            mode: Distance calculation mode ('straightline' or 'driving').
+            units: Distance units ('miles' or 'kilometers').
+            max_results: Maximum number of results to return.
+            max_distance: Maximum distance filter.
+            max_duration: Maximum duration filter (seconds, driving mode only).
+            min_distance: Minimum distance filter.
+            min_duration: Minimum duration filter (seconds, driving mode only).
+            order_by: Sort results by 'distance' or 'duration'.
+            sort_order: Sort direction ('asc' or 'desc').
+
+        Returns:
+            DistanceResponse with origin and calculated destinations.
+
+        Example:
+            >>> response = client.distance(
+            ...     origin="38.8977,-77.0365,white_house",
+            ...     destinations=["38.9072,-77.0369,capitol", "38.8895,-77.0353,monument"],
+            ...     mode="straightline",
+            ...     units="miles"
+            ... )
+            >>> print(response.destinations[0].distance_miles)
+        """
+        endpoint = f"{self.BASE_PATH}/distance"
+
+        # Normalize and convert origin to string
+        origin_coord = self._normalize_coordinate(origin)
+        origin_str = self._coordinate_to_string(origin_coord)
+
+        # Normalize and convert destinations to strings
+        dest_strs = [
+            self._coordinate_to_string(self._normalize_coordinate(d))
+            for d in destinations
+        ]
+
+        # Build params
+        params: Dict[str, Union[str, int, float, List[str]]] = {
+            "origin": origin_str,
+            "destinations[]": dest_strs,
+            "mode": normalize_distance_mode(mode),
+            "units": units,
+        }
+
+        # Add optional filter parameters
+        if max_results is not None:
+            params["max_results"] = max_results
+        if max_distance is not None:
+            params["max_distance"] = max_distance
+        if max_duration is not None:
+            params["max_duration"] = max_duration
+        if min_distance is not None:
+            params["min_distance"] = min_distance
+        if min_duration is not None:
+            params["min_duration"] = min_duration
+        if order_by != DISTANCE_ORDER_BY_DISTANCE:
+            params["order_by"] = order_by
+        if sort_order != DISTANCE_SORT_ASC:
+            params["sort"] = sort_order
+
+        response = self._request("GET", endpoint, params, timeout=self.single_timeout)
+        return DistanceResponse.from_api(response.json())
+
+    def distance_matrix(
+        self,
+        origins: List[Union[str, Tuple[float, float], "Coordinate"]],
+        destinations: List[Union[str, Tuple[float, float], "Coordinate"]],
+        mode: str = DISTANCE_MODE_STRAIGHTLINE,
+        units: str = DISTANCE_UNITS_MILES,
+        max_results: Optional[int] = None,
+        max_distance: Optional[float] = None,
+        max_duration: Optional[int] = None,
+        min_distance: Optional[float] = None,
+        min_duration: Optional[int] = None,
+        order_by: str = DISTANCE_ORDER_BY_DISTANCE,
+        sort_order: str = DISTANCE_SORT_ASC,
+    ) -> DistanceMatrixResponse:
+        """
+        Calculate distance matrix (multiple origins × destinations).
+
+        Uses POST request with coordinates as objects in JSON body.
+
+        Args:
+            origins: List of origin coordinates.
+            destinations: List of destination coordinates.
+            mode: Distance calculation mode ('straightline' or 'driving').
+            units: Distance units ('miles' or 'kilometers').
+            max_results: Maximum number of results to return per origin.
+            max_distance: Maximum distance filter.
+            max_duration: Maximum duration filter (seconds, driving mode only).
+            min_distance: Minimum distance filter.
+            min_duration: Minimum duration filter (seconds, driving mode only).
+            order_by: Sort results by 'distance' or 'duration'.
+            sort_order: Sort direction ('asc' or 'desc').
+
+        Returns:
+            DistanceMatrixResponse with results for each origin.
+
+        Example:
+            >>> response = client.distance_matrix(
+            ...     origins=[(38.8977, -77.0365), (38.9072, -77.0369)],
+            ...     destinations=[(38.8895, -77.0353), (39.2904, -76.6122)],
+            ...     mode="driving"
+            ... )
+            >>> print(response.results[0].destinations[0].distance_miles)
+        """
+        endpoint = f"{self.BASE_PATH}/distance-matrix"
+
+        # Normalize and convert origins to dicts for POST
+        origin_dicts = [
+            self._coordinate_to_dict(self._normalize_coordinate(o))
+            for o in origins
+        ]
+
+        # Normalize and convert destinations to dicts for POST
+        dest_dicts = [
+            self._coordinate_to_dict(self._normalize_coordinate(d))
+            for d in destinations
+        ]
+
+        # Build request body
+        body: Dict[str, Union[str, int, float, List[Dict]]] = {
+            "origins": origin_dicts,
+            "destinations": dest_dicts,
+            "mode": normalize_distance_mode(mode),
+            "units": units,
+        }
+
+        # Add optional filter parameters
+        if max_results is not None:
+            body["max_results"] = max_results
+        if max_distance is not None:
+            body["max_distance"] = max_distance
+        if max_duration is not None:
+            body["max_duration"] = max_duration
+        if min_distance is not None:
+            body["min_distance"] = min_distance
+        if min_duration is not None:
+            body["min_duration"] = min_duration
+        if order_by != DISTANCE_ORDER_BY_DISTANCE:
+            body["order_by"] = order_by
+        if sort_order != DISTANCE_SORT_ASC:
+            body["sort"] = sort_order
+
+        response = self._request("POST", endpoint, json=body, timeout=self.batch_timeout)
+        return DistanceMatrixResponse.from_api(response.json())
+
+    def create_distance_matrix_job(
+        self,
+        name: str,
+        origins: Union[List[Union[str, Tuple[float, float], "Coordinate"]], int],
+        destinations: Union[List[Union[str, Tuple[float, float], "Coordinate"]], int],
+        mode: str = DISTANCE_MODE_STRAIGHTLINE,
+        units: str = DISTANCE_UNITS_MILES,
+        callback_url: Optional[str] = None,
+        max_results: Optional[int] = None,
+        max_distance: Optional[float] = None,
+        max_duration: Optional[int] = None,
+        min_distance: Optional[float] = None,
+        min_duration: Optional[int] = None,
+        order_by: str = DISTANCE_ORDER_BY_DISTANCE,
+        sort_order: str = DISTANCE_SORT_ASC,
+    ) -> DistanceJobResponse:
+        """
+        Create an async distance matrix job for large calculations.
+
+        Args:
+            name: User-defined name for the job.
+            origins: List of coordinates OR integer list ID.
+            destinations: List of coordinates OR integer list ID.
+            mode: Distance calculation mode ('straightline' or 'driving').
+            units: Distance units ('miles' or 'kilometers').
+            callback_url: Optional URL to call when processing completes.
+            max_results: Maximum number of results to return per origin.
+            max_distance: Maximum distance filter.
+            max_duration: Maximum duration filter (seconds, driving mode only).
+            min_distance: Minimum distance filter.
+            min_duration: Minimum duration filter (seconds, driving mode only).
+            order_by: Sort results by 'distance' or 'duration'.
+            sort_order: Sort direction ('asc' or 'desc').
+
+        Returns:
+            DistanceJobResponse with job ID and status.
+
+        Example:
+            >>> job = client.create_distance_matrix_job(
+            ...     name="My Calculation",
+            ...     origins=[(38.8977, -77.0365), (38.9072, -77.0369)],
+            ...     destinations=[(38.8895, -77.0353)],
+            ...     mode="driving"
+            ... )
+            >>> print(job.id, job.status)
+        """
+        endpoint = f"{self.BASE_PATH}/distance-jobs"
+
+        # Handle origins - either list of coordinates or list ID
+        if isinstance(origins, int):
+            origins_data = origins
+        else:
+            origins_data = [
+                self._coordinate_to_dict(self._normalize_coordinate(o))
+                for o in origins
+            ]
+
+        # Handle destinations - either list of coordinates or list ID
+        if isinstance(destinations, int):
+            destinations_data = destinations
+        else:
+            destinations_data = [
+                self._coordinate_to_dict(self._normalize_coordinate(d))
+                for d in destinations
+            ]
+
+        # Build request body
+        body: Dict[str, Union[str, int, float, List[Dict]]] = {
+            "name": name,
+            "origins": origins_data,
+            "destinations": destinations_data,
+            "mode": normalize_distance_mode(mode),
+            "units": units,
+        }
+
+        # Add optional parameters
+        if callback_url:
+            body["callback_url"] = callback_url
+        if max_results is not None:
+            body["max_results"] = max_results
+        if max_distance is not None:
+            body["max_distance"] = max_distance
+        if max_duration is not None:
+            body["max_duration"] = max_duration
+        if min_distance is not None:
+            body["min_distance"] = min_distance
+        if min_duration is not None:
+            body["min_duration"] = min_duration
+        if order_by != DISTANCE_ORDER_BY_DISTANCE:
+            body["order_by"] = order_by
+        if sort_order != DISTANCE_SORT_ASC:
+            body["sort"] = sort_order
+
+        response = self._request("POST", endpoint, json=body, timeout=self.list_timeout)
+        return DistanceJobResponse.from_api(response.json())
+
+    def distance_matrix_job_status(self, job_id: Union[str, int]) -> DistanceJobResponse:
+        """
+        Get the status of a distance matrix job.
+
+        Args:
+            job_id: The job ID (integer or string).
+
+        Returns:
+            DistanceJobResponse with current status and progress.
+
+        Example:
+            >>> status = client.distance_matrix_job_status(123)
+            >>> print(status.status, status.progress)
+        """
+        endpoint = f"{self.BASE_PATH}/distance-jobs/{job_id}"
+        response = self._request("GET", endpoint, timeout=self.list_timeout)
+        return DistanceJobResponse.from_api(response.json())
+
+    def distance_matrix_jobs(self, page: int = 1) -> PaginatedResponse:
+        """
+        List all distance matrix jobs.
+
+        Args:
+            page: Page number for pagination.
+
+        Returns:
+            PaginatedResponse containing list of DistanceJobResponse objects.
+        """
+        endpoint = f"{self.BASE_PATH}/distance-jobs"
+        params: Dict[str, int] = {}
+        if page > 1:
+            params["page"] = page
+
+        response = self._request("GET", endpoint, params, timeout=self.list_timeout)
+        pagination_info = response.json()
+
+        job_responses = [
+            DistanceJobResponse.from_api(job_data)
+            for job_data in pagination_info.get("data", [])
+        ]
+
+        # Reuse PaginatedResponse but with job data
+        return PaginatedResponse(
+            data=job_responses,  # type: ignore
+            current_page=pagination_info.get("current_page", 1),
+            from_=pagination_info.get("from", 0),
+            to=pagination_info.get("to", 0),
+            path=pagination_info.get("path", ""),
+            per_page=pagination_info.get("per_page", 10),
+            first_page_url=pagination_info.get("first_page_url"),
+            next_page_url=pagination_info.get("next_page_url"),
+            prev_page_url=pagination_info.get("prev_page_url"),
+        )
+
+    def get_distance_matrix_job_results(
+        self, job_id: Union[str, int]
+    ) -> DistanceMatrixResponse:
+        """
+        Download and parse distance matrix job results.
+
+        Args:
+            job_id: The job ID (integer or string).
+
+        Returns:
+            DistanceMatrixResponse with all calculated distances.
+
+        Raises:
+            GeocodioServerError: If the job is not complete or failed.
+
+        Example:
+            >>> results = client.get_distance_matrix_job_results(123)
+            >>> for result in results.results:
+            ...     print(result.origin.id, result.destinations[0].distance_miles)
+        """
+        endpoint = f"{self.BASE_PATH}/distance-jobs/{job_id}/download"
+        response = self._request("GET", endpoint, timeout=self.list_timeout)
+
+        # Check if response is JSON (success) or error
+        content_type = response.headers.get("content-type", "")
+        if "application/json" in content_type:
+            return DistanceMatrixResponse.from_api(response.json())
+        else:
+            raise GeocodioServerError(
+                f"Unexpected response format: {content_type}. "
+                f"Job may not be complete."
+            )
+
+    def download_distance_matrix_job(
+        self, job_id: Union[str, int], filename: str
+    ) -> str:
+        """
+        Download distance matrix job results to a file.
+
+        Args:
+            job_id: The job ID (integer or string).
+            filename: Path to save the results file.
+
+        Returns:
+            The absolute path to the saved file.
+
+        Raises:
+            GeocodioServerError: If the job is not complete or download fails.
+        """
+        endpoint = f"{self.BASE_PATH}/distance-jobs/{job_id}/download"
+        response = self._request("GET", endpoint, timeout=self.list_timeout)
+
+        # Get absolute path
+        if not os.path.isabs(filename):
+            filename = os.path.abspath(filename)
+
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+
+        try:
+            with open(filename, "wb") as f:
+                f.write(response.content)
+            logger.info(f"Distance job {job_id} downloaded to {filename}")
+            return filename
+        except IOError as e:
+            logger.error(f"Failed to save distance job {job_id} to {filename}: {e}")
+            raise GeocodioServerError(f"Failed to save distance job: {e}")
+
+    def delete_distance_matrix_job(self, job_id: Union[str, int]) -> None:
+        """
+        Delete a distance matrix job.
+
+        Args:
+            job_id: The job ID (integer or string).
+        """
+        endpoint = f"{self.BASE_PATH}/distance-jobs/{job_id}"
+        self._request("DELETE", endpoint, timeout=self.list_timeout)
