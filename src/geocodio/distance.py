@@ -165,7 +165,7 @@ class Coordinate:
             lng = float(value[1])
         except (ValueError, TypeError) as e:
             raise ValueError(
-                f"Invalid coordinate values. Latitude and longitude must be numbers."
+                "Invalid coordinate values. Latitude and longitude must be numbers."
             ) from e
 
         coord_id = str(value[2]) if len(value) > 2 else None
@@ -185,7 +185,7 @@ class Coordinate:
             lng = float(value["lng"])
         except (ValueError, TypeError) as e:
             raise ValueError(
-                f"Invalid coordinate values. Latitude and longitude must be numbers."
+                "Invalid coordinate values. Latitude and longitude must be numbers."
             ) from e
 
         coord_id = str(value["id"]) if "id" in value and value["id"] is not None else None
