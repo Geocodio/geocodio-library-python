@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-01-06
+
+### Added
+- **Distance API support** with new methods for calculating distances between coordinates:
+  - `distance()` - Calculate distances from a single origin to multiple destinations
+  - `distance_matrix()` - Calculate distances from multiple origins to multiple destinations
+  - Support for `straightline` (haversine) and `driving` distance modes
+  - Support for `miles` and `km` units
+  - Optional sorting by distance or duration
+- New `Coordinate` class for representing geographic coordinates with optional IDs
+- Distance parameters for `geocode()` and `reverse()` methods to calculate distances inline
+- Comprehensive type definitions: `DistanceResponse`, `DistanceMatrixResponse`, `DistanceOrigin`, `DistanceDestination`
+- Distance mode constants: `DISTANCE_MODE_STRAIGHTLINE`, `DISTANCE_MODE_DRIVING`
+- Distance unit constants: `DISTANCE_UNITS_MILES`, `DISTANCE_UNITS_KM`
+
 ## [0.2.0] - 2025-08-08
 
 ### Changed
@@ -39,6 +54,7 @@ When ready to release:
 5. Push tags: `git push --tags`
 6. GitHub Actions will automatically publish to PyPI
 
-[Unreleased]: https://github.com/Geocodio/geocodio-library-python/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Geocodio/geocodio-library-python/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/Geocodio/geocodio-library-python/compare/v0.4.0...v0.5.0
 [0.2.0]: https://github.com/Geocodio/geocodio-library-python/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Geocodio/geocodio-library-python/releases/tag/v0.1.0
