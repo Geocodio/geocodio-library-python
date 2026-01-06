@@ -74,8 +74,8 @@ class TestDistanceE2E:
         )
 
         assert isinstance(response, DistanceResponse)
-        assert response.origin.id == "white_house"
-        # IDs in destinations are optional in response
+        assert response.destinations[0].id == "monument"
+        assert response.destinations[1].id == "capitol"
 
     def test_distance_driving_mode(self, client):
         """Test distance with driving mode returns duration."""
