@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-02-18
+
+### Fixed
+- Fixed parsing of state legislative district data (`stateleg` field). The API response key changed from `stateleg` to `state_legislative_districts` and the structure changed from a flat list to a dict with `house`/`senate` keys containing legislator info. The library now handles both formats.
+
 ## [0.5.0] - 2026-01-06
 
 ### Added
@@ -54,7 +59,8 @@ When ready to release:
 5. Push tags: `git push --tags`
 6. GitHub Actions will automatically publish to PyPI
 
-[Unreleased]: https://github.com/Geocodio/geocodio-library-python/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/Geocodio/geocodio-library-python/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/Geocodio/geocodio-library-python/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/Geocodio/geocodio-library-python/compare/v0.4.0...v0.5.0
 [0.2.0]: https://github.com/Geocodio/geocodio-library-python/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Geocodio/geocodio-library-python/releases/tag/v0.1.0
