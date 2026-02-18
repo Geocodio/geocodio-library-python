@@ -493,6 +493,28 @@ class Geocodio:
         )
 
 
+    @staticmethod
+    def _parse_stateleg(data) -> list:
+        """Parse state legislative district data.
+
+        Handles both formats:
+        - Dict with house/senate keys: {house: [...], senate: [...]}
+        - Flat list of district dicts (legacy)
+        """
+        if isinstance(data, dict):
+            districts = []
+            for chamber, chamber_districts in data.items():
+                if isinstance(chamber_districts, list):
+                    for district in chamber_districts:
+                        district_data = dict(district)
+                        if "chamber" not in district_data:
+                            district_data["chamber"] = chamber
+                        districts.append(StateLegislativeDistrict.from_api(district_data))
+            return districts
+        elif isinstance(data, list):
+            return [StateLegislativeDistrict.from_api(d) for d in data]
+        return []
+
     def _parse_fields(self, fields_data: dict | None) -> GeocodioFields | None:
         """
         Parse fields data from API response.
@@ -522,17 +544,15 @@ class Geocodio:
 
         state_legislative_districts = None
         if "stateleg" in fields_data:
-            state_legislative_districts = [
-                StateLegislativeDistrict.from_api(district)
-                for district in fields_data["stateleg"]
-            ]
+            state_legislative_districts = self._parse_stateleg(fields_data["stateleg"])
+        elif "state_legislative_districts" in fields_data:
+            state_legislative_districts = self._parse_stateleg(fields_data["state_legislative_districts"])
 
         state_legislative_districts_next = None
         if "stateleg-next" in fields_data:
-            state_legislative_districts_next = [
-                StateLegislativeDistrict.from_api(district)
-                for district in fields_data["stateleg-next"]
-            ]
+            state_legislative_districts_next = self._parse_stateleg(fields_data["stateleg-next"])
+        elif "state_legislative_districts_next" in fields_data:
+            state_legislative_districts_next = self._parse_stateleg(fields_data["state_legislative_districts_next"])
 
         # School districts - support both nested dict and flat list formats
         school_districts = None
@@ -713,7 +733,7 @@ class Geocodio:
         # Collect all known field keys that were parsed
         parsed_keys = {
             "timezone", "cd", "congressional_districts",
-            "stateleg", "stateleg-next",
+            "stateleg", "stateleg-next", "state_legislative_districts", "state_legislative_districts_next",
             "school", "school_districts",  # Both school formats
             "census",  # Nested census structure
             "acs",  # Nested ACS structure

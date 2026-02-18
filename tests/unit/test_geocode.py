@@ -597,3 +597,114 @@ def test_geocode_with_census_fields(client, httpx_mock):
     assert result.fields.census2024 is not None
     assert result.fields.census2024.tract == "960100"
     assert result.fields.census2024.block == "2004"
+
+
+def test_geocode_with_stateleg_fields(client, httpx_mock):
+    """Test geocoding with state legislative district fields.
+
+    The API returns state_legislative_districts as a dict with house/senate keys,
+    each containing a list of district objects with legislator info.
+    """
+    def response_callback(request):
+        assert request.url.params["fields"] == "stateleg"
+        return httpx.Response(200, json={
+            "input": {"formatted_address": "600 Santa Ray Ave, Oakland, CA 94610"},
+            "results": [{
+                "address_components": {
+                    "number": "600",
+                    "street": "Santa Ray",
+                    "suffix": "Ave",
+                    "city": "Oakland",
+                    "state": "CA",
+                    "zip": "94610",
+                    "country": "US"
+                },
+                "formatted_address": "600 Santa Ray Ave, Oakland, CA 94610",
+                "location": {"lat": 37.811943, "lng": -122.240213},
+                "accuracy": 1,
+                "accuracy_type": "rooftop",
+                "source": "Alameda",
+                "fields": {
+                    "state_legislative_districts": {
+                        "house": [
+                            {
+                                "name": "Assembly District 18",
+                                "district_number": "18",
+                                "ocd_id": "ocd-division/country:us/state:ca/sldl:18",
+                                "is_upcoming_state_legislative_district": False,
+                                "proportion": 1,
+                                "current_legislators": [
+                                    {
+                                        "type": "representative",
+                                        "bio": {
+                                            "last_name": "Bonta",
+                                            "first_name": "Mia",
+                                            "party": "Democrat"
+                                        }
+                                    }
+                                ]
+                            }
+                        ],
+                        "senate": [
+                            {
+                                "name": "Senate District 7",
+                                "district_number": "7",
+                                "ocd_id": "ocd-division/country:us/state:ca/sldu:7",
+                                "is_upcoming_state_legislative_district": False,
+                                "proportion": 1,
+                                "current_legislators": [
+                                    {
+                                        "type": "senator",
+                                        "bio": {
+                                            "last_name": "Arreguin",
+                                            "first_name": "Jesse",
+                                            "party": "Democrat"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }]
+        })
+
+    httpx_mock.add_callback(
+        callback=response_callback,
+        url=httpx.URL("https://api.test/v1.9/geocode", params={
+            "q": "600 Santa Ray Ave, Oakland CA 94610",
+            "fields": "stateleg"
+        }),
+        match_headers={"Authorization": "Bearer TEST_KEY"},
+    )
+
+    # Act
+    resp = client.geocode("600 Santa Ray Ave, Oakland CA 94610", fields=["stateleg"])
+
+    # Assert - state legislative districts should be parsed, not None
+    fields = resp.results[0].fields
+    assert fields.state_legislative_districts is not None
+    assert len(fields.state_legislative_districts) == 2
+
+    # Check house district
+    house = [d for d in fields.state_legislative_districts if d.chamber == "house"]
+    assert len(house) == 1
+    assert house[0].name == "Assembly District 18"
+    assert house[0].district_number == "18"
+    assert house[0].ocd_id == "ocd-division/country:us/state:ca/sldl:18"
+    assert house[0].proportion == 1
+
+    # Check senate district
+    senate = [d for d in fields.state_legislative_districts if d.chamber == "senate"]
+    assert len(senate) == 1
+    assert senate[0].name == "Senate District 7"
+    assert senate[0].district_number == "7"
+    assert senate[0].ocd_id == "ocd-division/country:us/state:ca/sldu:7"
+
+    # Check that legislator info is accessible via extras
+    legislators = house[0].get_extra("current_legislators", [])
+    assert len(legislators) == 1
+    assert legislators[0]["bio"]["last_name"] == "Bonta"
+
+    # Ensure state_legislative_districts didn't leak into extras
+    assert "state_legislative_districts" not in fields.extras
