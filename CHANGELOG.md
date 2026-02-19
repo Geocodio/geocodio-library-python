@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Updated default API version from v1.9 to v1.10
+
 ## [0.5.1] - 2026-02-18
 
 ### Fixed
