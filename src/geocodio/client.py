@@ -43,7 +43,7 @@ from geocodio.exceptions import InvalidRequestError, AuthenticationError, Geocod
 
 
 class Geocodio:
-    BASE_PATH = "/v1.9"  # keep in sync with Geocodio's current version
+    BASE_PATH = "/v1.10"  # keep in sync with Geocodio's current version
     DEFAULT_SINGLE_TIMEOUT = 5.0
     DEFAULT_BATCH_TIMEOUT = 1800.0  # 30 minutes
     LIST_API_TIMEOUT = 60.0
