@@ -213,7 +213,7 @@ class TestDistance:
         """Test basic distance calculation."""
         def response_callback(request):
             assert request.method == "GET"
-            assert "/v1.10/distance" in str(request.url)
+            assert "/v1.11/distance" in str(request.url)
             return httpx.Response(200, json=sample_distance_response())
 
         httpx_mock.add_callback(callback=response_callback)
@@ -464,7 +464,7 @@ def sample_job_status_response():
             "name": "My Job",
             "status": "COMPLETED",
             "progress": 100,
-            "download_url": "https://api.geocod.io/v1.10/distance-jobs/123/download",
+            "download_url": "https://api.geocod.io/v1.11/distance-jobs/123/download",
             "total_calculations": 4,
             "calculations_completed": 4,
             "origins_count": 2,
@@ -502,7 +502,7 @@ def sample_jobs_list_response():
         "current_page": 1,
         "from": 1,
         "to": 2,
-        "path": "/v1.10/distance-jobs",
+        "path": "/v1.11/distance-jobs",
         "per_page": 10
     }
 
@@ -656,7 +656,7 @@ class TestGeocodeWithDistance:
         """Test geocode with destination parameter."""
         def response_callback(request):
             url_str = str(request.url)
-            assert "/v1.10/geocode" in url_str
+            assert "/v1.11/geocode" in url_str
             assert "destinations%5B%5D" in url_str or "destinations[]" in url_str.replace("%5B", "[").replace("%5D", "]")
             return httpx.Response(200, json=sample_geocode_with_distance_response())
 
@@ -673,7 +673,7 @@ class TestGeocodeWithDistance:
         """Test geocode with distance mode parameter."""
         def response_callback(request):
             url_str = str(request.url)
-            assert "/v1.10/geocode" in url_str
+            assert "/v1.11/geocode" in url_str
             assert "distance_mode=driving" in url_str
             return httpx.Response(200, json=sample_geocode_with_distance_response())
 
@@ -689,7 +689,7 @@ class TestGeocodeWithDistance:
         """Test geocode with distance units parameter."""
         def response_callback(request):
             url_str = str(request.url)
-            assert "/v1.10/geocode" in url_str
+            assert "/v1.11/geocode" in url_str
             assert "distance_units=km" in url_str
             return httpx.Response(200, json=sample_geocode_with_distance_response())
 
@@ -714,7 +714,7 @@ class TestReverseWithDistance:
         """Test reverse geocode with destination parameter."""
         def response_callback(request):
             url_str = str(request.url)
-            assert "/v1.10/reverse" in url_str
+            assert "/v1.11/reverse" in url_str
             assert "destinations%5B%5D" in url_str or "destinations[]" in url_str.replace("%5B", "[").replace("%5D", "]")
             return httpx.Response(200, json=sample_geocode_with_distance_response())
 
@@ -731,7 +731,7 @@ class TestReverseWithDistance:
         """Test reverse geocode with distance mode parameter."""
         def response_callback(request):
             url_str = str(request.url)
-            assert "/v1.10/reverse" in url_str
+            assert "/v1.11/reverse" in url_str
             assert "distance_mode=straightline" in url_str
             return httpx.Response(200, json=sample_geocode_with_distance_response())
 
