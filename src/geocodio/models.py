@@ -82,8 +82,8 @@ class Timezone(ApiModelMixin):
 @dataclass(slots=True, frozen=True)
 class CongressionalDistrict(ApiModelMixin):
     name: str
-    district_number: int
-    congress_number: str
+    district_number: Any = None
+    congress_number: Optional[str] = None
     ocd_id: Optional[str] = None
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)
 
@@ -95,8 +95,8 @@ class StateLegislativeDistrict(ApiModelMixin):
     """
 
     name: str
-    district_number: int
-    chamber: str  # 'house' or 'senate'
+    district_number: Any = None
+    chamber: Optional[str] = None  # 'house' or 'senate'
     ocd_id: Optional[str] = None
     proportion: Optional[float] = None  # Proportion of overlap with the address
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)

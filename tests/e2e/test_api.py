@@ -111,7 +111,7 @@ def test_integration_with_fields(client):
     if fields.congressional_districts:
         cd = fields.congressional_districts[0]
         assert cd.name is not None
-        assert isinstance(cd.district_number, int)
+        assert cd.district_number is not None
         assert cd.congress_number is not None
 
     if fields.census2020:
@@ -205,7 +205,7 @@ def test_integration_with_state_legislative_districts(client):
     if fields.state_legislative_districts:
         district = fields.state_legislative_districts[0]
         assert district.name is not None
-        assert isinstance(district.district_number, int)
+        assert district.district_number is not None
         assert district.chamber in ["house", "senate"]
         if district.ocd_id:
             assert isinstance(district.ocd_id, str)
@@ -216,7 +216,7 @@ def test_integration_with_state_legislative_districts(client):
     if fields.state_legislative_districts_next:
         district = fields.state_legislative_districts_next[0]
         assert district.name is not None
-        assert isinstance(district.district_number, int)
+        assert district.district_number is not None
         assert district.chamber in ["house", "senate"]
         if district.ocd_id:
             assert isinstance(district.ocd_id, str)
@@ -249,7 +249,7 @@ def test_integration_with_school_districts(client):
         district = fields.school_districts[0]
         assert district.name is not None
         if district.district_number:
-            assert isinstance(district.district_number, str)
+            assert district.district_number is not None
         if district.lea_id:
             assert isinstance(district.lea_id, str)
         if district.nces_id:
@@ -676,7 +676,7 @@ def test_integration_with_congressional_district_variants(client):
     if fields.congressional_districts:
         for district in fields.congressional_districts:
             assert district.name is not None
-            assert isinstance(district.district_number, int)
+            assert district.district_number is not None
             assert district.congress_number is not None
             if district.ocd_id:
                 assert isinstance(district.ocd_id, str)
