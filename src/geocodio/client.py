@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import List, Union, Dict, Tuple, Optional
+from typing import Dict, List, Optional, Tuple, Union
 
 import httpx
 
@@ -16,34 +16,59 @@ from geocodio._version import __version__
 # Set up logger early to capture all logs
 logger = logging.getLogger("geocodio")
 
-# flake8: noqa: F401
-from geocodio.models import (
-    GeocodingResponse, GeocodingResult, AddressComponents,
-    Location, GeocodioFields, Timezone, CongressionalDistrict,
-    CensusData, ACSSurveyData, StateLegislativeDistrict, SchoolDistrict,
-    Demographics, Economics, Families, Housing, Social,
-    FederalRiding, ProvincialRiding, StatisticsCanadaData, ListResponse, PaginatedResponse,
-    ZIP4Data, FFIECData,
-    DistanceResponse, DistanceMatrixResponse, DistanceJobResponse,
-)
 from geocodio.distance import (
-    Coordinate,
-    DISTANCE_MODE_STRAIGHTLINE,
     DISTANCE_MODE_DRIVING,
     DISTANCE_MODE_HAVERSINE,
-    DISTANCE_UNITS_MILES,
-    DISTANCE_UNITS_KM,
+    DISTANCE_MODE_STRAIGHTLINE,
     DISTANCE_ORDER_BY_DISTANCE,
     DISTANCE_ORDER_BY_DURATION,
     DISTANCE_SORT_ASC,
     DISTANCE_SORT_DESC,
+    DISTANCE_UNITS_KM,
+    DISTANCE_UNITS_MILES,
+    Coordinate,
     normalize_distance_mode,
 )
-from geocodio.exceptions import InvalidRequestError, AuthenticationError, GeocodioServerError, BadRequestError
+from geocodio.exceptions import (
+    AuthenticationError,
+    BadRequestError,
+    GeocodioServerError,
+    InvalidRequestError,
+)
+
+# flake8: noqa: F401
+from geocodio.models import (
+    ACSSurveyData,
+    AddressComponents,
+    CensusData,
+    CongressionalDistrict,
+    Demographics,
+    DistanceJobResponse,
+    DistanceMatrixResponse,
+    DistanceResponse,
+    Economics,
+    Families,
+    FederalRiding,
+    FFIECData,
+    GeocodingResponse,
+    GeocodingResult,
+    GeocodioFields,
+    Housing,
+    ListResponse,
+    Location,
+    PaginatedResponse,
+    ProvincialRiding,
+    SchoolDistrict,
+    Social,
+    StateLegislativeDistrict,
+    StatisticsCanadaData,
+    Timezone,
+    ZIP4Data,
+)
 
 
 class Geocodio:
-    BASE_PATH = "/v1.11"  # keep in sync with Geocodio's current version
+    BASE_PATH = "/v2"  # keep in sync with Geocodio's current version
     DEFAULT_SINGLE_TIMEOUT = 5.0
     DEFAULT_BATCH_TIMEOUT = 1800.0  # 30 minutes
     LIST_API_TIMEOUT = 60.0
@@ -51,7 +76,13 @@ class Geocodio:
 
     @staticmethod
     def get_status_exception_mappings() -> Dict[
-        int, type[BadRequestError | InvalidRequestError | AuthenticationError | GeocodioServerError]
+        int,
+        type[
+            BadRequestError
+            | InvalidRequestError
+            | AuthenticationError
+            | GeocodioServerError
+        ],
     ]:
         """
         Returns a list of status code to exception mappings.
@@ -82,30 +113,38 @@ class Geocodio:
         self.single_timeout = single_timeout or self.DEFAULT_SINGLE_TIMEOUT
         self.batch_timeout = batch_timeout or self.DEFAULT_BATCH_TIMEOUT
         self.list_timeout = list_timeout or self.LIST_API_TIMEOUT
-        self._http = httpx.Client(base_url=f"https://{self.hostname}", verify=verify_ssl)
+        self._http = httpx.Client(
+            base_url=f"https://{self.hostname}", verify=verify_ssl
+        )
 
     # ──────────────────────────────────────────────────────────────────────────
     # Public methods
     # ──────────────────────────────────────────────────────────────────────────
 
     def geocode(
-            self,
-            address: Union[
-                str, Dict[str, str], List[Union[str, Dict[str, str]]], Dict[str, Union[str, Dict[str, str]]]],
-            fields: Optional[List[str]] = None,
-            limit: Optional[int] = None,
-            country: Optional[str] = None,
-            # Distance parameters
-            destinations: Optional[List[Union[str, Tuple[float, float], "Coordinate"]]] = None,
-            distance_mode: Optional[str] = None,
-            distance_units: Optional[str] = None,
-            distance_max_results: Optional[int] = None,
-            distance_max_distance: Optional[float] = None,
-            distance_max_duration: Optional[int] = None,
-            distance_min_distance: Optional[float] = None,
-            distance_min_duration: Optional[int] = None,
-            distance_order_by: Optional[str] = None,
-            distance_sort_order: Optional[str] = None,
+        self,
+        address: Union[
+            str,
+            Dict[str, str],
+            List[Union[str, Dict[str, str]]],
+            Dict[str, Union[str, Dict[str, str]]],
+        ],
+        fields: Optional[List[str]] = None,
+        limit: Optional[int] = None,
+        country: Optional[str] = None,
+        # Distance parameters
+        destinations: Optional[
+            List[Union[str, Tuple[float, float], "Coordinate"]]
+        ] = None,
+        distance_mode: Optional[str] = None,
+        distance_units: Optional[str] = None,
+        distance_max_results: Optional[int] = None,
+        distance_max_distance: Optional[float] = None,
+        distance_max_duration: Optional[int] = None,
+        distance_min_distance: Optional[float] = None,
+        distance_min_duration: Optional[int] = None,
+        distance_order_by: Optional[str] = None,
+        distance_sort_order: Optional[str] = None,
     ) -> GeocodingResponse:
         params: Dict[str, Union[str, int, List[str]]] = {}
         if fields:
@@ -145,7 +184,9 @@ class Geocodio:
         data: Union[List, Dict] | None
 
         # Handle different input types
-        if isinstance(address, dict) and not any(isinstance(v, dict) for v in address.values()):
+        if isinstance(address, dict) and not any(
+            isinstance(v, dict) for v in address.values()
+        ):
             # Single structured address
             endpoint = f"{self.BASE_PATH}/geocode"
             # Map our parameter names to API parameter names
@@ -154,7 +195,8 @@ class Geocodio:
                 "street2": "street2",
                 "city": "city",
                 "county": "county",
-                "state": "state",
+                "state": "state",  # legacy input field, still accepted
+                "state_province": "state_province",
                 "postal_code": "postal_code",
                 "country": "country",
             }
@@ -167,7 +209,9 @@ class Geocodio:
             # Batch addresses - send list directly
             endpoint = f"{self.BASE_PATH}/geocode"
             data = address
-        elif isinstance(address, dict) and any(isinstance(v, dict) for v in address.values()):
+        elif isinstance(address, dict) and any(
+            isinstance(v, dict) for v in address.values()
+        ):
             # Batch addresses with custom keys
             endpoint = f"{self.BASE_PATH}/geocode"
             data = {"addresses": list(address.values()), "keys": list(address.keys())}
@@ -178,25 +222,31 @@ class Geocodio:
             data = None
 
         timeout = self.batch_timeout if data else self.single_timeout
-        response = self._request("POST" if data else "GET", endpoint, params, json=data, timeout=timeout)
+        response = self._request(
+            "POST" if data else "GET", endpoint, params, json=data, timeout=timeout
+        )
         return self._parse_geocoding_response(response.json())
 
     def reverse(
-            self,
-            coordinate: Union[str, Tuple[float, float], List[Union[str, Tuple[float, float]]]],
-            fields: Optional[List[str]] = None,
-            limit: Optional[int] = None,
-            # Distance parameters
-            destinations: Optional[List[Union[str, Tuple[float, float], "Coordinate"]]] = None,
-            distance_mode: Optional[str] = None,
-            distance_units: Optional[str] = None,
-            distance_max_results: Optional[int] = None,
-            distance_max_distance: Optional[float] = None,
-            distance_max_duration: Optional[int] = None,
-            distance_min_distance: Optional[float] = None,
-            distance_min_duration: Optional[int] = None,
-            distance_order_by: Optional[str] = None,
-            distance_sort_order: Optional[str] = None,
+        self,
+        coordinate: Union[
+            str, Tuple[float, float], List[Union[str, Tuple[float, float]]]
+        ],
+        fields: Optional[List[str]] = None,
+        limit: Optional[int] = None,
+        # Distance parameters
+        destinations: Optional[
+            List[Union[str, Tuple[float, float], "Coordinate"]]
+        ] = None,
+        distance_mode: Optional[str] = None,
+        distance_units: Optional[str] = None,
+        distance_max_results: Optional[int] = None,
+        distance_max_distance: Optional[float] = None,
+        distance_max_duration: Optional[int] = None,
+        distance_min_distance: Optional[float] = None,
+        distance_min_duration: Optional[int] = None,
+        distance_order_by: Optional[str] = None,
+        distance_sort_order: Optional[str] = None,
     ) -> GeocodingResponse:
         params: Dict[str, Union[str, int, List[str]]] = {}
         if fields:
@@ -252,7 +302,9 @@ class Geocodio:
             data = None
 
         timeout = self.batch_timeout if data else self.single_timeout
-        response = self._request("POST" if data else "GET", endpoint, params, json=data, timeout=timeout)
+        response = self._request(
+            "POST" if data else "GET", endpoint, params, json=data, timeout=timeout
+        )
         return self._parse_geocoding_response(response.json())
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -260,13 +312,13 @@ class Geocodio:
     # ──────────────────────────────────────────────────────────────────────────
 
     def _request(
-            self,
-            method: str,
-            endpoint: str,
-            params: Optional[dict] = None,
-            json: Optional[dict] = None,
-            files: Optional[dict] = None,
-            timeout: Optional[float] = None,
+        self,
+        method: str,
+        endpoint: str,
+        params: Optional[dict] = None,
+        json: Optional[dict] = None,
+        files: Optional[dict] = None,
+        timeout: Optional[float] = None,
     ) -> httpx.Response:
         logger.debug(f"Making Request: {method} {endpoint}")
         logger.debug(f"Params: {params}")
@@ -275,15 +327,23 @@ class Geocodio:
 
         if timeout is None:
             timeout = self.single_timeout
-        
+
         # Set up authorization and user-agent headers
         headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "User-Agent": self.USER_AGENT
+            "User-Agent": self.USER_AGENT,
         }
-        
+
         logger.debug(f"Using timeout: {timeout}s")
-        resp = self._http.request(method, endpoint, params=params, json=json, files=files, headers=headers, timeout=timeout)
+        resp = self._http.request(
+            method,
+            endpoint,
+            params=params,
+            json=json,
+            files=files,
+            headers=headers,
+            timeout=timeout,
+        )
 
         logger.debug(f"Response status code: {resp.status_code}")
         logger.debug(f"Response headers: {resp.headers}")
@@ -305,32 +365,48 @@ class Geocodio:
             exception_class = exception_mappings[resp.status_code]
             raise exception_class(resp.text)
         else:
-            raise GeocodioServerError(f"Unrecognized status code {resp.status_code}: {resp.text}")
+            raise GeocodioServerError(
+                f"Unrecognized status code {resp.status_code}: {resp.text}"
+            )
 
     def _parse_geocoding_response(self, response_json: dict) -> GeocodingResponse:
         logger.debug(f"Raw response: {response_json}")
 
         # Handle batch response format
-        if "results" in response_json and isinstance(response_json["results"], list) and response_json[
-            "results"] and "response" in response_json["results"][0]:
+        if (
+            "results" in response_json
+            and isinstance(response_json["results"], list)
+            and response_json["results"]
+            and "response" in response_json["results"][0]
+        ):
             results = [
                 GeocodingResult(
-                    address_components=AddressComponents.from_api(res["response"]["results"][0]["address_components"]),
-                    formatted_address=res["response"]["results"][0]["formatted_address"],
+                    address_components=AddressComponents.from_api(
+                        res["response"]["results"][0]["address_components"]
+                    ),
+                    formatted_address=res["response"]["results"][0][
+                        "formatted_address"
+                    ],
                     location=Location(**res["response"]["results"][0]["location"]),
                     accuracy=res["response"]["results"][0].get("accuracy", 0.0),
-                    accuracy_type=res["response"]["results"][0].get("accuracy_type", ""),
+                    accuracy_type=res["response"]["results"][0].get(
+                        "accuracy_type", ""
+                    ),
                     source=res["response"]["results"][0].get("source", ""),
-                    fields=self._parse_fields(res["response"]["results"][0].get("fields")),
+                    fields=self._parse_fields(
+                        res["response"]["results"][0].get("fields")
+                    ),
                 )
                 for res in response_json["results"]
             ]
-            return GeocodingResponse(input=response_json.get("input", {}), results=results)
+            return GeocodingResponse(results=results)
 
         # Handle single response format
         results = [
             GeocodingResult(
-                address_components=AddressComponents.from_api(res["address_components"]),
+                address_components=AddressComponents.from_api(
+                    res["address_components"]
+                ),
                 formatted_address=res["formatted_address"],
                 location=Location(**res["location"]),
                 accuracy=res.get("accuracy", 0.0),
@@ -340,7 +416,7 @@ class Geocodio:
             )
             for res in response_json.get("results", [])
         ]
-        return GeocodingResponse(input=response_json.get("input", {}), results=results)
+        return GeocodingResponse(results=results)
 
     # ──────────────────────────────────────────────────────────────────────────
     # List API methods
@@ -350,13 +426,13 @@ class Geocodio:
     DIRECTION_REVERSE = "reverse"
 
     def create_list(
-            self,
-            file: Optional[str] = None,
-            filename: Optional[str] = None,
-            direction: str = DIRECTION_FORWARD,
-            format_: Optional[str] = "{{A}}",
-            callback_url: Optional[str] = None,
-            fields: list[str] | None = None
+        self,
+        file: Optional[str] = None,
+        filename: Optional[str] = None,
+        direction: str = DIRECTION_FORWARD,
+        format_: Optional[str] = "{{A}}",
+        callback_url: Optional[str] = None,
+        fields: list[str] | None = None,
     ) -> ListResponse:
         """
         Create a new geocoding list.
@@ -407,7 +483,9 @@ class Geocodio:
             # Join fields with commas as required by the API
             params["fields"] = ",".join(fields)
 
-        response = self._request("POST", endpoint, params, files=files, timeout=self.list_timeout)
+        response = self._request(
+            "POST", endpoint, params, files=files, timeout=self.list_timeout
+        )
         logger.debug(f"Response content: {response.text}")
         return self._parse_list_response(response.json(), response=response)
 
@@ -429,7 +507,9 @@ class Geocodio:
         response_lists = []
         for list_item in pagination_info.get("data", []):
             logger.debug(f"List item: {list_item}")
-            response_lists.append(self._parse_list_response(list_item, response=response))
+            response_lists.append(
+                self._parse_list_response(list_item, response=response)
+            )
 
         return PaginatedResponse(
             data=response_lists,
@@ -440,7 +520,7 @@ class Geocodio:
             per_page=pagination_info.get("per_page", 10),
             first_page_url=pagination_info.get("first_page_url"),
             next_page_url=pagination_info.get("next_page_url"),
-            prev_page_url=pagination_info.get("prev_page_url")
+            prev_page_url=pagination_info.get("prev_page_url"),
         )
 
     def get_list(self, list_id: str) -> ListResponse:
@@ -472,7 +552,9 @@ class Geocodio:
         self._request("DELETE", endpoint, params, timeout=self.list_timeout)
 
     @staticmethod
-    def _parse_list_response(response_json: dict, response: httpx.Response = None) -> ListResponse:
+    def _parse_list_response(
+        response_json: dict, response: httpx.Response = None
+    ) -> ListResponse:
         """
         Parse a response from the List API.
 
@@ -492,7 +574,6 @@ class Geocodio:
             http_response=response,
         )
 
-
     @staticmethod
     def _parse_stateleg(data) -> list:
         """Parse state legislative district data.
@@ -509,7 +590,9 @@ class Geocodio:
                         district_data = dict(district)
                         if "chamber" not in district_data:
                             district_data["chamber"] = chamber
-                        districts.append(StateLegislativeDistrict.from_api(district_data))
+                        districts.append(
+                            StateLegislativeDistrict.from_api(district_data)
+                        )
             return districts
         elif isinstance(data, list):
             return [StateLegislativeDistrict.from_api(d) for d in data]
@@ -528,13 +611,13 @@ class Geocodio:
 
         timezone = (
             Timezone.from_api(fields_data["timezone"])
-            if "timezone" in fields_data else None
+            if "timezone" in fields_data
+            else None
         )
         congressional_districts = None
         if "cd" in fields_data:
             congressional_districts = [
-                CongressionalDistrict.from_api(cd)
-                for cd in fields_data["cd"]
+                CongressionalDistrict.from_api(cd) for cd in fields_data["cd"]
             ]
         elif "congressional_districts" in fields_data:
             congressional_districts = [
@@ -546,13 +629,19 @@ class Geocodio:
         if "stateleg" in fields_data:
             state_legislative_districts = self._parse_stateleg(fields_data["stateleg"])
         elif "state_legislative_districts" in fields_data:
-            state_legislative_districts = self._parse_stateleg(fields_data["state_legislative_districts"])
+            state_legislative_districts = self._parse_stateleg(
+                fields_data["state_legislative_districts"]
+            )
 
         state_legislative_districts_next = None
         if "stateleg-next" in fields_data:
-            state_legislative_districts_next = self._parse_stateleg(fields_data["stateleg-next"])
+            state_legislative_districts_next = self._parse_stateleg(
+                fields_data["stateleg-next"]
+            )
         elif "state_legislative_districts_next" in fields_data:
-            state_legislative_districts_next = self._parse_stateleg(fields_data["state_legislative_districts_next"])
+            state_legislative_districts_next = self._parse_stateleg(
+                fields_data["state_legislative_districts_next"]
+            )
 
         # School districts - support both nested dict and flat list formats
         school_districts = None
@@ -569,8 +658,7 @@ class Geocodio:
             elif isinstance(school_data, list):
                 # List format (backward compatibility)
                 school_districts = [
-                    SchoolDistrict.from_api(district)
-                    for district in school_data
+                    SchoolDistrict.from_api(district) for district in school_data
                 ]
 
         # Also check for flat list format: school: [...]
@@ -585,8 +673,7 @@ class Geocodio:
             elif isinstance(school_data, list):
                 # List format
                 school_districts = [
-                    SchoolDistrict.from_api(district)
-                    for district in school_data
+                    SchoolDistrict.from_api(district) for district in school_data
                 ]
 
         # Census fields - support both nested and flat structures
@@ -625,7 +712,11 @@ class Geocodio:
         # Also check for flat structure: census2010: {...}, census2020: {...}
         # This ensures backward compatibility if API sends both formats
         for key in fields_data:
-            if key.startswith("census") and key[6:].isdigit() and key not in census_data_dict:
+            if (
+                key.startswith("census")
+                and key[6:].isdigit()
+                and key not in census_data_dict
+            ):
                 # Map new field names to old for backward compatibility
                 parsed_data = parse_census_data(fields_data[key])
                 census_data_dict[key] = CensusData.from_api(parsed_data)
@@ -634,27 +725,32 @@ class Geocodio:
         # These will be merged with nested structure later if both exist
         demographics = (
             Demographics.from_api(fields_data["acs-demographics"])
-            if "acs-demographics" in fields_data else None
+            if "acs-demographics" in fields_data
+            else None
         )
 
         economics = (
             Economics.from_api(fields_data["acs-economics"])
-            if "acs-economics" in fields_data else None
+            if "acs-economics" in fields_data
+            else None
         )
 
         families = (
             Families.from_api(fields_data["acs-families"])
-            if "acs-families" in fields_data else None
+            if "acs-families" in fields_data
+            else None
         )
 
         housing = (
             Housing.from_api(fields_data["acs-housing"])
-            if "acs-housing" in fields_data else None
+            if "acs-housing" in fields_data
+            else None
         )
 
         social = (
             Social.from_api(fields_data["acs-social"])
-            if "acs-social" in fields_data else None
+            if "acs-social" in fields_data
+            else None
         )
 
         # ACS fields - support both nested and flat structures
@@ -667,7 +763,13 @@ class Geocodio:
 
             # Check if this is nested ACS structure (contains metric keys)
             # or simple ACS structure (contains population, households, etc.)
-            acs_metric_keys = {"demographics", "economics", "families", "housing", "social"}
+            acs_metric_keys = {
+                "demographics",
+                "economics",
+                "families",
+                "housing",
+                "social",
+            }
 
             if any(key in acs_data for key in acs_metric_keys):
                 # Nested structure: acs: {demographics: {...}, economics: {...}}
@@ -699,47 +801,60 @@ class Geocodio:
             acs_fields["social"] = social
 
         # ZIP4 and FFIEC data
-        zip4 = (
-            ZIP4Data.from_api(fields_data["zip4"])
-            if "zip4" in fields_data else None
-        )
+        zip4 = ZIP4Data.from_api(fields_data["zip4"]) if "zip4" in fields_data else None
 
         ffiec = (
-            FFIECData.from_api(fields_data["ffiec"])
-            if "ffiec" in fields_data else None
+            FFIECData.from_api(fields_data["ffiec"]) if "ffiec" in fields_data else None
         )
 
         # Canadian fields
         riding = (
             FederalRiding.from_api(fields_data["riding"])
-            if "riding" in fields_data else None
+            if "riding" in fields_data
+            else None
         )
 
         provriding = (
             ProvincialRiding.from_api(fields_data["provriding"])
-            if "provriding" in fields_data else None
+            if "provriding" in fields_data
+            else None
         )
 
         provriding_next = (
             ProvincialRiding.from_api(fields_data["provriding-next"])
-            if "provriding-next" in fields_data else None
+            if "provriding-next" in fields_data
+            else None
         )
 
         statcan = (
             StatisticsCanadaData.from_api(fields_data["statcan"])
-            if "statcan" in fields_data else None
+            if "statcan" in fields_data
+            else None
         )
 
         # Collect all known field keys that were parsed
         parsed_keys = {
-            "timezone", "cd", "congressional_districts",
-            "stateleg", "stateleg-next", "state_legislative_districts", "state_legislative_districts_next",
-            "school", "school_districts",  # Both school formats
+            "timezone",
+            "cd",
+            "congressional_districts",
+            "stateleg",
+            "stateleg-next",
+            "state_legislative_districts",
+            "state_legislative_districts_next",
+            "school",
+            "school_districts",  # Both school formats
             "census",  # Nested census structure
             "acs",  # Nested ACS structure
-            "acs-demographics", "acs-economics", "acs-families", "acs-housing", "acs-social",
-            "zip4", "ffiec",
-            "riding", "provriding", "provriding-next",
+            "acs-demographics",
+            "acs-economics",
+            "acs-families",
+            "acs-housing",
+            "acs-social",
+            "zip4",
+            "ffiec",
+            "riding",
+            "provriding",
+            "provriding-next",
             "statcan",
         }
         # Add flat census keys that were parsed (census2000, census2020, etc.)
@@ -748,10 +863,7 @@ class Geocodio:
 
         # Extras - capture any fields not explicitly handled
         # This is now mainly for truly unknown API fields (not census years)
-        extras = {
-            k: v for k, v in fields_data.items()
-            if k not in parsed_keys
-        }
+        extras = {k: v for k, v in fields_data.items() if k not in parsed_keys}
 
         return GeocodioFields(
             timezone=timezone,
@@ -789,15 +901,24 @@ class Geocodio:
         params = {}
         endpoint = f"{self.BASE_PATH}/lists/{list_id}/download"
 
-        response: httpx.Response = self._request("GET", endpoint, params, timeout=self.list_timeout)
+        response: httpx.Response = self._request(
+            "GET", endpoint, params, timeout=self.list_timeout
+        )
         if response.headers.get("content-type", "").startswith("application/json"):
             try:
                 error = response.json()
                 logger.error(f"Error downloading list {list_id}: {error}")
-                raise GeocodioServerError(error.get("message", "Failed to download list."))
+                raise GeocodioServerError(
+                    error.get("message", "Failed to download list.")
+                )
             except Exception as e:
-                logger.error(f"Failed to parse error message from response: {response.text}", exc_info=True)
-                raise GeocodioServerError("Failed to download list and could not parse error message.") from e
+                logger.error(
+                    f"Failed to parse error message from response: {response.text}",
+                    exc_info=True,
+                )
+                raise GeocodioServerError(
+                    "Failed to download list and could not parse error message."
+                ) from e
         else:
             if filename:
                 # If a filename is provided, save the response content to a file of that name=
@@ -810,7 +931,9 @@ class Geocodio:
 
                 # do not check if the file exists, just overwrite it
                 if os.path.exists(filename):
-                    logger.debug(f"File {filename} already exists; it will be overwritten.")
+                    logger.debug(
+                        f"File {filename} already exists; it will be overwritten."
+                    )
 
                 try:
                     with open(filename, "wb") as f:
@@ -818,7 +941,10 @@ class Geocodio:
                     logger.info(f"List {list_id} downloaded and saved to {filename}")
                     return filename  # Return the full path of the saved file
                 except IOError as e:
-                    logger.error(f"Failed to save list {list_id} to {filename}: {e}", exc_info=True)
+                    logger.error(
+                        f"Failed to save list {list_id} to {filename}: {e}",
+                        exc_info=True,
+                    )
                     raise GeocodioServerError(f"Failed to save list: {e}")
             else:  # return the bytes content directly
                 return response.content
@@ -972,8 +1098,7 @@ class Geocodio:
 
         # Normalize and convert origins to dicts for POST
         origin_dicts = [
-            self._coordinate_to_dict(self._normalize_coordinate(o))
-            for o in origins
+            self._coordinate_to_dict(self._normalize_coordinate(o)) for o in origins
         ]
 
         # Normalize and convert destinations to dicts for POST
@@ -1006,7 +1131,9 @@ class Geocodio:
         if sort_order != DISTANCE_SORT_ASC:
             body["sort"] = sort_order
 
-        response = self._request("POST", endpoint, json=body, timeout=self.batch_timeout)
+        response = self._request(
+            "POST", endpoint, json=body, timeout=self.batch_timeout
+        )
         return DistanceMatrixResponse.from_api(response.json())
 
     def create_distance_matrix_job(
@@ -1062,8 +1189,7 @@ class Geocodio:
             origins_data = origins
         else:
             origins_data = [
-                self._coordinate_to_dict(self._normalize_coordinate(o))
-                for o in origins
+                self._coordinate_to_dict(self._normalize_coordinate(o)) for o in origins
             ]
 
         # Handle destinations - either list of coordinates or list ID
@@ -1105,7 +1231,9 @@ class Geocodio:
         response = self._request("POST", endpoint, json=body, timeout=self.list_timeout)
         return DistanceJobResponse.from_api(response.json())
 
-    def distance_matrix_job_status(self, job_id: Union[str, int]) -> DistanceJobResponse:
+    def distance_matrix_job_status(
+        self, job_id: Union[str, int]
+    ) -> DistanceJobResponse:
         """
         Get the status of a distance matrix job.
 

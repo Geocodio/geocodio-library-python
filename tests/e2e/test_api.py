@@ -4,7 +4,9 @@ These tests require a valid GEOCODIO_API_KEY environment variable.
 """
 
 import os
+
 import pytest
+
 from geocodio import Geocodio
 from geocodio.exceptions import GeocodioError
 
@@ -45,8 +47,8 @@ def test_integration_geocode(client):
     assert components.number == "1109"
     assert "Highland" in components.street
     assert components.city == "Arlington"
-    assert components.state == "VA"
-    assert components.zip is not None
+    assert components.state_province == "VA"
+    assert components.postal_code is not None
 
 
 def test_integration_reverse(client):
@@ -76,8 +78,8 @@ def test_integration_reverse(client):
     assert components.number is not None
     assert components.street is not None
     assert components.city is not None
-    assert components.state is not None
-    assert components.zip is not None
+    assert components.state_province is not None
+    assert components.postal_code is not None
 
 
 def test_integration_with_fields(client):
@@ -86,10 +88,7 @@ def test_integration_with_fields(client):
     address = "1600 Pennsylvania Ave NW, Washington, DC"
 
     # Request additional fields
-    response = client.geocode(
-        address,
-        fields=["timezone", "cd", "census2020", "acs"]
-    )
+    response = client.geocode(address, fields=["timezone", "cd", "census2020", "acs"])
 
     # Verify response structure
     assert response is not None
@@ -134,10 +133,7 @@ def test_integration_with_fields(client):
 def test_integration_batch_geocode(client):
     """Test real batch geocoding API call."""
     # Test addresses
-    addresses = [
-        "3730 N Clark St, Chicago, IL",
-        "638 E 13th Ave, Denver, CO"
-    ]
+    addresses = ["3730 N Clark St, Chicago, IL", "638 E 13th Ave, Denver, CO"]
 
     # Make the API call
     response = client.geocode(addresses)
@@ -160,8 +156,8 @@ def test_integration_batch_geocode(client):
     assert components.street == "Clark"
     assert components.suffix == "St"
     assert components.city == "Chicago"
-    assert components.state == "IL"
-    assert components.zip == "60613"
+    assert components.state_province == "IL"
+    assert components.postal_code == "60613"
 
     # Check second address (Denver)
     denver = response.results[1]
@@ -177,8 +173,8 @@ def test_integration_batch_geocode(client):
     assert components.street == "13th"
     assert components.suffix == "Ave"
     assert components.city == "Denver"
-    assert components.state == "CO"
-    assert components.zip == "80203"
+    assert components.state_province == "CO"
+    assert components.postal_code == "80203"
 
 
 def test_integration_with_state_legislative_districts(client):
@@ -187,10 +183,7 @@ def test_integration_with_state_legislative_districts(client):
     address = "1600 Pennsylvania Ave NW, Washington, DC"
 
     # Request additional fields
-    response = client.geocode(
-        address,
-        fields=["stateleg", "stateleg-next"]
-    )
+    response = client.geocode(address, fields=["stateleg", "stateleg-next"])
 
     # Verify response structure
     assert response is not None
@@ -230,10 +223,7 @@ def test_integration_with_school_districts(client):
     address = "1600 Pennsylvania Ave NW, Washington, DC"
 
     # Request additional fields
-    response = client.geocode(
-        address,
-        fields=["school"]
-    )
+    response = client.geocode(address, fields=["school"])
 
     # Verify response structure
     assert response is not None
@@ -262,10 +252,7 @@ def test_integration_with_census2023(client):
     address = "1600 Pennsylvania Ave NW, Washington, DC"
 
     # Request additional fields
-    response = client.geocode(
-        address,
-        fields=["census2023"]
-    )
+    response = client.geocode(address, fields=["census2023"])
 
     # Verify response structure
     assert response is not None
@@ -294,10 +281,7 @@ def test_integration_with_demographics(client):
     address = "1600 Pennsylvania Ave NW, Washington, DC"
 
     # Request additional fields
-    response = client.geocode(
-        address,
-        fields=["acs-demographics"]
-    )
+    response = client.geocode(address, fields=["acs-demographics"])
 
     # Verify response structure
     assert response is not None
@@ -334,10 +318,7 @@ def test_integration_with_economics(client):
     address = "1600 Pennsylvania Ave NW, Washington, DC"
 
     # Request additional fields
-    response = client.geocode(
-        address,
-        fields=["acs-economics"]
-    )
+    response = client.geocode(address, fields=["acs-economics"])
 
     # Verify response structure
     assert response is not None
@@ -368,10 +349,7 @@ def test_integration_with_families(client):
     address = "1600 Pennsylvania Ave NW, Washington, DC"
 
     # Request additional fields
-    response = client.geocode(
-        address,
-        fields=["acs-families"]
-    )
+    response = client.geocode(address, fields=["acs-families"])
 
     # Verify response structure
     assert response is not None
@@ -406,10 +384,7 @@ def test_integration_with_housing(client):
     address = "1600 Pennsylvania Ave NW, Washington, DC"
 
     # Request additional fields
-    response = client.geocode(
-        address,
-        fields=["acs-housing"]
-    )
+    response = client.geocode(address, fields=["acs-housing"])
 
     # Verify response structure
     assert response is not None
@@ -444,10 +419,7 @@ def test_integration_with_zip4(client):
     address = "1600 Pennsylvania Ave NW, Washington, DC"
 
     # Request additional fields
-    response = client.geocode(
-        address,
-        fields=["zip4"]
-    )
+    response = client.geocode(address, fields=["zip4"])
 
     # Verify response structure
     assert response is not None
@@ -473,10 +445,7 @@ def test_integration_with_ffiec(client):
     address = "1600 Pennsylvania Ave NW, Washington, DC"
 
     # Request additional fields
-    response = client.geocode(
-        address,
-        fields=["ffiec"]
-    )
+    response = client.geocode(address, fields=["ffiec"])
 
     # Verify response structure
     assert response is not None
@@ -497,8 +466,7 @@ def test_integration_with_canadian_fields(client):
     # Test forward geocoding with Canadian address using q parameter
     address = "301 Front Street West, Toronto, ON M5V 2T6, Canada"
     response = client.geocode(
-        address,
-        fields=["provriding"]  # Test with just provriding first
+        address, fields=["provriding"]  # Test with just provriding first
     )
 
     # Verify response structure
@@ -524,12 +492,9 @@ def test_integration_with_canadian_fields(client):
         "city": "Toronto",
         "state": "ON",
         "postal_code": "M5V 2T6",
-        "country": "Canada"
+        "country": "Canada",
     }
-    response = client.geocode(
-        structured_address,
-        fields=["provriding"]
-    )
+    response = client.geocode(structured_address, fields=["provriding"])
 
     # Verify response structure
     assert response is not None
@@ -549,10 +514,7 @@ def test_integration_with_canadian_fields(client):
         assert fields.provriding.source is not None
 
     # Test reverse geocoding with Canadian coordinates (CN Tower coordinates)
-    response = client.reverse(
-        (43.6426, -79.3871),
-        fields=["provriding"]
-    )
+    response = client.reverse((43.6426, -79.3871), fields=["provriding"])
 
     # Verify response structure
     assert response is not None
@@ -575,7 +537,7 @@ def test_integration_with_canadian_fields(client):
     response = client.geocode(
         "301 Front Street West, Toronto, ON M5V 2T6",
         fields=["riding", "provriding", "provriding-next", "statcan"],
-        country="CA"  # Use country parameter instead of including in address
+        country="CA",  # Use country parameter instead of including in address
     )
 
     # Verify fields data for all Canadian fields
@@ -629,8 +591,7 @@ def test_integration_with_census_years(client):
 
     # Request additional fields for various census years
     response = client.geocode(
-        address,
-        fields=["census2000", "census2010", "census2020", "census2023"]
+        address, fields=["census2000", "census2010", "census2020", "census2023"]
     )
 
     # Verify response structure
@@ -659,8 +620,7 @@ def test_integration_with_congressional_district_variants(client):
 
     # Request additional fields for various congress numbers
     response = client.geocode(
-        address,
-        fields=["cd113", "cd114", "cd115", "cd116", "cd117", "cd118", "cd119"]
+        address, fields=["cd113", "cd114", "cd115", "cd116", "cd117", "cd118", "cd119"]
     )
 
     # Verify response structure

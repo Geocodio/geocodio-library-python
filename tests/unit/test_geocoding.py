@@ -1,6 +1,7 @@
 """
 Tests for geocoding functionality.
 """
+
 import os
 from typing import List
 
@@ -13,6 +14,7 @@ from geocodio.exceptions import AuthenticationError
 # Load environment variables from .env file
 load_dotenv()
 
+
 @pytest.fixture
 def client() -> Geocodio:
     """Create a Geocodio instance for testing."""
@@ -20,6 +22,7 @@ def client() -> Geocodio:
     if not api_key:
         pytest.skip("GEOCODIO_API_KEY environment variable not set")
     return Geocodio(api_key)
+
 
 def test_client_requires_api_key():
     """Test that client raises AuthenticationError when no API key is provided."""
@@ -36,11 +39,11 @@ def test_client_requires_api_key():
         if original_key:
             os.environ["GEOCODIO_API_KEY"] = original_key
 
+
 def test_single_forward_geocode(client: Geocodio):
     """Test forward geocoding of a single address."""
     response = client.geocode("3730 N Clark St, Chicago, IL")
 
-    assert response.input is not None
     assert len(response.results) > 0
 
     result = response.results[0]
@@ -60,14 +63,15 @@ def test_single_forward_geocode(client: Geocodio):
     assert components.street == "Clark"
     assert components.suffix == "St"
     assert components.city == "Chicago"
-    assert components.state == "IL"
-    assert components.zip == "60613"
+    assert components.state_province == "IL"
+    assert components.postal_code == "60613"
+
 
 def test_batch_forward_geocode(client: Geocodio):
     """Test forward geocoding of multiple addresses."""
     addresses: List[str] = [
         "3730 N Clark St, Chicago, IL",
-        "638 E 13th Ave, Denver, CO"
+        "638 E 13th Ave, Denver, CO",
     ]
     response = client.geocode(addresses)
 
@@ -84,6 +88,7 @@ def test_batch_forward_geocode(client: Geocodio):
     assert denver.formatted_address == "638 E 13th Ave, Denver, CO 80203"
     assert denver.accuracy > 0.9
     assert denver.accuracy_type == "rooftop"
+
 
 def test_single_reverse_geocode(client: Geocodio):
     """Test reverse geocoding of coordinates."""
@@ -102,12 +107,10 @@ def test_single_reverse_geocode(client: Geocodio):
     assert 38.89 < result.location.lat < 38.91
     assert -77.00 < result.location.lng < -76.99
 
+
 def test_geocode_with_fields(client: Geocodio):
     """Test geocoding with additional data fields."""
-    response = client.geocode(
-        "3730 N Clark St, Chicago, IL",
-        fields=["cd", "timezone"]
-    )
+    response = client.geocode("3730 N Clark St, Chicago, IL", fields=["cd", "timezone"])
 
     assert len(response.results) > 0
     result = response.results[0]

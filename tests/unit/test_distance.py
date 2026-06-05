@@ -3,26 +3,26 @@ Unit tests for the Distance API implementation.
 """
 
 import json
-import pytest
+
 import httpx
+import pytest
 
 from geocodio import (
-    Geocodio,
-    Coordinate,
-    DISTANCE_MODE_STRAIGHTLINE,
     DISTANCE_MODE_DRIVING,
     DISTANCE_MODE_HAVERSINE,
-    DISTANCE_UNITS_MILES,
-    DISTANCE_UNITS_KM,
+    DISTANCE_MODE_STRAIGHTLINE,
     DISTANCE_ORDER_BY_DISTANCE,
     DISTANCE_ORDER_BY_DURATION,
     DISTANCE_SORT_ASC,
     DISTANCE_SORT_DESC,
-    DistanceResponse,
-    DistanceMatrixResponse,
+    DISTANCE_UNITS_KM,
+    DISTANCE_UNITS_MILES,
+    Coordinate,
     DistanceJobResponse,
+    DistanceMatrixResponse,
+    DistanceResponse,
+    Geocodio,
 )
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Coordinate Class Tests
@@ -116,7 +116,9 @@ class TestCoordinate:
 
     def test_from_dict_with_id(self):
         """Test creating coordinate from dict with id."""
-        coord = Coordinate.from_input({"lat": 38.8977, "lng": -77.0365, "id": "white_house"})
+        coord = Coordinate.from_input(
+            {"lat": 38.8977, "lng": -77.0365, "id": "white_house"}
+        )
         assert coord.lat == 38.8977
         assert coord.lng == -77.0365
         assert coord.id == "white_house"
@@ -164,7 +166,7 @@ def sample_distance_response():
         "origin": {
             "query": "38.8977,-77.0365,white_house",
             "location": [38.8977, -77.0365],
-            "id": "white_house"
+            "id": "white_house",
         },
         "mode": "straightline",
         "destinations": [
@@ -173,26 +175,23 @@ def sample_distance_response():
                 "location": [38.9072, -77.0369],
                 "id": "capitol",
                 "distance_miles": 0.7,
-                "distance_km": 1.1
+                "distance_km": 1.1,
             },
             {
                 "query": "38.8895,-77.0353,monument",
                 "location": [38.8895, -77.0353],
                 "id": "monument",
                 "distance_miles": 0.6,
-                "distance_km": 0.9
-            }
-        ]
+                "distance_km": 0.9,
+            },
+        ],
     }
 
 
 def sample_distance_driving_response():
     """Sample response for distance endpoint with driving mode."""
     return {
-        "origin": {
-            "query": "38.8977,-77.0365",
-            "location": [38.8977, -77.0365]
-        },
+        "origin": {"query": "38.8977,-77.0365", "location": [38.8977, -77.0365]},
         "mode": "driving",
         "destinations": [
             {
@@ -200,9 +199,9 @@ def sample_distance_driving_response():
                 "location": [38.9072, -77.0369],
                 "distance_miles": 1.2,
                 "distance_km": 1.9,
-                "duration_seconds": 294
+                "duration_seconds": 294,
             }
-        ]
+        ],
     }
 
 
@@ -211,16 +210,17 @@ class TestDistance:
 
     def test_distance_basic(self, client, httpx_mock):
         """Test basic distance calculation."""
+
         def response_callback(request):
             assert request.method == "GET"
-            assert "/v1.11/distance" in str(request.url)
+            assert "/v2/distance" in str(request.url)
             return httpx.Response(200, json=sample_distance_response())
 
         httpx_mock.add_callback(callback=response_callback)
 
         response = client.distance(
             origin="38.8977,-77.0365,white_house",
-            destinations=["38.9072,-77.0369,capitol", "38.8895,-77.0353,monument"]
+            destinations=["38.9072,-77.0369,capitol", "38.8895,-77.0353,monument"],
         )
 
         assert isinstance(response, DistanceResponse)
@@ -233,13 +233,15 @@ class TestDistance:
     def test_distance_with_coordinate_objects(self, client, httpx_mock):
         """Test distance with Coordinate objects."""
         httpx_mock.add_callback(
-            callback=lambda request: httpx.Response(200, json=sample_distance_response())
+            callback=lambda request: httpx.Response(
+                200, json=sample_distance_response()
+            )
         )
 
         origin = Coordinate(38.8977, -77.0365, "white_house")
         destinations = [
             Coordinate(38.9072, -77.0369, "capitol"),
-            Coordinate(38.8895, -77.0353, "monument")
+            Coordinate(38.8895, -77.0353, "monument"),
         ]
 
         response = client.distance(origin=origin, destinations=destinations)
@@ -250,18 +252,21 @@ class TestDistance:
     def test_distance_with_tuples(self, client, httpx_mock):
         """Test distance with tuple coordinates."""
         httpx_mock.add_callback(
-            callback=lambda request: httpx.Response(200, json=sample_distance_response())
+            callback=lambda request: httpx.Response(
+                200, json=sample_distance_response()
+            )
         )
 
         response = client.distance(
             origin=(38.8977, -77.0365),
-            destinations=[(38.9072, -77.0369), (38.8895, -77.0353)]
+            destinations=[(38.9072, -77.0369), (38.8895, -77.0353)],
         )
 
         assert isinstance(response, DistanceResponse)
 
     def test_distance_driving_mode(self, client, httpx_mock):
         """Test distance with driving mode returns duration."""
+
         def response_callback(request):
             assert "mode=driving" in str(request.url)
             return httpx.Response(200, json=sample_distance_driving_response())
@@ -271,7 +276,7 @@ class TestDistance:
         response = client.distance(
             origin="38.8977,-77.0365",
             destinations=["38.9072,-77.0369"],
-            mode=DISTANCE_MODE_DRIVING
+            mode=DISTANCE_MODE_DRIVING,
         )
 
         assert response.mode == "driving"
@@ -279,6 +284,7 @@ class TestDistance:
 
     def test_distance_haversine_mapped_to_straightline(self, client, httpx_mock):
         """Test that haversine mode is mapped to straightline."""
+
         def response_callback(request):
             assert "mode=straightline" in str(request.url)
             return httpx.Response(200, json=sample_distance_response())
@@ -288,11 +294,12 @@ class TestDistance:
         client.distance(
             origin="38.8977,-77.0365",
             destinations=["38.9072,-77.0369"],
-            mode=DISTANCE_MODE_HAVERSINE
+            mode=DISTANCE_MODE_HAVERSINE,
         )
 
     def test_distance_with_filters(self, client, httpx_mock):
         """Test distance with filter parameters."""
+
         def response_callback(request):
             url_str = str(request.url)
             assert "max_results=5" in url_str
@@ -305,11 +312,12 @@ class TestDistance:
             origin="38.8977,-77.0365",
             destinations=["38.9072,-77.0369"],
             max_results=5,
-            max_distance=10.0
+            max_distance=10.0,
         )
 
     def test_distance_with_sorting(self, client, httpx_mock):
         """Test distance with sorting parameters."""
+
         def response_callback(request):
             url_str = str(request.url)
             assert "order_by=duration" in url_str
@@ -322,7 +330,7 @@ class TestDistance:
             origin="38.8977,-77.0365",
             destinations=["38.9072,-77.0369"],
             order_by=DISTANCE_ORDER_BY_DURATION,
-            sort_order=DISTANCE_SORT_DESC
+            sort_order=DISTANCE_SORT_DESC,
         )
 
 
@@ -340,7 +348,7 @@ def sample_distance_matrix_response():
                 "origin": {
                     "query": "38.8977,-77.0365",
                     "location": [38.8977, -77.0365],
-                    "id": "origin1"
+                    "id": "origin1",
                 },
                 "destinations": [
                     {
@@ -348,15 +356,15 @@ def sample_distance_matrix_response():
                         "location": [38.8895, -77.0353],
                         "id": "dest1",
                         "distance_miles": 1.5,
-                        "distance_km": 2.5
+                        "distance_km": 2.5,
                     }
-                ]
+                ],
             },
             {
                 "origin": {
                     "query": "38.9072,-77.0369",
                     "location": [38.9072, -77.0369],
-                    "id": "origin2"
+                    "id": "origin2",
                 },
                 "destinations": [
                     {
@@ -364,11 +372,11 @@ def sample_distance_matrix_response():
                         "location": [38.8895, -77.0353],
                         "id": "dest1",
                         "distance_miles": 1.3,
-                        "distance_km": 2.1
+                        "distance_km": 2.1,
                     }
-                ]
-            }
-        ]
+                ],
+            },
+        ],
     }
 
 
@@ -377,6 +385,7 @@ class TestDistanceMatrix:
 
     def test_distance_matrix_basic(self, client, httpx_mock):
         """Test basic distance matrix calculation."""
+
         def response_callback(request):
             assert request.method == "POST"
             body = json.loads(request.content)
@@ -388,13 +397,8 @@ class TestDistanceMatrix:
         httpx_mock.add_callback(callback=response_callback)
 
         response = client.distance_matrix(
-            origins=[
-                (38.8977, -77.0365, "origin1"),
-                (38.9072, -77.0369, "origin2")
-            ],
-            destinations=[
-                (38.8895, -77.0353, "dest1")
-            ]
+            origins=[(38.8977, -77.0365, "origin1"), (38.9072, -77.0369, "origin2")],
+            destinations=[(38.8895, -77.0353, "dest1")],
         )
 
         assert isinstance(response, DistanceMatrixResponse)
@@ -405,6 +409,7 @@ class TestDistanceMatrix:
 
     def test_distance_matrix_uses_object_format(self, client, httpx_mock):
         """Test that distance_matrix uses object format in POST body."""
+
         def response_callback(request):
             body = json.loads(request.content)
             # Origins and destinations should be dicts, not strings
@@ -417,11 +422,12 @@ class TestDistanceMatrix:
 
         client.distance_matrix(
             origins=["38.8977,-77.0365,origin1"],
-            destinations=["38.8895,-77.0353,dest1"]
+            destinations=["38.8895,-77.0353,dest1"],
         )
 
     def test_distance_matrix_preserves_ids(self, client, httpx_mock):
         """Test that IDs are preserved in request."""
+
         def response_callback(request):
             body = json.loads(request.content)
             assert body["origins"][0]["id"] == "origin1"
@@ -432,7 +438,7 @@ class TestDistanceMatrix:
 
         client.distance_matrix(
             origins=[Coordinate(38.8977, -77.0365, "origin1")],
-            destinations=[Coordinate(38.8895, -77.0353, "dest1")]
+            destinations=[Coordinate(38.8895, -77.0353, "dest1")],
         )
 
 
@@ -451,7 +457,7 @@ def sample_job_create_response():
         "created_at": "2025-01-15T12:00:00.000000Z",
         "origins_count": 2,
         "destinations_count": 2,
-        "total_calculations": 4
+        "total_calculations": 4,
     }
 
 
@@ -464,12 +470,12 @@ def sample_job_status_response():
             "name": "My Job",
             "status": "COMPLETED",
             "progress": 100,
-            "download_url": "https://api.geocod.io/v1.11/distance-jobs/123/download",
+            "download_url": "https://api.geocod.io/v2/distance-jobs/123/download",
             "total_calculations": 4,
             "calculations_completed": 4,
             "origins_count": 2,
             "destinations_count": 2,
-            "created_at": "2025-01-15T12:00:00.000000Z"
+            "created_at": "2025-01-15T12:00:00.000000Z",
         }
     }
 
@@ -486,7 +492,7 @@ def sample_jobs_list_response():
                 "created_at": "2025-01-15T12:00:00.000000Z",
                 "origins_count": 2,
                 "destinations_count": 2,
-                "total_calculations": 4
+                "total_calculations": 4,
             },
             {
                 "id": 124,
@@ -496,14 +502,14 @@ def sample_jobs_list_response():
                 "created_at": "2025-01-15T13:00:00.000000Z",
                 "origins_count": 3,
                 "destinations_count": 3,
-                "total_calculations": 9
-            }
+                "total_calculations": 9,
+            },
         ],
         "current_page": 1,
         "from": 1,
         "to": 2,
-        "path": "/v1.11/distance-jobs",
-        "per_page": 10
+        "path": "/v2/distance-jobs",
+        "per_page": 10,
     }
 
 
@@ -512,6 +518,7 @@ class TestDistanceJobs:
 
     def test_create_job_with_coordinates(self, client, httpx_mock):
         """Test creating a distance job with coordinate lists."""
+
         def response_callback(request):
             assert request.method == "POST"
             body = json.loads(request.content)
@@ -525,7 +532,7 @@ class TestDistanceJobs:
         response = client.create_distance_matrix_job(
             name="My Job",
             origins=[(38.8977, -77.0365), (38.9072, -77.0369)],
-            destinations=[(38.8895, -77.0353), (39.2904, -76.6122)]
+            destinations=[(38.8895, -77.0353), (39.2904, -76.6122)],
         )
 
         assert isinstance(response, DistanceJobResponse)
@@ -535,6 +542,7 @@ class TestDistanceJobs:
 
     def test_create_job_with_list_ids(self, client, httpx_mock):
         """Test creating a distance job with list IDs."""
+
         def response_callback(request):
             body = json.loads(request.content)
             assert body["origins"] == 12345
@@ -544,13 +552,12 @@ class TestDistanceJobs:
         httpx_mock.add_callback(callback=response_callback)
 
         client.create_distance_matrix_job(
-            name="My Job",
-            origins=12345,
-            destinations=67890
+            name="My Job", origins=12345, destinations=67890
         )
 
     def test_create_job_with_callback_url(self, client, httpx_mock):
         """Test creating a job with callback URL."""
+
         def response_callback(request):
             body = json.loads(request.content)
             assert body["callback_url"] == "https://example.com/webhook"
@@ -562,13 +569,15 @@ class TestDistanceJobs:
             name="My Job",
             origins=[(38.8977, -77.0365)],
             destinations=[(38.8895, -77.0353)],
-            callback_url="https://example.com/webhook"
+            callback_url="https://example.com/webhook",
         )
 
     def test_job_status(self, client, httpx_mock):
         """Test getting job status."""
         httpx_mock.add_callback(
-            callback=lambda request: httpx.Response(200, json=sample_job_status_response())
+            callback=lambda request: httpx.Response(
+                200, json=sample_job_status_response()
+            )
         )
 
         response = client.distance_matrix_job_status(123)
@@ -580,7 +589,9 @@ class TestDistanceJobs:
     def test_list_jobs(self, client, httpx_mock):
         """Test listing jobs."""
         httpx_mock.add_callback(
-            callback=lambda request: httpx.Response(200, json=sample_jobs_list_response())
+            callback=lambda request: httpx.Response(
+                200, json=sample_jobs_list_response()
+            )
         )
 
         response = client.distance_matrix_jobs()
@@ -594,7 +605,7 @@ class TestDistanceJobs:
             callback=lambda request: httpx.Response(
                 200,
                 json=sample_distance_matrix_response(),
-                headers={"content-type": "application/json"}
+                headers={"content-type": "application/json"},
             )
         )
 
@@ -605,6 +616,7 @@ class TestDistanceJobs:
 
     def test_delete_job(self, client, httpx_mock):
         """Test deleting a job."""
+
         def response_callback(request):
             assert request.method == "DELETE"
             return httpx.Response(204)
@@ -623,29 +635,31 @@ class TestDistanceJobs:
 def sample_geocode_with_distance_response():
     """Sample geocode response with distance data."""
     return {
-        "results": [{
-            "address_components": {
-                "number": "1600",
-                "street": "Pennsylvania",
-                "suffix": "Ave",
-                "city": "Washington",
-                "state": "DC",
-                "zip": "20500"
-            },
-            "formatted_address": "1600 Pennsylvania Ave NW, Washington, DC 20500",
-            "location": {"lat": 38.8977, "lng": -77.0365},
-            "accuracy": 1,
-            "accuracy_type": "rooftop",
-            "source": "DC",
-            "destinations": [
-                {
-                    "query": "38.9072,-77.0369",
-                    "location": [38.9072, -77.0369],
-                    "distance_miles": 0.7,
-                    "distance_km": 1.1
-                }
-            ]
-        }]
+        "results": [
+            {
+                "address_components": {
+                    "number": "1600",
+                    "street": "Pennsylvania",
+                    "suffix": "Ave",
+                    "city": "Washington",
+                    "state_province": "DC",
+                    "postal_code": "20500",
+                },
+                "formatted_address": "1600 Pennsylvania Ave NW, Washington, DC 20500",
+                "location": {"lat": 38.8977, "lng": -77.0365},
+                "accuracy": 1,
+                "accuracy_type": "rooftop",
+                "source": "DC",
+                "destinations": [
+                    {
+                        "query": "38.9072,-77.0369",
+                        "location": [38.9072, -77.0369],
+                        "distance_miles": 0.7,
+                        "distance_km": 1.1,
+                    }
+                ],
+            }
+        ]
     }
 
 
@@ -654,26 +668,30 @@ class TestGeocodeWithDistance:
 
     def test_geocode_with_destinations(self, client, httpx_mock):
         """Test geocode with destination parameter."""
+
         def response_callback(request):
             url_str = str(request.url)
-            assert "/v1.11/geocode" in url_str
-            assert "destinations%5B%5D" in url_str or "destinations[]" in url_str.replace("%5B", "[").replace("%5D", "]")
+            assert "/v2/geocode" in url_str
+            assert (
+                "destinations%5B%5D" in url_str
+                or "destinations[]" in url_str.replace("%5B", "[").replace("%5D", "]")
+            )
             return httpx.Response(200, json=sample_geocode_with_distance_response())
 
         httpx_mock.add_callback(callback=response_callback)
 
         response = client.geocode(
-            "1600 Pennsylvania Ave NW, Washington DC",
-            destinations=["38.9072,-77.0369"]
+            "1600 Pennsylvania Ave NW, Washington DC", destinations=["38.9072,-77.0369"]
         )
 
         assert len(response.results) == 1
 
     def test_geocode_with_distance_mode(self, client, httpx_mock):
         """Test geocode with distance mode parameter."""
+
         def response_callback(request):
             url_str = str(request.url)
-            assert "/v1.11/geocode" in url_str
+            assert "/v2/geocode" in url_str
             assert "distance_mode=driving" in url_str
             return httpx.Response(200, json=sample_geocode_with_distance_response())
 
@@ -682,14 +700,15 @@ class TestGeocodeWithDistance:
         client.geocode(
             "1600 Pennsylvania Ave NW, Washington DC",
             destinations=["38.9072,-77.0369"],
-            distance_mode=DISTANCE_MODE_DRIVING
+            distance_mode=DISTANCE_MODE_DRIVING,
         )
 
     def test_geocode_with_distance_units(self, client, httpx_mock):
         """Test geocode with distance units parameter."""
+
         def response_callback(request):
             url_str = str(request.url)
-            assert "/v1.11/geocode" in url_str
+            assert "/v2/geocode" in url_str
             assert "distance_units=km" in url_str
             return httpx.Response(200, json=sample_geocode_with_distance_response())
 
@@ -698,7 +717,7 @@ class TestGeocodeWithDistance:
         client.geocode(
             "1600 Pennsylvania Ave NW, Washington DC",
             destinations=["38.9072,-77.0369"],
-            distance_units=DISTANCE_UNITS_KM
+            distance_units=DISTANCE_UNITS_KM,
         )
 
 
@@ -712,26 +731,28 @@ class TestReverseWithDistance:
 
     def test_reverse_with_destinations(self, client, httpx_mock):
         """Test reverse geocode with destination parameter."""
+
         def response_callback(request):
             url_str = str(request.url)
-            assert "/v1.11/reverse" in url_str
-            assert "destinations%5B%5D" in url_str or "destinations[]" in url_str.replace("%5B", "[").replace("%5D", "]")
+            assert "/v2/reverse" in url_str
+            assert (
+                "destinations%5B%5D" in url_str
+                or "destinations[]" in url_str.replace("%5B", "[").replace("%5D", "]")
+            )
             return httpx.Response(200, json=sample_geocode_with_distance_response())
 
         httpx_mock.add_callback(callback=response_callback)
 
-        response = client.reverse(
-            "38.8977,-77.0365",
-            destinations=["38.9072,-77.0369"]
-        )
+        response = client.reverse("38.8977,-77.0365", destinations=["38.9072,-77.0369"])
 
         assert len(response.results) == 1
 
     def test_reverse_with_distance_mode(self, client, httpx_mock):
         """Test reverse geocode with distance mode parameter."""
+
         def response_callback(request):
             url_str = str(request.url)
-            assert "/v1.11/reverse" in url_str
+            assert "/v2/reverse" in url_str
             assert "distance_mode=straightline" in url_str
             return httpx.Response(200, json=sample_geocode_with_distance_response())
 
@@ -740,7 +761,7 @@ class TestReverseWithDistance:
         client.reverse(
             (38.8977, -77.0365),
             destinations=[(38.9072, -77.0369)],
-            distance_mode=DISTANCE_MODE_STRAIGHTLINE
+            distance_mode=DISTANCE_MODE_STRAIGHTLINE,
         )
 
 

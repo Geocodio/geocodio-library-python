@@ -1,7 +1,25 @@
 import pytest
+
 from geocodio.models import (
-    AddressComponents, Timezone, CongressionalDistrict,
-    GeocodioFields, GeocodingResult, GeocodingResponse, Location, StateLegislativeDistrict, SchoolDistrict, CensusData, Demographics, Economics, Families, Housing, Social, ZIP4Data, FederalRiding, StatisticsCanadaData, FFIECData
+    AddressComponents,
+    CensusData,
+    CongressionalDistrict,
+    Demographics,
+    Economics,
+    Families,
+    FederalRiding,
+    FFIECData,
+    GeocodingResponse,
+    GeocodingResult,
+    GeocodioFields,
+    Housing,
+    Location,
+    SchoolDistrict,
+    Social,
+    StateLegislativeDistrict,
+    StatisticsCanadaData,
+    Timezone,
+    ZIP4Data,
 )
 
 
@@ -13,10 +31,10 @@ def test_has_extras_mixin():
         "street": "Highland",
         "suffix": "St",
         "city": "Arlington",
-        "state": "VA",
-        "zip": "22201",
+        "state_province": "VA",
+        "postal_code": "22201",
         "extra_field": "extra value",
-        "another_extra": 123
+        "another_extra": 123,
     }
 
     ac = AddressComponents.from_api(data)
@@ -44,10 +62,10 @@ def test_address_components_extras():
         "street": "Highland",
         "suffix": "St",
         "city": "Arlington",
-        "state": "VA",
-        "zip": "22201",
+        "state_province": "VA",
+        "postal_code": "22201",
         "extra_field": "extra value",
-        "another_extra": 123
+        "another_extra": 123,
     }
 
     ac = AddressComponents.from_api(data)
@@ -56,8 +74,8 @@ def test_address_components_extras():
     assert ac.street == "Highland"
     assert ac.suffix == "St"
     assert ac.city == "Arlington"
-    assert ac.state == "VA"
-    assert ac.zip == "22201"
+    assert ac.state_province == "VA"
+    assert ac.postal_code == "22201"
 
 
 def test_timezone_extras():
@@ -66,7 +84,7 @@ def test_timezone_extras():
         "name": "America/New_York",
         "utc_offset": -5,
         "observes_dst": True,
-        "extra_field": "extra value"
+        "extra_field": "extra value",
     }
 
     tz = Timezone.from_api(data)
@@ -78,30 +96,28 @@ def test_timezone_extras():
 
 def test_geocoding_response_empty_results():
     # Test GeocodingResponse with empty results list
-    response = GeocodingResponse(
-        input={"address": "1109 N Highland St, Arlington, VA"},
-        results=[]
-    )
+    response = GeocodingResponse(results=[])
 
     assert len(response.results) == 0
-    assert response.input["address"] == "1109 N Highland St, Arlington, VA"
 
 
 def test_geocoding_result_without_fields():
     # Test GeocodingResult without optional fields
     result = GeocodingResult(
-        address_components=AddressComponents.from_api({
-            "number": "1109",
-            "street": "Highland",
-            "suffix": "St",
-            "city": "Arlington",
-            "state": "VA"
-        }),
+        address_components=AddressComponents.from_api(
+            {
+                "number": "1109",
+                "street": "Highland",
+                "suffix": "St",
+                "city": "Arlington",
+                "state_province": "VA",
+            }
+        ),
         formatted_address="1109 Highland St, Arlington, VA",
         location=Location(lat=38.886672, lng=-77.094735),
         accuracy=1.0,
         accuracy_type="rooftop",
-        source="Arlington"
+        source="Arlington",
     )
 
     assert result.fields is None
@@ -118,7 +134,7 @@ def test_state_legislative_district_extras():
         "chamber": "house",
         "ocd_id": "ocd-division/country:us/state:va/sldl:8",
         "proportion": 1.0,
-        "extra_field": "extra value"
+        "extra_field": "extra value",
     }
 
     district = StateLegislativeDistrict.from_api(data)
@@ -137,7 +153,7 @@ def test_school_district_extras():
         "district_number": "001",
         "lea_id": "5100000",
         "nces_id": "5100000",
-        "extra_field": "extra value"
+        "extra_field": "extra value",
     }
 
     district = SchoolDistrict.from_api(data)
@@ -158,7 +174,7 @@ def test_census_data_extras():
         "state_fips": "51",
         "msa_code": "47900",
         "csa_code": "548",
-        "extra_field": "extra value"
+        "extra_field": "extra value",
     }
 
     census = CensusData.from_api(data)
@@ -183,7 +199,7 @@ def test_demographics_extras():
         "black_population": 200,
         "asian_population": 100,
         "hispanic_population": 100,
-        "extra_field": "extra value"
+        "extra_field": "extra value",
     }
 
     demographics = Demographics.from_api(data)
@@ -206,7 +222,7 @@ def test_economics_extras():
         "per_capita_income": 35000,
         "poverty_rate": 10.5,
         "unemployment_rate": 5.2,
-        "extra_field": "extra value"
+        "extra_field": "extra value",
     }
 
     economics = Economics.from_api(data)
@@ -228,7 +244,7 @@ def test_families_extras():
         "single_male_households": 100,
         "single_female_households": 100,
         "average_household_size": 2.5,
-        "extra_field": "extra value"
+        "extra_field": "extra value",
     }
 
     families = Families.from_api(data)
@@ -252,7 +268,7 @@ def test_housing_extras():
         "renter_occupied_units": 300,
         "median_home_value": 350000,
         "median_rent": 1500,
-        "extra_field": "extra value"
+        "extra_field": "extra value",
     }
 
     housing = Housing.from_api(data)
@@ -274,7 +290,7 @@ def test_social_extras():
         "graduate_degree_or_higher": 200,
         "veterans": 100,
         "veterans_percentage": 10.5,
-        "extra_field": "extra value"
+        "extra_field": "extra value",
     }
 
     social = Social.from_api(data)
@@ -292,7 +308,7 @@ def test_zip4_data():
         "zip4": "1234",
         "delivery_point": "01",
         "carrier_route": "C001",
-        "extra_field": "extra value"
+        "extra_field": "extra value",
     }
     zip4 = ZIP4Data.from_api(data)
     assert zip4.zip4 == "1234"
@@ -310,7 +326,7 @@ def test_canadian_riding():
         "ocd_id": "ocd-division/country:ca/ed:35052",
         "year": 2021,
         "source": "Elections Canada",
-        "extra_field": "extra value"
+        "extra_field": "extra value",
     }
     riding = FederalRiding.from_api(data)
     assert riding.code == "35052"
@@ -337,7 +353,7 @@ def test_statistics_canada_data():
         "dissemination_block": {"code": "123456"},
         "census_year": 2021,
         "designated_place": {"name": "Place 1"},
-        "extra_field": "extra value"
+        "extra_field": "extra value",
     }
     statcan = StatisticsCanadaData.from_api(data)
     assert statcan.division == {"name": "Division 1"}
@@ -357,8 +373,6 @@ def test_statistics_canada_data():
 
 def test_ffiec_data():
     """Test FFIEC data model."""
-    data = {
-        "extra_field": "extra value"
-    }
+    data = {"extra_field": "extra value"}
     ffiec = FFIECData.from_api(data)
     assert ffiec.get_extra("extra_field") == "extra value"

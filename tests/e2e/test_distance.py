@@ -6,23 +6,24 @@ They make real API calls to the Geocodio service.
 """
 
 import os
-import pytest
-from geocodio import (
-    Geocodio,
-    Coordinate,
-    DISTANCE_MODE_STRAIGHTLINE,
-    DISTANCE_MODE_DRIVING,
-    DISTANCE_UNITS_MILES,
-    DISTANCE_UNITS_KM,
-    DistanceResponse,
-    DistanceMatrixResponse,
-)
 
+import pytest
+
+from geocodio import (
+    DISTANCE_MODE_DRIVING,
+    DISTANCE_MODE_STRAIGHTLINE,
+    DISTANCE_UNITS_KM,
+    DISTANCE_UNITS_MILES,
+    Coordinate,
+    DistanceMatrixResponse,
+    DistanceResponse,
+    Geocodio,
+)
 
 # Skip all tests if no API key is available
 pytestmark = pytest.mark.skipif(
     not os.getenv("GEOCODIO_API_KEY"),
-    reason="GEOCODIO_API_KEY environment variable not set"
+    reason="GEOCODIO_API_KEY environment variable not set",
 )
 
 
@@ -47,10 +48,10 @@ class TestDistanceE2E:
             origin="38.8977,-77.0365",  # White House
             destinations=[
                 "38.8895,-77.0353",  # Washington Monument
-                "38.9072,-77.0369"   # Capitol Building
+                "38.9072,-77.0369",  # Capitol Building
             ],
             mode=DISTANCE_MODE_STRAIGHTLINE,
-            units=DISTANCE_UNITS_MILES
+            units=DISTANCE_UNITS_MILES,
         )
 
         assert isinstance(response, DistanceResponse)
@@ -69,8 +70,8 @@ class TestDistanceE2E:
             origin=Coordinate(38.8977, -77.0365, "white_house"),
             destinations=[
                 Coordinate(38.8895, -77.0353, "monument"),
-                Coordinate(38.9072, -77.0369, "capitol")
-            ]
+                Coordinate(38.9072, -77.0369, "capitol"),
+            ],
         )
 
         assert isinstance(response, DistanceResponse)
@@ -82,7 +83,7 @@ class TestDistanceE2E:
         response = client.distance(
             origin="38.8977,-77.0365",
             destinations=["38.8895,-77.0353"],
-            mode=DISTANCE_MODE_DRIVING
+            mode=DISTANCE_MODE_DRIVING,
         )
 
         assert response.mode == "driving"
@@ -96,7 +97,7 @@ class TestDistanceE2E:
         response = client.distance(
             origin="38.8977,-77.0365",
             destinations=["38.8895,-77.0353"],
-            units=DISTANCE_UNITS_KM
+            units=DISTANCE_UNITS_KM,
         )
 
         assert isinstance(response, DistanceResponse)
@@ -118,12 +119,12 @@ class TestDistanceMatrixE2E:
         response = client.distance_matrix(
             origins=[
                 (38.8977, -77.0365),  # White House
-                (38.9072, -77.0369)   # Capitol
+                (38.9072, -77.0369),  # Capitol
             ],
             destinations=[
                 (38.8895, -77.0353),  # Washington Monument
-                (38.8816, -77.0364)   # Jefferson Memorial
-            ]
+                (38.8816, -77.0364),  # Jefferson Memorial
+            ],
         )
 
         assert isinstance(response, DistanceMatrixResponse)
@@ -140,11 +141,9 @@ class TestDistanceMatrixE2E:
         response = client.distance_matrix(
             origins=[
                 Coordinate(38.8977, -77.0365, "origin1"),
-                Coordinate(38.9072, -77.0369, "origin2")
+                Coordinate(38.9072, -77.0369, "origin2"),
             ],
-            destinations=[
-                Coordinate(38.8895, -77.0353, "dest1")
-            ]
+            destinations=[Coordinate(38.8895, -77.0353, "dest1")],
         )
 
         assert isinstance(response, DistanceMatrixResponse)
@@ -165,7 +164,7 @@ class TestGeocodeWithDistanceE2E:
         """Test geocode with distance to destinations."""
         response = client.geocode(
             "1600 Pennsylvania Ave NW, Washington DC",
-            destinations=["38.8895,-77.0353"]  # Washington Monument
+            destinations=["38.8895,-77.0353"],  # Washington Monument
         )
 
         assert len(response.results) >= 1
@@ -176,7 +175,7 @@ class TestGeocodeWithDistanceE2E:
         """Test reverse geocode with distance to destinations."""
         response = client.reverse(
             (38.8977, -77.0365),  # White House coordinates
-            destinations=["38.8895,-77.0353"]  # Washington Monument
+            destinations=["38.8895,-77.0353"],  # Washington Monument
         )
 
         assert len(response.results) >= 1
@@ -194,32 +193,27 @@ class TestCoordinateE2E:
         """Test that all coordinate formats work with the API."""
         # String format
         response1 = client.distance(
-            origin="38.8977,-77.0365",
-            destinations=["38.8895,-77.0353"]
+            origin="38.8977,-77.0365", destinations=["38.8895,-77.0353"]
         )
         assert isinstance(response1, DistanceResponse)
 
         # Tuple format
         response2 = client.distance(
-            origin=(38.8977, -77.0365),
-            destinations=[(38.8895, -77.0353)]
+            origin=(38.8977, -77.0365), destinations=[(38.8895, -77.0353)]
         )
         assert isinstance(response2, DistanceResponse)
 
         # Coordinate object format
         response3 = client.distance(
             origin=Coordinate(38.8977, -77.0365),
-            destinations=[Coordinate(38.8895, -77.0353)]
+            destinations=[Coordinate(38.8895, -77.0353)],
         )
         assert isinstance(response3, DistanceResponse)
 
         # Mixed formats
         response4 = client.distance(
             origin=Coordinate(38.8977, -77.0365, "white_house"),
-            destinations=[
-                "38.8895,-77.0353,monument",
-                (38.9072, -77.0369)
-            ]
+            destinations=["38.8895,-77.0353,monument", (38.9072, -77.0369)],
         )
         assert isinstance(response4, DistanceResponse)
 

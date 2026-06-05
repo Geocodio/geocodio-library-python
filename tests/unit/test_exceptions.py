@@ -1,18 +1,17 @@
 import pytest
+
 from geocodio.exceptions import (
-    GeocodioErrorDetail,
-    GeocodioError,
-    InvalidRequestError,
     AuthenticationError,
+    GeocodioError,
+    GeocodioErrorDetail,
     GeocodioServerError,
+    InvalidRequestError,
 )
 
 
 def test_error_detail_with_code_and_errors():
     detail = GeocodioErrorDetail(
-        message="Invalid input",
-        code=422,
-        errors=["Field 'address' is required"]
+        message="Invalid input", code=422, errors=["Field 'address' is required"]
     )
     assert detail.message == "Invalid input"
     assert detail.code == 422
@@ -29,9 +28,7 @@ def test_error_with_string_detail():
 
 def test_error_with_error_detail():
     detail = GeocodioErrorDetail(
-        message="Complex error",
-        code=500,
-        errors=["Database error", "Network timeout"]
+        message="Complex error", code=500, errors=["Database error", "Network timeout"]
     )
     error = GeocodioError(detail)
     assert str(error) == "Complex error"
