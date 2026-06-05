@@ -1,24 +1,13 @@
 import json
 from pathlib import Path
-from geocodio.models import GeocodingResponse, AddressComponents
+
 import httpx
+
+from geocodio.models import AddressComponents, GeocodingResponse
 
 
 def sample_payload() -> dict:
     return {
-        "input": {
-            "address_components": {
-                "number": "1109",
-                "predirectional": "N",
-                "street": "Highland",
-                "suffix": "St",
-                "formatted_street": "N Highland St",
-                "city": "Arlington",
-                "state": "VA",
-                "country": "US",
-            },
-            "formatted_address": "1109 N Highland St, Arlington, VA",
-        },
         "results": [
             {
                 "address_components": {
@@ -29,8 +18,8 @@ def sample_payload() -> dict:
                     "formatted_street": "N Highland St",
                     "city": "Arlington",
                     "county": "Arlington County",
-                    "state": "VA",
-                    "zip": "22201",
+                    "state_province": "VA",
+                    "postal_code": "22201",
                     "country": "US",
                 },
                 "formatted_address": "1109 N Highland St, Arlington, VA 22201",
@@ -57,7 +46,10 @@ def test_geocode_single(client, httpx_mock):
 
     httpx_mock.add_callback(
         callback=response_callback,
-        url=httpx.URL("https://api.test/v1.9/geocode", params={"q": "1109 N Highland St, Arlington, VA"}),
+        url=httpx.URL(
+            "https://api.test/v2/geocode",
+            params={"q": "1109 N Highland St, Arlington, VA"},
+        ),
         match_headers={"Authorization": "Bearer TEST_KEY"},
     )
 
@@ -79,68 +71,72 @@ def test_geocode_single(client, httpx_mock):
 
 def test_geocode_batch(client, httpx_mock):
     # Arrange: stub the API call
-    addresses = [
-        "3730 N Clark St, Chicago, IL",
-        "638 E 13th Ave, Denver, CO"
-    ]
+    addresses = ["3730 N Clark St, Chicago, IL", "638 E 13th Ave, Denver, CO"]
 
     def batch_response_callback(request):
         assert request.method == "POST"  # Should use POST for batch
         assert json.loads(request.content) == addresses  # Check payload is a list
-        return httpx.Response(200, json={
-            "results": [
-                {
-                    "query": "3730 N Clark St, Chicago, IL",
-                    "response": {
-                        "results": [{
-                            "address_components": {
-                                "number": "3730",
-                                "predirectional": "N",
-                                "street": "Clark",
-                                "suffix": "St",
-                                "city": "Chicago",
-                                "county": "Cook County",
-                                "state": "IL",
-                                "zip": "60613",
-                                "country": "US"
-                            },
-                            "formatted_address": "3730 N Clark St, Chicago, IL 60613",
-                            "location": {"lat": 41.94987, "lng": -87.65893},
-                            "accuracy": 1,
-                            "accuracy_type": "rooftop",
-                            "source": "Cook"
-                        }]
-                    }
-                },
-                {
-                    "query": "638 E 13th Ave, Denver, CO",
-                    "response": {
-                        "results": [{
-                            "address_components": {
-                                "number": "638",
-                                "predirectional": "E",
-                                "street": "13th",
-                                "suffix": "Ave",
-                                "city": "Denver",
-                                "county": "Denver County",
-                                "state": "CO",
-                                "zip": "80203",
-                                "country": "US"
-                            },
-                            "formatted_address": "638 E 13th Ave, Denver, CO 80203",
-                            "location": {"lat": 39.736792, "lng": -104.978914},
-                            "accuracy": 1,
-                            "accuracy_type": "rooftop",
-                            "source": "Denver (City of Denver Open Data Catalog CC BY 3.0)"
-                        }]
-                    }
-                }
-            ]
-        })
+        return httpx.Response(
+            200,
+            json={
+                "results": [
+                    {
+                        "query": "3730 N Clark St, Chicago, IL",
+                        "response": {
+                            "results": [
+                                {
+                                    "address_components": {
+                                        "number": "3730",
+                                        "predirectional": "N",
+                                        "street": "Clark",
+                                        "suffix": "St",
+                                        "city": "Chicago",
+                                        "county": "Cook County",
+                                        "state_province": "IL",
+                                        "postal_code": "60613",
+                                        "country": "US",
+                                    },
+                                    "formatted_address": "3730 N Clark St, Chicago, IL 60613",
+                                    "location": {"lat": 41.94987, "lng": -87.65893},
+                                    "accuracy": 1,
+                                    "accuracy_type": "rooftop",
+                                    "source": "Cook",
+                                }
+                            ]
+                        },
+                    },
+                    {
+                        "query": "638 E 13th Ave, Denver, CO",
+                        "response": {
+                            "results": [
+                                {
+                                    "address_components": {
+                                        "number": "638",
+                                        "predirectional": "E",
+                                        "street": "13th",
+                                        "suffix": "Ave",
+                                        "city": "Denver",
+                                        "county": "Denver County",
+                                        "state_province": "CO",
+                                        "postal_code": "80203",
+                                        "country": "US",
+                                    },
+                                    "formatted_address": "638 E 13th Ave, Denver, CO 80203",
+                                    "location": {"lat": 39.736792, "lng": -104.978914},
+                                    "accuracy": 1,
+                                    "accuracy_type": "rooftop",
+                                    "source": "Denver (City of Denver Open Data Catalog CC BY 3.0)",
+                                }
+                            ]
+                        },
+                    },
+                ]
+            },
+        )
 
     httpx_mock.add_callback(
         callback=batch_response_callback,
-        url=httpx.URL("https://api.test/v1.9/geocode"),
+        url=httpx.URL("https://api.test/v2/geocode"),
         match_headers={"Authorization": "Bearer TEST_KEY"},
     )
 
@@ -160,23 +156,26 @@ def test_geocode_structured_address(client, httpx_mock):
     structured_address = {
         "street": "1109 N Highland St",
         "city": "Arlington",
-        "state": "VA"
+        "state_province": "VA",
     }
 
     def response_callback(request):
         assert request.method == "GET"
         assert request.url.params["street"] == "1109 N Highland St"
         assert request.url.params["city"] == "Arlington"
-        assert request.url.params["state"] == "VA"
+        assert request.url.params["state_province"] == "VA"
         return httpx.Response(200, json=sample_payload())
 
     httpx_mock.add_callback(
         callback=response_callback,
-        url=httpx.URL("https://api.test/v1.9/geocode", params={
-            "street": "1109 N Highland St",
-            "city": "Arlington",
-            "state": "VA"
-        }),
+        url=httpx.URL(
+            "https://api.test/v2/geocode",
+            params={
+                "street": "1109 N Highland St",
+                "city": "Arlington",
+                "state_province": "VA",
+            },
+        ),
         match_headers={"Authorization": "Bearer TEST_KEY"},
     )
 
@@ -187,7 +186,7 @@ def test_geocode_structured_address(client, httpx_mock):
     assert len(resp.results) == 1
     assert resp.results[0].formatted_address.endswith("VA 22201")
     assert resp.results[0].address_components.city == "Arlington"
-    assert resp.results[0].address_components.state == "VA"
+    assert resp.results[0].address_components.state_province == "VA"
 
 
 def test_geocode_with_fields(client, httpx_mock):
@@ -195,44 +194,49 @@ def test_geocode_with_fields(client, httpx_mock):
     def response_callback(request):
         assert request.method == "GET"
         assert request.url.params["fields"] == "timezone,cd"
-        return httpx.Response(200, json={
-            "results": [{
-                "address_components": {
-                    "number": "1109",
-                    "street": "Highland",
-                    "suffix": "St",
-                    "city": "Arlington",
-                    "state": "VA",
-                    "zip": "22201"
-                },
-                "formatted_address": "1109 Highland St, Arlington, VA 22201",
-                "location": {"lat": 38.886672, "lng": -77.094735},
-                "accuracy": 1,
-                "accuracy_type": "rooftop",
-                "source": "Arlington",
-                "fields": {
-                    "timezone": {
-                        "name": "America/New_York",
-                        "utc_offset": -5,
-                        "observes_dst": True
-                    },
-                    "cd": [
-                        {
-                            "name": "Virginia's 8th congressional district",
-                            "district_number": 8,
-                            "congress_number": "118"
-                        }
-                    ]
-                }
-            }]
-        })
+        return httpx.Response(
+            200,
+            json={
+                "results": [
+                    {
+                        "address_components": {
+                            "number": "1109",
+                            "street": "Highland",
+                            "suffix": "St",
+                            "city": "Arlington",
+                            "state_province": "VA",
+                            "postal_code": "22201",
+                        },
+                        "formatted_address": "1109 Highland St, Arlington, VA 22201",
+                        "location": {"lat": 38.886672, "lng": -77.094735},
+                        "accuracy": 1,
+                        "accuracy_type": "rooftop",
+                        "source": "Arlington",
+                        "fields": {
+                            "timezone": {
+                                "name": "America/New_York",
+                                "utc_offset": -5,
+                                "observes_dst": True,
+                            },
+                            "cd": [
+                                {
+                                    "name": "Virginia's 8th congressional district",
+                                    "district_number": 8,
+                                    "congress_number": "118",
+                                }
+                            ],
+                        },
+                    }
+                ]
+            },
+        )
 
     httpx_mock.add_callback(
         callback=response_callback,
-        url=httpx.URL("https://api.test/v1.9/geocode", params={
-            "q": "1109 Highland St, Arlington, VA",
-            "fields": "timezone,cd"
-        }),
+        url=httpx.URL(
+            "https://api.test/v2/geocode",
+            params={"q": "1109 Highland St, Arlington, VA", "fields": "timezone,cd"},
+        ),
         match_headers={"Authorization": "Bearer TEST_KEY"},
     )
 
@@ -245,7 +249,10 @@ def test_geocode_with_fields(client, httpx_mock):
     assert resp.results[0].fields.timezone.utc_offset == -5
     assert resp.results[0].fields.timezone.observes_dst is True
     assert len(resp.results[0].fields.congressional_districts) == 1
-    assert resp.results[0].fields.congressional_districts[0].name == "Virginia's 8th congressional district"
+    assert (
+        resp.results[0].fields.congressional_districts[0].name
+        == "Virginia's 8th congressional district"
+    )
     assert resp.results[0].fields.congressional_districts[0].district_number == 8
     assert resp.results[0].fields.congressional_districts[0].congress_number == "118"
 
@@ -255,47 +262,50 @@ def test_geocode_with_limit(client, httpx_mock):
     def response_callback(request):
         assert request.method == "GET"
         assert request.url.params["limit"] == "2"
-        return httpx.Response(200, json={
-            "results": [
-                {
-                    "address_components": {
-                        "number": "1109",
-                        "street": "Highland",
-                        "suffix": "St",
-                        "city": "Arlington",
-                        "state": "VA",
-                        "zip": "22201"
+        return httpx.Response(
+            200,
+            json={
+                "results": [
+                    {
+                        "address_components": {
+                            "number": "1109",
+                            "street": "Highland",
+                            "suffix": "St",
+                            "city": "Arlington",
+                            "state_province": "VA",
+                            "postal_code": "22201",
+                        },
+                        "formatted_address": "1109 Highland St, Arlington, VA 22201",
+                        "location": {"lat": 38.886672, "lng": -77.094735},
+                        "accuracy": 1,
+                        "accuracy_type": "rooftop",
+                        "source": "Arlington",
                     },
-                    "formatted_address": "1109 Highland St, Arlington, VA 22201",
-                    "location": {"lat": 38.886672, "lng": -77.094735},
-                    "accuracy": 1,
-                    "accuracy_type": "rooftop",
-                    "source": "Arlington"
-                },
-                {
-                    "address_components": {
-                        "number": "1111",
-                        "street": "Highland",
-                        "suffix": "St",
-                        "city": "Arlington",
-                        "state": "VA",
-                        "zip": "22201"
+                    {
+                        "address_components": {
+                            "number": "1111",
+                            "street": "Highland",
+                            "suffix": "St",
+                            "city": "Arlington",
+                            "state_province": "VA",
+                            "postal_code": "22201",
+                        },
+                        "formatted_address": "1111 Highland St, Arlington, VA 22201",
+                        "location": {"lat": 38.886672, "lng": -77.094735},
+                        "accuracy": 1,
+                        "accuracy_type": "rooftop",
+                        "source": "Arlington",
                     },
-                    "formatted_address": "1111 Highland St, Arlington, VA 22201",
-                    "location": {"lat": 38.886672, "lng": -77.094735},
-                    "accuracy": 1,
-                    "accuracy_type": "rooftop",
-                    "source": "Arlington"
-                }
-            ]
-        })
+                ]
+            },
+        )
 
     httpx_mock.add_callback(
         callback=response_callback,
-        url=httpx.URL("https://api.test/v1.9/geocode", params={
-            "q": "1109 Highland St, Arlington, VA",
-            "limit": "2"
-        }),
+        url=httpx.URL(
+            "https://api.test/v2/geocode",
+            params={"q": "1109 Highland St, Arlington, VA", "limit": "2"},
+        ),
         match_headers={"Authorization": "Bearer TEST_KEY"},
     )
 
@@ -310,68 +320,72 @@ def test_geocode_with_limit(client, httpx_mock):
 
 def test_geocode_batch_with_nested_response(client, httpx_mock):
     """Test batch geocoding with the nested response structure."""
-    addresses = [
-        "3730 N Clark St, Chicago, IL",
-        "638 E 13th Ave, Denver, CO"
-    ]
+    addresses = ["3730 N Clark St, Chicago, IL", "638 E 13th Ave, Denver, CO"]
 
     def batch_response_callback(request):
         assert request.method == "POST"
         assert json.loads(request.content) == addresses  # Check payload is a list
-        return httpx.Response(200, json={
-            "results": [
-                {
-                    "query": "3730 N Clark St, Chicago, IL",
-                    "response": {
-                        "results": [{
-                            "address_components": {
-                                "number": "3730",
-                                "predirectional": "N",
-                                "street": "Clark",
-                                "suffix": "St",
-                                "city": "Chicago",
-                                "county": "Cook County",
-                                "state": "IL",
-                                "zip": "60613",
-                                "country": "US"
-                            },
-                            "formatted_address": "3730 N Clark St, Chicago, IL 60613",
-                            "location": {"lat": 41.94987, "lng": -87.65893},
-                            "accuracy": 1,
-                            "accuracy_type": "rooftop",
-                            "source": "Cook"
-                        }]
-                    }
-                },
-                {
-                    "query": "638 E 13th Ave, Denver, CO",
-                    "response": {
-                        "results": [{
-                            "address_components": {
-                                "number": "638",
-                                "predirectional": "E",
-                                "street": "13th",
-                                "suffix": "Ave",
-                                "city": "Denver",
-                                "county": "Denver County",
-                                "state": "CO",
-                                "zip": "80203",
-                                "country": "US"
-                            },
-                            "formatted_address": "638 E 13th Ave, Denver, CO 80203",
-                            "location": {"lat": 39.736792, "lng": -104.978914},
-                            "accuracy": 1,
-                            "accuracy_type": "rooftop",
-                            "source": "Denver (City of Denver Open Data Catalog CC BY 3.0)"
-                        }]
-                    }
-                }
-            ]
-        })
+        return httpx.Response(
+            200,
+            json={
+                "results": [
+                    {
+                        "query": "3730 N Clark St, Chicago, IL",
+                        "response": {
+                            "results": [
+                                {
+                                    "address_components": {
+                                        "number": "3730",
+                                        "predirectional": "N",
+                                        "street": "Clark",
+                                        "suffix": "St",
+                                        "city": "Chicago",
+                                        "county": "Cook County",
+                                        "state_province": "IL",
+                                        "postal_code": "60613",
+                                        "country": "US",
+                                    },
+                                    "formatted_address": "3730 N Clark St, Chicago, IL 60613",
+                                    "location": {"lat": 41.94987, "lng": -87.65893},
+                                    "accuracy": 1,
+                                    "accuracy_type": "rooftop",
+                                    "source": "Cook",
+                                }
+                            ]
+                        },
+                    },
+                    {
+                        "query": "638 E 13th Ave, Denver, CO",
+                        "response": {
+                            "results": [
+                                {
+                                    "address_components": {
+                                        "number": "638",
+                                        "predirectional": "E",
+                                        "street": "13th",
+                                        "suffix": "Ave",
+                                        "city": "Denver",
+                                        "county": "Denver County",
+                                        "state_province": "CO",
+                                        "postal_code": "80203",
+                                        "country": "US",
+                                    },
+                                    "formatted_address": "638 E 13th Ave, Denver, CO 80203",
+                                    "location": {"lat": 39.736792, "lng": -104.978914},
+                                    "accuracy": 1,
+                                    "accuracy_type": "rooftop",
+                                    "source": "Denver (City of Denver Open Data Catalog CC BY 3.0)",
+                                }
+                            ]
+                        },
+                    },
+                ]
+            },
+        )
 
     httpx_mock.add_callback(
         callback=batch_response_callback,
-        url=httpx.URL("https://api.test/v1.9/geocode"),
+        url=httpx.URL("https://api.test/v2/geocode"),
         match_headers={"Authorization": "Bearer TEST_KEY"},
     )
 
@@ -388,97 +402,101 @@ def test_geocode_batch_with_nested_response(client, httpx_mock):
 
 def test_geocode_batch_with_fields(client, httpx_mock):
     """Test batch geocoding with additional fields."""
-    addresses = [
-        "3730 N Clark St, Chicago, IL",
-        "638 E 13th Ave, Denver, CO"
-    ]
+    addresses = ["3730 N Clark St, Chicago, IL", "638 E 13th Ave, Denver, CO"]
 
     def batch_response_callback(request):
         assert request.method == "POST"
         assert request.url.params["fields"] == "timezone,cd"
         assert json.loads(request.content) == addresses  # Check payload is a list
-        return httpx.Response(200, json={
-            "results": [
-                {
-                    "query": "3730 N Clark St, Chicago, IL",
-                    "response": {
-                        "results": [{
-                            "address_components": {
-                                "number": "3730",
-                                "predirectional": "N",
-                                "street": "Clark",
-                                "suffix": "St",
-                                "city": "Chicago",
-                                "county": "Cook County",
-                                "state": "IL",
-                                "zip": "60613",
-                                "country": "US"
-                            },
-                            "formatted_address": "3730 N Clark St, Chicago, IL 60613",
-                            "location": {"lat": 41.94987, "lng": -87.65893},
-                            "accuracy": 1,
-                            "accuracy_type": "rooftop",
-                            "source": "Cook",
-                            "fields": {
-                                "timezone": {
-                                    "name": "America/Chicago",
-                                    "utc_offset": -6,
-                                    "observes_dst": True
-                                },
-                                "cd": [
-                                    {
-                                        "name": "Congressional District 5",
-                                        "district_number": 5,
-                                        "congress_number": "119th"
-                                    }
-                                ]
-                            }
-                        }]
-                    }
-                },
-                {
-                    "query": "638 E 13th Ave, Denver, CO",
-                    "response": {
-                        "results": [{
-                            "address_components": {
-                                "number": "638",
-                                "predirectional": "E",
-                                "street": "13th",
-                                "suffix": "Ave",
-                                "city": "Denver",
-                                "county": "Denver County",
-                                "state": "CO",
-                                "zip": "80203",
-                                "country": "US"
-                            },
-                            "formatted_address": "638 E 13th Ave, Denver, CO 80203",
-                            "location": {"lat": 39.736792, "lng": -104.978914},
-                            "accuracy": 1,
-                            "accuracy_type": "rooftop",
-                            "source": "Denver (City of Denver Open Data Catalog CC BY 3.0)",
-                            "fields": {
-                                "timezone": {
-                                    "name": "America/Denver",
-                                    "utc_offset": -7,
-                                    "observes_dst": True
-                                },
-                                "cd": [
-                                    {
-                                        "name": "Congressional District 1",
-                                        "district_number": 1,
-                                        "congress_number": "119th"
-                                    }
-                                ]
-                            }
-                        }]
-                    }
-                }
-            ]
-        })
+        return httpx.Response(
+            200,
+            json={
+                "results": [
+                    {
+                        "query": "3730 N Clark St, Chicago, IL",
+                        "response": {
+                            "results": [
+                                {
+                                    "address_components": {
+                                        "number": "3730",
+                                        "predirectional": "N",
+                                        "street": "Clark",
+                                        "suffix": "St",
+                                        "city": "Chicago",
+                                        "county": "Cook County",
+                                        "state_province": "IL",
+                                        "postal_code": "60613",
+                                        "country": "US",
+                                    },
+                                    "formatted_address": "3730 N Clark St, Chicago, IL 60613",
+                                    "location": {"lat": 41.94987, "lng": -87.65893},
+                                    "accuracy": 1,
+                                    "accuracy_type": "rooftop",
+                                    "source": "Cook",
+                                    "fields": {
+                                        "timezone": {
+                                            "name": "America/Chicago",
+                                            "utc_offset": -6,
+                                            "observes_dst": True,
+                                        },
+                                        "cd": [
+                                            {
+                                                "name": "Congressional District 5",
+                                                "district_number": 5,
+                                                "congress_number": "119th",
+                                            }
+                                        ],
+                                    },
+                                }
+                            ]
+                        },
+                    },
+                    {
+                        "query": "638 E 13th Ave, Denver, CO",
+                        "response": {
+                            "results": [
+                                {
+                                    "address_components": {
+                                        "number": "638",
+                                        "predirectional": "E",
+                                        "street": "13th",
+                                        "suffix": "Ave",
+                                        "city": "Denver",
+                                        "county": "Denver County",
+                                        "state_province": "CO",
+                                        "postal_code": "80203",
+                                        "country": "US",
+                                    },
+                                    "formatted_address": "638 E 13th Ave, Denver, CO 80203",
+                                    "location": {"lat": 39.736792, "lng": -104.978914},
+                                    "accuracy": 1,
+                                    "accuracy_type": "rooftop",
+                                    "source": "Denver (City of Denver Open Data Catalog CC BY 3.0)",
+                                    "fields": {
+                                        "timezone": {
+                                            "name": "America/Denver",
+                                            "utc_offset": -7,
+                                            "observes_dst": True,
+                                        },
+                                        "cd": [
+                                            {
+                                                "name": "Congressional District 1",
+                                                "district_number": 1,
+                                                "congress_number": "119th",
+                                            }
+                                        ],
+                                    },
+                                }
+                            ]
+                        },
+                    },
+                ]
+            },
+        )
 
     httpx_mock.add_callback(
         callback=batch_response_callback,
-        url=httpx.URL("https://api.test/v1.9/geocode", params={"fields": "timezone,cd"}),
+        url=httpx.URL("https://api.test/v2/geocode", params={"fields": "timezone,cd"}),
         match_headers={"Authorization": "Bearer TEST_KEY"},
     )
 
@@ -503,74 +521,91 @@ def test_geocode_batch_with_fields(client, httpx_mock):
 
 def test_geocode_with_census_fields(client, httpx_mock):
     """Test geocoding with census field appends including all census years."""
+
     # Arrange: stub the API call with multiple census years
     def response_callback(request):
         assert request.method == "GET"
-        assert request.url.params["fields"] == "census2010,census2020,census2023,census2024"
-        return httpx.Response(200, json={
-            "results": [{
-                "address_components": {
-                    "number": "1640",
-                    "street": "Main",
-                    "suffix": "St",
-                    "city": "Sheldon",
-                    "state": "VT",
-                    "zip": "05483",
-                    "country": "US"
-                },
-                "formatted_address": "1640 Main St, Sheldon, VT 05483",
-                "location": {"lat": 44.895469, "lng": -72.953264},
-                "accuracy": 1,
-                "accuracy_type": "rooftop",
-                "source": "Vermont",
-                "fields": {
-                    "census2010": {
-                        "tract": "960100",
-                        "block": "2001",
-                        "blockgroup": "2",
-                        "county_fips": "50011",
-                        "state_fips": "50"
-                    },
-                    "census2020": {
-                        "tract": "960100",
-                        "block": "2002",
-                        "blockgroup": "2",
-                        "county_fips": "50011",
-                        "state_fips": "50"
-                    },
-                    "census2023": {
-                        "tract": "960100",
-                        "block": "2003",
-                        "blockgroup": "2",
-                        "county_fips": "50011",
-                        "state_fips": "50"
-                    },
-                    "census2024": {
-                        "tract": "960100",
-                        "block": "2004",
-                        "blockgroup": "2",
-                        "county_fips": "50011",
-                        "state_fips": "50"
+        assert (
+            request.url.params["fields"]
+            == "census2010,census2020,census2023,census2024"
+        )
+        return httpx.Response(
+            200,
+            json={
+                "results": [
+                    {
+                        "address_components": {
+                            "number": "1640",
+                            "street": "Main",
+                            "suffix": "St",
+                            "city": "Sheldon",
+                            "state_province": "VT",
+                            "postal_code": "05483",
+                            "country": "US",
+                        },
+                        "formatted_address": "1640 Main St, Sheldon, VT 05483",
+                        "location": {"lat": 44.895469, "lng": -72.953264},
+                        "accuracy": 1,
+                        "accuracy_type": "rooftop",
+                        "source": "Vermont",
+                        "fields": {
+                            "census2010": {
+                                "tract": "960100",
+                                "block": "2001",
+                                "blockgroup": "2",
+                                "county_fips": "50011",
+                                "state_fips": "50",
+                            },
+                            "census2020": {
+                                "tract": "960100",
+                                "block": "2002",
+                                "blockgroup": "2",
+                                "county_fips": "50011",
+                                "state_fips": "50",
+                            },
+                            "census2023": {
+                                "tract": "960100",
+                                "block": "2003",
+                                "blockgroup": "2",
+                                "county_fips": "50011",
+                                "state_fips": "50",
+                            },
+                            "census2024": {
+                                "tract": "960100",
+                                "block": "2004",
+                                "blockgroup": "2",
+                                "county_fips": "50011",
+                                "state_fips": "50",
+                            },
+                        },
                     }
-                }
-            }]
-        })
+                ]
+            },
+        )
 
     httpx_mock.add_callback(
         callback=response_callback,
-        url=httpx.URL("https://api.test/v1.9/geocode", params={
-            "street": "1640 Main St",
-            "city": "Sheldon",
-            "state": "VT",
-            "postal_code": "05483",
-            "fields": "census2010,census2020,census2023,census2024"
-        }),
+        url=httpx.URL(
+            "https://api.test/v2/geocode",
+            params={
+                "street": "1640 Main St",
+                "city": "Sheldon",
+                "state": "VT",
+                "postal_code": "05483",
+                "fields": "census2010,census2020,census2023,census2024",
+            },
+        ),
         match_headers={"Authorization": "Bearer TEST_KEY"},
     )
 
     # Act
     resp = client.geocode(
-        {"city": "Sheldon", "state": "VT", "street": "1640 Main St", "postal_code": "05483"},
+        {
+            "city": "Sheldon",
+            "state": "VT",
+            "street": "1640 Main St",
+            "postal_code": "05483",
+        },
         fields=["census2010", "census2020", "census2023", "census2024"],
     )
 
@@ -605,76 +640,81 @@ def test_geocode_with_stateleg_fields(client, httpx_mock):
     The API returns state_legislative_districts as a dict with house/senate keys,
     each containing a list of district objects with legislator info.
     """
+
     def response_callback(request):
         assert request.url.params["fields"] == "stateleg"
-        return httpx.Response(200, json={
-            "input": {"formatted_address": "600 Santa Ray Ave, Oakland, CA 94610"},
-            "results": [{
-                "address_components": {
-                    "number": "600",
-                    "street": "Santa Ray",
-                    "suffix": "Ave",
-                    "city": "Oakland",
-                    "state": "CA",
-                    "zip": "94610",
-                    "country": "US"
-                },
-                "formatted_address": "600 Santa Ray Ave, Oakland, CA 94610",
-                "location": {"lat": 37.811943, "lng": -122.240213},
-                "accuracy": 1,
-                "accuracy_type": "rooftop",
-                "source": "Alameda",
-                "fields": {
-                    "state_legislative_districts": {
-                        "house": [
-                            {
-                                "name": "Assembly District 18",
-                                "district_number": "18",
-                                "ocd_id": "ocd-division/country:us/state:ca/sldl:18",
-                                "is_upcoming_state_legislative_district": False,
-                                "proportion": 1,
-                                "current_legislators": [
+        return httpx.Response(
+            200,
+            json={
+                "results": [
+                    {
+                        "address_components": {
+                            "number": "600",
+                            "street": "Santa Ray",
+                            "suffix": "Ave",
+                            "city": "Oakland",
+                            "state_province": "CA",
+                            "postal_code": "94610",
+                            "country": "US",
+                        },
+                        "formatted_address": "600 Santa Ray Ave, Oakland, CA 94610",
+                        "location": {"lat": 37.811943, "lng": -122.240213},
+                        "accuracy": 1,
+                        "accuracy_type": "rooftop",
+                        "source": "Alameda",
+                        "fields": {
+                            "state_legislative_districts": {
+                                "house": [
                                     {
-                                        "type": "representative",
-                                        "bio": {
-                                            "last_name": "Bonta",
-                                            "first_name": "Mia",
-                                            "party": "Democrat"
-                                        }
+                                        "name": "Assembly District 18",
+                                        "district_number": "18",
+                                        "ocd_id": "ocd-division/country:us/state:ca/sldl:18",
+                                        "is_upcoming_state_legislative_district": False,
+                                        "proportion": 1,
+                                        "current_legislators": [
+                                            {
+                                                "type": "representative",
+                                                "bio": {
+                                                    "last_name": "Bonta",
+                                                    "first_name": "Mia",
+                                                    "party": "Democrat",
+                                                },
+                                            }
+                                        ],
                                     }
-                                ]
-                            }
-                        ],
-                        "senate": [
-                            {
-                                "name": "Senate District 7",
-                                "district_number": "7",
-                                "ocd_id": "ocd-division/country:us/state:ca/sldu:7",
-                                "is_upcoming_state_legislative_district": False,
-                                "proportion": 1,
-                                "current_legislators": [
+                                ],
+                                "senate": [
                                     {
-                                        "type": "senator",
-                                        "bio": {
-                                            "last_name": "Arreguin",
-                                            "first_name": "Jesse",
-                                            "party": "Democrat"
-                                        }
+                                        "name": "Senate District 7",
+                                        "district_number": "7",
+                                        "ocd_id": "ocd-division/country:us/state:ca/sldu:7",
+                                        "is_upcoming_state_legislative_district": False,
+                                        "proportion": 1,
+                                        "current_legislators": [
+                                            {
+                                                "type": "senator",
+                                                "bio": {
+                                                    "last_name": "Arreguin",
+                                                    "first_name": "Jesse",
+                                                    "party": "Democrat",
+                                                },
+                                            }
+                                        ],
                                     }
-                                ]
+                                ],
                             }
-                        ]
+                        },
                     }
-                }
-            }]
-        })
+                ]
+            },
+        )
 
     httpx_mock.add_callback(
         callback=response_callback,
-        url=httpx.URL("https://api.test/v1.9/geocode", params={
-            "q": "600 Santa Ray Ave, Oakland CA 94610",
-            "fields": "stateleg"
-        }),
+        url=httpx.URL(
+            "https://api.test/v2/geocode",
+            params={"q": "600 Santa Ray Ave, Oakland CA 94610", "fields": "stateleg"},
+        ),
         match_headers={"Authorization": "Bearer TEST_KEY"},
     )
 

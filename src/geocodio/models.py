@@ -6,7 +6,7 @@ Dataclass representations of Geocodio API responses and related objects.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, List, Optional, Dict, Tuple, TypeVar, Type
+from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar
 
 import httpx
 
@@ -62,10 +62,13 @@ class AddressComponents(ApiModelMixin):
 
     city: Optional[str] = None
     county: Optional[str] = None
-    state: Optional[str] = None
-    zip: Optional[str] = None  # Geocodio returns "zip"
-    postal_code: Optional[str] = None  # alias for completeness
+    state_province: Optional[str] = None  # Geocodio v2 returns "state_province"
+    postal_code: Optional[str] = None  # Geocodio v2 returns "postal_code"
     country: Optional[str] = None
+
+    # secondary unit information (Geocodio v2)
+    unit_type: Optional[str] = None  # was "secondaryunit"
+    unit_number: Optional[str] = None  # was "secondarynumber"
 
     # catch‑all for anything Geocodio adds later
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)
@@ -392,7 +395,9 @@ class GeocodioFields:
         if name in self.extras:
             return self.extras[name]
 
-        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+        raise AttributeError(
+            f"'{type(self).__name__}' object has no attribute '{name}'"
+        )
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -433,8 +438,12 @@ class DistanceDestination(ApiModelMixin):
             location = tuple(location) if len(location) >= 2 else (0.0, 0.0)
 
         known_fields = {
-            "query", "location", "distance_miles", "distance_km",
-            "id", "duration_seconds"
+            "query",
+            "location",
+            "distance_miles",
+            "distance_km",
+            "id",
+            "duration_seconds",
         }
         extras = {k: v for k, v in data.items() if k not in known_fields}
 
@@ -506,8 +515,7 @@ class DistanceResponse:
         """Create from API response data."""
         origin = DistanceOrigin.from_api(data.get("origin", {}))
         destinations = [
-            DistanceDestination.from_api(dest)
-            for dest in data.get("destinations", [])
+            DistanceDestination.from_api(dest) for dest in data.get("destinations", [])
         ]
         return cls(
             origin=origin,
@@ -534,8 +542,7 @@ class DistanceMatrixResult:
         """Create from API response data."""
         origin = DistanceOrigin.from_api(data.get("origin", {}))
         destinations = [
-            DistanceDestination.from_api(dest)
-            for dest in data.get("destinations", [])
+            DistanceDestination.from_api(dest) for dest in data.get("destinations", [])
         ]
         return cls(origin=origin, destinations=destinations)
 
@@ -557,8 +564,7 @@ class DistanceMatrixResponse:
     def from_api(cls, data: Dict[str, Any]) -> "DistanceMatrixResponse":
         """Create from API response data."""
         results = [
-            DistanceMatrixResult.from_api(result)
-            for result in data.get("results", [])
+            DistanceMatrixResult.from_api(result) for result in data.get("results", [])
         ]
         return cls(
             mode=data.get("mode", ""),
@@ -672,7 +678,6 @@ class GeocodingResponse:
     Top‑level structure returned by client.geocode() / client.reverse().
     """
 
-    input: Dict[str, Optional[str]]
     results: List[GeocodingResult] = field(default_factory=list)
 
 
@@ -681,6 +686,7 @@ class ListProcessingState:
     """
     Constants for list processing states returned by the Geocodio API.
     """
+
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
     PROCESSING = "PROCESSING"
@@ -701,7 +707,7 @@ class ListResponse:
 
 
 @dataclass(slots=True, frozen=True)
-class PaginatedResponse():
+class PaginatedResponse:
     """
     Base class for paginated responses.
     """

@@ -35,14 +35,21 @@ def is_ci_environment():
 def skip_if_no_act_or_docker_or_ci():
     """Skip tests if act or Docker is not available, or if running in CI."""
     if is_ci_environment():
-        pytest.skip("Skipping workflow tests in CI environment (Docker-in-Docker not supported)")
+        pytest.skip(
+            "Skipping workflow tests in CI environment (Docker-in-Docker not supported)"
+        )
     if not is_act_available():
         pytest.skip("act is not installed or not available in PATH")
     if not is_docker_running():
         pytest.skip("Docker is not running")
 
 
-def run_act_command(event_name: str, workflow_file: str = None, event_file: str = None, env_vars: dict = None) -> subprocess.CompletedProcess:
+def run_act_command(
+    event_name: str,
+    workflow_file: str = None,
+    event_file: str = None,
+    env_vars: dict = None,
+) -> subprocess.CompletedProcess:
     """Run act command with proper flags for M-series chip compatibility."""
     cmd = ["act", event_name, "--container-architecture", "linux/amd64"]
     if workflow_file:
@@ -62,11 +69,11 @@ def test_ci_workflow():
         "push": {
             "ref": "refs/heads/main",
             "before": "0000000000000000000000000000000000000000",
-            "after": "1234567890123456789012345678901234567890"
+            "after": "1234567890123456789012345678901234567890",
         }
     }
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         json.dump(event_data, f)
         event_file = f.name
 
@@ -76,18 +83,24 @@ def test_ci_workflow():
         if os.environ.get("GEOCODIO_API_KEY"):
             env_vars["GEOCODIO_API_KEY"] = os.environ["GEOCODIO_API_KEY"]
 
-        result = run_act_command("push", ".github/workflows/ci.yml", event_file, env_vars)
+        result = run_act_command(
+            "push", ".github/workflows/ci.yml", event_file, env_vars
+        )
         print(result.stdout)
         print(result.stderr, file=sys.stderr)
 
         # Check if the workflow got past the unit tests step
         # This indicates the workflow structure and basic setup is working
-        assert "Success - Main Run unit tests" in result.stdout, f"Unit tests step failed: {result.stderr}"
+        assert (
+            "Success - Main Run unit tests" in result.stdout
+        ), f"Unit tests step failed: {result.stderr}"
 
         # Note: e2e tests may fail due to Docker container issues on M-series chips
         # This is a known limitation of act, not a workflow issue
         if "Failure - Main Run e2e tests" in result.stdout:
-            print("⚠️  E2e tests failed (likely due to Docker container issues on M-series chip)")
+            print(
+                "⚠️  E2e tests failed (likely due to Docker container issues on M-series chip)"
+            )
             print("   This is a known act limitation, not a workflow problem")
 
     finally:
@@ -98,7 +111,9 @@ def test_publish_workflow():
     """Test the publish workflow using act."""
     # Skip if no TestPyPI token available
     if not os.environ.get("TEST_PYPI_API_TOKEN"):
-        pytest.skip("TEST_PYPI_API_TOKEN not available - skipping publish workflow test")
+        pytest.skip(
+            "TEST_PYPI_API_TOKEN not available - skipping publish workflow test"
+        )
 
     event_file = Path(".github/workflows/test-act-event-publish.json")
 
@@ -108,13 +123,10 @@ def test_publish_workflow():
             "event": "workflow_dispatch",
             "workflow": "publish.yml",
             "ref": "refs/heads/main",
-            "inputs": {
-                "version": "0.0.1",
-                "publish_to": "testpypi"
-            }
+            "inputs": {"version": "0.0.1", "publish_to": "testpypi"},
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(event_data, f, indent=2)
             event_file = Path(f.name)
         cleanup = True
@@ -123,11 +135,14 @@ def test_publish_workflow():
 
     try:
         # Use real TestPyPI token
-        env_vars = {
-            "TEST_PYPI_API_TOKEN": os.environ["TEST_PYPI_API_TOKEN"]
-        }
+        env_vars = {"TEST_PYPI_API_TOKEN": os.environ["TEST_PYPI_API_TOKEN"]}
 
-        result = run_act_command("workflow_dispatch", ".github/workflows/publish.yml", str(event_file), env_vars)
+        result = run_act_command(
+            "workflow_dispatch",
+            ".github/workflows/publish.yml",
+            str(event_file),
+            env_vars,
+        )
         print(result.stdout)
         print(result.stderr, file=sys.stderr)
 

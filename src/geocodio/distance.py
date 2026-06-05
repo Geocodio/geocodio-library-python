@@ -8,7 +8,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-
 # ──────────────────────────────────────────────────────────────────────────────
 # Distance Mode Constants
 # ──────────────────────────────────────────────────────────────────────────────
@@ -42,6 +41,7 @@ DISTANCE_SORT_DESC = "desc"
 # ──────────────────────────────────────────────────────────────────────────────
 # Coordinate Class
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 @dataclass(frozen=True, slots=True)
 class Coordinate:
@@ -150,9 +150,7 @@ class Coordinate:
         return cls(lat=lat, lng=lng, id=coord_id)
 
     @classmethod
-    def _from_sequence(
-        cls, value: Union[Tuple, List]
-    ) -> "Coordinate":
+    def _from_sequence(cls, value: Union[Tuple, List]) -> "Coordinate":
         """Parse coordinate from tuple or list: [lat, lng] or [lat, lng, id]."""
         if len(value) < 2:
             raise ValueError(
@@ -188,7 +186,9 @@ class Coordinate:
                 "Invalid coordinate values. Latitude and longitude must be numbers."
             ) from e
 
-        coord_id = str(value["id"]) if "id" in value and value["id"] is not None else None
+        coord_id = (
+            str(value["id"]) if "id" in value and value["id"] is not None else None
+        )
         return cls(lat=lat, lng=lng, id=coord_id)
 
     def to_string(self) -> str:

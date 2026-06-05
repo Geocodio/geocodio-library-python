@@ -2,10 +2,12 @@
 Test configuration and fixtures
 """
 
-import os
 import logging
-from dotenv import load_dotenv
+import os
+
 import pytest
+from dotenv import load_dotenv
+
 from geocodio import Geocodio
 
 # Load environment variables from .env file

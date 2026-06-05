@@ -3,15 +3,17 @@ End-to-end tests for the List API functionality.
 These tests require a valid GEOCODIO_API_KEY environment variable.
 """
 
+import io
+import logging
 import os
-import pytest
 import time
 from unittest.mock import patch
+
+import pytest
+
 from geocodio import Geocodio
-from geocodio.models import ListResponse, PaginatedResponse, ListProcessingState
 from geocodio.exceptions import GeocodioServerError
-import logging
-import io
+from geocodio.models import ListProcessingState, ListResponse, PaginatedResponse
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +44,7 @@ def wait_for_list_processed(client, list_id, timeout=120):
     start = time.time()
     while time.time() - start < timeout:
         list_response = client.get_list(list_id)
-        list_processing_state = list_response.status.get('state')
+        list_processing_state = list_response.status.get("state")
         logger.debug(f"List status: {list_processing_state}")
         if list_processing_state == ListProcessingState.COMPLETED:
             logger.info(f"List processed. {list_processing_state}")
@@ -112,7 +114,9 @@ def test_delete_list(client, list_response):
     all_list_ids = {list_obj.id for list_obj in all_list_responses}
 
     if list_id in all_list_ids:
-        raise AssertionError(f"List with ID {list_id} was not deleted successfully. It still exists in the list of lists.")
+        raise AssertionError(
+            f"List with ID {list_id} was not deleted successfully. It still exists in the list of lists."
+        )
 
 
 def test_download_csv_to_file(client, tmp_path):
@@ -184,9 +188,7 @@ def test_create_list_with_fields(client):
 
     # Create list with specific fields
     response = client.create_list(
-        file=csv_file,
-        filename="test_list.csv",
-        fields=["census2020", "timezone", "cd"]
+        file=csv_file, filename="test_list.csv", fields=["census2020", "timezone", "cd"]
     )
 
     assert isinstance(response, ListResponse)
@@ -197,7 +199,7 @@ def test_create_list_with_fields(client):
     while True:
         list_response = client.get_list(response.id)
         logger.debug(f"List status: {list_response.status.get('state')}")
-        if list_response.status.get('state') in ["COMPLETED", "FAILED"]:
+        if list_response.status.get("state") in ["COMPLETED", "FAILED"]:
             logger.info(f"List processed. {list_response.status.get('state')}")
             break
         time.sleep(2)
