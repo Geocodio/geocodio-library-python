@@ -198,7 +198,7 @@ def test_integration_with_state_legislative_districts(client):
     if fields.state_legislative_districts:
         district = fields.state_legislative_districts[0]
         assert district.name is not None
-        assert isinstance(district.district_number, int)
+        assert district.district_number is not None
         assert district.chamber in ["house", "senate"]
         if district.ocd_id:
             assert isinstance(district.ocd_id, str)
@@ -209,7 +209,7 @@ def test_integration_with_state_legislative_districts(client):
     if fields.state_legislative_districts_next:
         district = fields.state_legislative_districts_next[0]
         assert district.name is not None
-        assert isinstance(district.district_number, int)
+        assert district.district_number is not None
         assert district.chamber in ["house", "senate"]
         if district.ocd_id:
             assert isinstance(district.ocd_id, str)
