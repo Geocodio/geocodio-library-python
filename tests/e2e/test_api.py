@@ -47,8 +47,8 @@ def test_integration_geocode(client):
     assert components.number == "1109"
     assert "Highland" in components.street
     assert components.city == "Arlington"
-    assert components.state == "VA"
-    assert components.zip is not None
+    assert components.state_province == "VA"
+    assert components.postal_code is not None
 
 
 def test_integration_reverse(client):
@@ -78,8 +78,8 @@ def test_integration_reverse(client):
     assert components.number is not None
     assert components.street is not None
     assert components.city is not None
-    assert components.state is not None
-    assert components.zip is not None
+    assert components.state_province is not None
+    assert components.postal_code is not None
 
 
 def test_integration_with_fields(client):
@@ -156,8 +156,8 @@ def test_integration_batch_geocode(client):
     assert components.street == "Clark"
     assert components.suffix == "St"
     assert components.city == "Chicago"
-    assert components.state == "IL"
-    assert components.zip == "60613"
+    assert components.state_province == "IL"
+    assert components.postal_code == "60613"
 
     # Check second address (Denver)
     denver = response.results[1]
@@ -173,8 +173,8 @@ def test_integration_batch_geocode(client):
     assert components.street == "13th"
     assert components.suffix == "Ave"
     assert components.city == "Denver"
-    assert components.state == "CO"
-    assert components.zip == "80203"
+    assert components.state_province == "CO"
+    assert components.postal_code == "80203"
 
 
 def test_integration_with_state_legislative_districts(client):
