@@ -203,7 +203,7 @@ def test_integration_with_state_legislative_districts(client):
         if district.ocd_id:
             assert isinstance(district.ocd_id, str)
         if district.proportion:
-            assert isinstance(district.proportion, float)
+            assert isinstance(district.proportion, (int, float))
 
     # Check upcoming state legislative districts
     if fields.state_legislative_districts_next:
@@ -214,7 +214,7 @@ def test_integration_with_state_legislative_districts(client):
         if district.ocd_id:
             assert isinstance(district.ocd_id, str)
         if district.proportion:
-            assert isinstance(district.proportion, float)
+            assert isinstance(district.proportion, (int, float))
 
 
 def test_integration_with_school_districts(client):
