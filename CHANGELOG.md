@@ -18,6 +18,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `unit_type` (was `secondaryunit`) and `unit_number` (was `secondarynumber`)
 - Structured address input now accepts `state_province` (the legacy `state` field is still accepted for compatibility).
 
+## [0.7.0] - 2026-03-12
+
+### Changed
+- Updated default API version to v1.11
+
+## [0.6.0] - 2026-02-24
+
+### Changed
+- Updated default API version from v1.9 to v1.10
 ## [0.5.1] - 2026-02-18
 
 ### Fixed
@@ -71,7 +80,9 @@ When ready to release:
 6. GitHub Actions will automatically publish to PyPI
 
 [Unreleased]: https://github.com/Geocodio/geocodio-library-python/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/Geocodio/geocodio-library-python/compare/v0.5.1...v1.0.0
+[1.0.0]: https://github.com/Geocodio/geocodio-library-python/compare/v0.7.0...v1.0.0
+[0.7.0]: https://github.com/Geocodio/geocodio-library-python/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/Geocodio/geocodio-library-python/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/Geocodio/geocodio-library-python/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/Geocodio/geocodio-library-python/compare/v0.4.0...v0.5.0
 [0.2.0]: https://github.com/Geocodio/geocodio-library-python/compare/v0.1.0...v0.2.0
