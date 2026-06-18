@@ -748,3 +748,61 @@ def test_geocode_with_stateleg_fields(client, httpx_mock):
 
     # Ensure state_legislative_districts didn't leak into extras
     assert "state_legislative_districts" not in fields.extras
+
+
+def test_geocode_batch_with_unmatched_address(client, httpx_mock):
+    """Batch responses can include queries with no results (e.g. an address
+    the API could not match). Those entries must not raise IndexError."""
+    addresses = ["3730 N Clark St, Chicago, IL", "qwertyuiop asdfghjkl zxcvbnm"]
+
+    def batch_response_callback(request):
+        return httpx.Response(
+            200,
+            json={
+                "results": [
+                    {
+                        "query": "3730 N Clark St, Chicago, IL",
+                        "response": {
+                            "results": [
+                                {
+                                    "address_components": {
+                                        "number": "3730",
+                                        "predirectional": "N",
+                                        "street": "Clark",
+                                        "suffix": "St",
+                                        "city": "Chicago",
+                                        "county": "Cook County",
+                                        "state_province": "IL",
+                                        "postal_code": "60613",
+                                        "country": "US",
+                                    },
+                                    "formatted_address": "3730 N Clark St, Chicago, IL 60613",
+                                    "location": {"lat": 41.94987, "lng": -87.65893},
+                                    "accuracy": 1,
+                                    "accuracy_type": "rooftop",
+                                    "source": "Cook",
+                                }
+                            ]
+                        },
+                    },
+                    {
+                        "query": "qwertyuiop asdfghjkl zxcvbnm",
+                        "response": {
+                            "error": "Could not geocode address. No matches found.",
+                            "results": [],
+                        },
+                    },
+                ]
+            },
+        )
+
+    httpx_mock.add_callback(
+        callback=batch_response_callback,
+        url=httpx.URL("https://api.test/v2/geocode"),
+        match_headers={"Authorization": "Bearer TEST_KEY"},
+    )
+
+    resp = client.geocode(addresses)
+
+    assert len(resp.results) == 1
+    assert resp.results[0].formatted_address == "3730 N Clark St, Chicago, IL 60613"

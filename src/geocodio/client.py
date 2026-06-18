@@ -398,6 +398,7 @@ class Geocodio:
                     ),
                 )
                 for res in response_json["results"]
+                if res.get("response", {}).get("results")
             ]
             return GeocodingResponse(results=results)
 
