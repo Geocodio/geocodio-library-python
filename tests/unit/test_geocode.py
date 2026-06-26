@@ -151,6 +151,63 @@ def test_geocode_batch(client, httpx_mock):
     assert resp.results[1].location.lat == 39.736792
 
 
+def test_geocode_batch_with_invalid_address_result(client, httpx_mock):
+    addresses = [
+        "1109 N Highland St, Arlington VA",
+        "qwertyuiop asdfghjkl zxcvbnm",
+        "1600 Pennsylvania Ave NW, Washington DC",
+    ]
+    valid_result = sample_payload()["results"][0]
+    later_valid_result = {
+        **valid_result,
+        "formatted_address": "1600 Pennsylvania Ave NW, Washington, DC 20500",
+    }
+
+    def batch_response_callback(request):
+        assert request.method == "POST"
+        assert json.loads(request.content) == addresses
+        return httpx.Response(
+            200,
+            json={
+                "results": [
+                    {
+                        "query": addresses[0],
+                        "response": {"results": [valid_result]},
+                    },
+                    {
+                        "query": addresses[1],
+                        "response": {
+                            "error": "Could not geocode address. No matches found.",
+                            "reference": (
+                                "https://www.geocod.io/geocodio-422-"
+                                "unprocessable-entity/"
+                            ),
+                            "results": [],
+                        },
+                    },
+                    {
+                        "query": addresses[2],
+                        "response": {"results": [later_valid_result]},
+                    },
+                ]
+            },
+        )
+
+    httpx_mock.add_callback(
+        callback=batch_response_callback,
+        url=httpx.URL("https://api.test/v2/geocode"),
+        match_headers={"Authorization": "Bearer TEST_KEY"},
+    )
+
+    resp = client.geocode(addresses)
+
+    assert len(resp.results) == 2
+    assert [result.formatted_address for result in resp.results] == [
+        valid_result["formatted_address"],
+        later_valid_result["formatted_address"],
+    ]
+
+
 def test_geocode_structured_address(client, httpx_mock):
     # Arrange: stub the API call
     structured_address = {

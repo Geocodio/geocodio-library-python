@@ -379,26 +379,25 @@ class Geocodio:
             and response_json["results"]
             and "response" in response_json["results"][0]
         ):
-            results = [
-                GeocodingResult(
-                    address_components=AddressComponents.from_api(
-                        res["response"]["results"][0]["address_components"]
-                    ),
-                    formatted_address=res["response"]["results"][0][
-                        "formatted_address"
-                    ],
-                    location=Location(**res["response"]["results"][0]["location"]),
-                    accuracy=res["response"]["results"][0].get("accuracy", 0.0),
-                    accuracy_type=res["response"]["results"][0].get(
-                        "accuracy_type", ""
-                    ),
-                    source=res["response"]["results"][0].get("source", ""),
-                    fields=self._parse_fields(
-                        res["response"]["results"][0].get("fields")
-                    ),
+            results = []
+            for res in response_json["results"]:
+                response_results = res.get("response", {}).get("results", [])
+                if not response_results:
+                    continue
+                result = response_results[0]
+                results.append(
+                    GeocodingResult(
+                        address_components=AddressComponents.from_api(
+                            result["address_components"]
+                        ),
+                        formatted_address=result["formatted_address"],
+                        location=Location(**result["location"]),
+                        accuracy=result.get("accuracy", 0.0),
+                        accuracy_type=result.get("accuracy_type", ""),
+                        source=result.get("source", ""),
+                        fields=self._parse_fields(result.get("fields")),
+                    )
                 )
-                for res in response_json["results"]
-            ]
             return GeocodingResponse(results=results)
 
         # Handle single response format
