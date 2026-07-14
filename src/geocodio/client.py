@@ -379,26 +379,43 @@ class Geocodio:
             and response_json["results"]
             and "response" in response_json["results"][0]
         ):
-            results = [
-                GeocodingResult(
-                    address_components=AddressComponents.from_api(
-                        res["response"]["results"][0]["address_components"]
-                    ),
-                    formatted_address=res["response"]["results"][0][
-                        "formatted_address"
-                    ],
-                    location=Location(**res["response"]["results"][0]["location"]),
-                    accuracy=res["response"]["results"][0].get("accuracy", 0.0),
-                    accuracy_type=res["response"]["results"][0].get(
-                        "accuracy_type", ""
-                    ),
-                    source=res["response"]["results"][0].get("source", ""),
-                    fields=self._parse_fields(
-                        res["response"]["results"][0].get("fields")
-                    ),
+            results = []
+            for res in response_json["results"]:
+                query = res.get("query", "")
+                matches = res.get("response", {}).get("results") or []
+
+                # Unmatched query (e.g. an unparseable address): keep an entry
+                # so the result list stays aligned with the submitted addresses,
+                # but with no coordinates.
+                if not matches:
+                    results.append(
+                        GeocodingResult(
+                            address_components=AddressComponents.from_api({}),
+                            formatted_address="",
+                            location=None,
+                            accuracy=0.0,
+                            accuracy_type="",
+                            source="",
+                            query=query,
+                        )
+                    )
+                    continue
+
+                top = matches[0]
+                results.append(
+                    GeocodingResult(
+                        address_components=AddressComponents.from_api(
+                            top["address_components"]
+                        ),
+                        formatted_address=top["formatted_address"],
+                        location=Location(**top["location"]),
+                        accuracy=top.get("accuracy", 0.0),
+                        accuracy_type=top.get("accuracy_type", ""),
+                        source=top.get("source", ""),
+                        query=query,
+                        fields=self._parse_fields(top.get("fields")),
+                    )
                 )
-                for res in response_json["results"]
-            ]
             return GeocodingResponse(results=results)
 
         # Handle single response format
