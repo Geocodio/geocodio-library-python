@@ -665,11 +665,17 @@ class DistanceJobResponse:
 class GeocodingResult:
     address_components: AddressComponents
     formatted_address: str
-    location: Location
+    location: Optional[Location]
     accuracy: float
     accuracy_type: str
     source: str
     fields: Optional[GeocodioFields] = None
+    query: str = ""
+
+    @property
+    def matched(self) -> bool:
+        """True when the API returned coordinates for this query."""
+        return self.location is not None
 
 
 @dataclass(slots=True, frozen=True)
