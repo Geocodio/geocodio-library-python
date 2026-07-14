@@ -34,6 +34,7 @@ def sample_payload() -> dict:
                         "observes_dst": True,
                     }
                 },
+                "stable_address_key": "abc123stablekey",
             }
         ],
     }
@@ -67,6 +68,8 @@ def test_geocode_single(client, httpx_mock):
     tz = resp.results[0].fields.timezone
     assert tz.name == "America/New_York"
     assert tz.observes_dst is True
+    # stable address key (v2 returns this on every result)
+    assert resp.results[0].stable_address_key == "abc123stablekey"
 
 
 def test_geocode_batch(client, httpx_mock):
@@ -820,3 +823,92 @@ def test_geocode_batch_with_unmatched_address(client, httpx_mock):
     assert unmatched.location is None
     assert unmatched.query == "qwertyuiop asdfghjkl zxcvbnm"
     assert unmatched.formatted_address == ""
+
+def test_geocode_batch_exposes_stable_address_key(client, httpx_mock):
+    """stable_address_key is parsed from the nested batch response format."""
+    addresses = ["1109 N Highland St, Arlington, VA"]
+
+    def batch_response_callback(request):
+        return httpx.Response(
+            200,
+            json={
+                "results": [
+                    {
+                        "query": "1109 N Highland St, Arlington, VA",
+                        "response": {
+                            "results": [
+                                {
+                                    "address_components": {
+                                        "number": "1109",
+                                        "street": "Highland",
+                                        "suffix": "St",
+                                        "city": "Arlington",
+                                        "state_province": "VA",
+                                        "postal_code": "22201",
+                                        "country": "US",
+                                    },
+                                    "formatted_address": "1109 N Highland St, Arlington, VA 22201",
+                                    "location": {"lat": 38.886672, "lng": -77.094735},
+                                    "accuracy": 1,
+                                    "accuracy_type": "rooftop",
+                                    "source": "Arlington",
+                                    "stable_address_key": "arlington-stable-key",
+                                }
+                            ]
+                        },
+                    },
+                ]
+            },
+        )
+
+    httpx_mock.add_callback(
+        callback=batch_response_callback,
+        url=httpx.URL("https://api.test/v2/geocode"),
+        match_headers={"Authorization": "Bearer TEST_KEY"},
+    )
+
+    resp = client.geocode(addresses)
+
+    assert resp.results[0].stable_address_key == "arlington-stable-key"
+
+
+def test_geocode_stable_address_key_absent_is_none(client, httpx_mock):
+    """stable_address_key defaults to None when the API omits it."""
+
+    def response_callback(request):
+        return httpx.Response(
+            200,
+            json={
+                "results": [
+                    {
+                        "address_components": {
+                            "number": "1109",
+                            "street": "Highland",
+                            "suffix": "St",
+                            "city": "Arlington",
+                            "state_province": "VA",
+                            "postal_code": "22201",
+                            "country": "US",
+                        },
+                        "formatted_address": "1109 N Highland St, Arlington, VA 22201",
+                        "location": {"lat": 38.886672, "lng": -77.094735},
+                        "accuracy": 1,
+                        "accuracy_type": "rooftop",
+                        "source": "Arlington",
+                    }
+                ],
+            },
+        )
+
+    httpx_mock.add_callback(
+        callback=response_callback,
+        url=httpx.URL(
+            "https://api.test/v2/geocode",
+            params={"q": "1109 N Highland St, Arlington, VA"},
+        ),
+        match_headers={"Authorization": "Bearer TEST_KEY"},
+    )
+
+    resp = client.geocode("1109 N Highland St, Arlington, VA")
+
+    assert resp.results[0].stable_address_key is None
