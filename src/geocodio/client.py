@@ -414,6 +414,7 @@ class Geocodio:
                         source=top.get("source", ""),
                         query=query,
                         fields=self._parse_fields(top.get("fields")),
+                        stable_address_key=top.get("stable_address_key"),
                     )
                 )
             return GeocodingResponse(results=results)
@@ -430,6 +431,7 @@ class Geocodio:
                 accuracy_type=res.get("accuracy_type", ""),
                 source=res.get("source", ""),
                 fields=self._parse_fields(res.get("fields")),
+                stable_address_key=res.get("stable_address_key"),
             )
             for res in response_json.get("results", [])
         ]

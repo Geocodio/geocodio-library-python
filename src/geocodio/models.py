@@ -671,6 +671,7 @@ class GeocodingResult:
     source: str
     fields: Optional[GeocodioFields] = None
     query: str = ""
+    stable_address_key: Optional[str] = None
 
     @property
     def matched(self) -> bool:

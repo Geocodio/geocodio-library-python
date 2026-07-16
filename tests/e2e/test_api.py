@@ -51,6 +51,32 @@ def test_integration_geocode(client):
     assert components.postal_code is not None
 
 
+def test_integration_stable_address_key(client):
+    """Verify stable_address_key is exposed on real single, reverse, and batch calls."""
+    # Single forward geocode
+    single = client.geocode("1109 N Highland St, Arlington, VA").results[0]
+    assert single.stable_address_key is not None
+    assert isinstance(single.stable_address_key, str)
+    assert single.stable_address_key != ""
+
+    # Reverse geocode (White House)
+    reverse = client.reverse((38.897699, -77.036547)).results[0]
+    assert reverse.stable_address_key is not None
+    assert isinstance(reverse.stable_address_key, str)
+
+    # Batch geocode (nested response format)
+    batch = client.geocode(
+        ["3730 N Clark St, Chicago, IL", "638 E 13th Ave, Denver, CO"]
+    )
+    for result in batch.results:
+        assert result.stable_address_key is not None
+        assert isinstance(result.stable_address_key, str)
+
+    # The key should be stable: the same address returns the same key.
+    again = client.geocode("1109 N Highland St, Arlington, VA").results[0]
+    assert again.stable_address_key == single.stable_address_key
+
+
 def test_integration_reverse(client):
     """Test real reverse geocoding API call."""
     # Test coordinates (White House)
