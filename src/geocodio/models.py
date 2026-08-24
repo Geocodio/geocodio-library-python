@@ -310,6 +310,20 @@ class StatisticsCanadaData(ApiModelMixin):
 
 
 @dataclass(slots=True, frozen=True)
+class UKLegislativeDistrict(ApiModelMixin):
+    """UK legislative district returned by the uk-westminster, uk-devolved, and
+    uk-local appends (and their ``-next`` variants)."""
+
+    district_type: Optional[str] = None
+    gss_code: Optional[str] = None
+    ocd_id: Optional[str] = None
+    name: Optional[str] = None
+    is_upcoming_district: Optional[bool] = None
+    source: Optional[str] = None
+    extras: Dict[str, Any] = field(default_factory=dict, repr=False)
+
+
+@dataclass(slots=True, frozen=True)
 class FFIECData(ApiModelMixin):
     """FFIEC CRA/HMDA Data (Beta)."""
 
@@ -372,6 +386,11 @@ class GeocodioFields:
     provriding: Optional[ProvincialRiding] = None
     provriding_next: Optional[ProvincialRiding] = None
     statcan: Optional[StatisticsCanadaData] = None
+
+    # United Kingdom fields
+    uk_westminster: Optional[List[UKLegislativeDistrict]] = None
+    uk_devolved: Optional[List[UKLegislativeDistrict]] = None
+    uk_local: Optional[List[UKLegislativeDistrict]] = None
 
     # Catch-all for any future or unknown fields from the API
     extras: Dict[str, Any] = field(default_factory=dict, repr=False)

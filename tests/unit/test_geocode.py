@@ -753,6 +753,97 @@ def test_geocode_with_stateleg_fields(client, httpx_mock):
     assert "state_legislative_districts" not in fields.extras
 
 
+def test_geocode_with_uk_fields(client, httpx_mock):
+    """Test geocoding a UK address with the UK legislative district appends.
+
+    The API returns uk_westminster / uk_local as lists of district objects.
+    """
+
+    def response_callback(request):
+        assert request.url.params["fields"] == "uk-westminster,uk-local"
+        return httpx.Response(
+            200,
+            json={
+                "results": [
+                    {
+                        "address_components": {
+                            "number": "10",
+                            "street": "Downing",
+                            "suffix": "St",
+                            "city": "London",
+                            "nation": "England",
+                            "postal_code": "SW1A 2AA",
+                            "country": "GB",
+                        },
+                        "formatted_address": "10 Downing St, London SW1A 2AA",
+                        "location": {"lat": 51.503541, "lng": -0.12767},
+                        "accuracy": 1,
+                        "accuracy_type": "rooftop",
+                        "source": "Contains OS data © Crown copyright.",
+                        "fields": {
+                            "uk_westminster": [
+                                {
+                                    "district_type": "westminster_constituency",
+                                    "gss_code": "E14001172",
+                                    "ocd_id": "ocd-division/country:gb/part:eng/region:uki/ed:cities_of_london_and_westminster",
+                                    "name": "Cities of London and Westminster",
+                                    "is_upcoming_district": False,
+                                    "source": "Office for National Statistics",
+                                }
+                            ],
+                            "uk_local": [
+                                {
+                                    "district_type": "ward",
+                                    "gss_code": "E05013806",
+                                    "ocd_id": "ocd-division/country:gb/part:eng/ward:e05013806",
+                                    "name": "St James's",
+                                    "is_upcoming_district": False,
+                                    "source": "Office for National Statistics",
+                                }
+                            ],
+                        },
+                    }
+                ]
+            },
+        )
+
+    httpx_mock.add_callback(
+        callback=response_callback,
+        url=httpx.URL(
+            "https://api.test/v2/geocode",
+            params={
+                "q": "10 Downing St, London, United Kingdom",
+                "fields": "uk-westminster,uk-local",
+            },
+        ),
+        match_headers={"Authorization": "Bearer TEST_KEY"},
+    )
+
+    # Act
+    resp = client.geocode(
+        "10 Downing St, London, United Kingdom",
+        fields=["uk-westminster", "uk-local"],
+    )
+
+    # Assert - UK appends should be parsed into typed models, not None
+    fields = resp.results[0].fields
+    assert fields.uk_westminster is not None
+    assert len(fields.uk_westminster) == 1
+    assert fields.uk_westminster[0].name == "Cities of London and Westminster"
+    assert fields.uk_westminster[0].district_type == "westminster_constituency"
+
+    assert fields.uk_local is not None
+    assert fields.uk_local[0].district_type == "ward"
+    assert fields.uk_local[0].name == "St James's"
+
+    # UK devolved was not requested for this address, so it stays None
+    assert fields.uk_devolved is None
+
+    # Ensure UK fields didn't leak into extras
+    assert "uk_westminster" not in fields.extras
+    assert "uk_local" not in fields.extras
+
+
 def test_geocode_batch_with_unmatched_address(client, httpx_mock):
     """Batch responses can include queries with no results (e.g. an address
     the API could not match). Those entries must not raise IndexError, and the

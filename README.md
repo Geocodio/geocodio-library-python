@@ -65,6 +65,7 @@ To batch geocode, simply pass a list of addresses or coordinates instead of a si
 response = client.geocode([
     "1109 N Highland St, Arlington VA",
     "525 University Ave, Toronto, ON, Canada",
+    "10 Downing St, London, United Kingdom",
     "4410 S Highway 17 92, Casselberry FL",
     "15000 NE 24th Street, Redmond WA",
     "17015 Walnut Grove Drive, Morgan Hill CA"
@@ -81,15 +82,16 @@ response = client.reverse([
 response = client.geocode({
     "MyId1": "1109 N Highland St, Arlington VA",
     "MyId2": "525 University Ave, Toronto, ON, Canada",
-    "MyId3": "4410 S Highway 17 92, Casselberry FL",
-    "MyId4": "15000 NE 24th Street, Redmond WA",
-    "MyId5": "17015 Walnut Grove Drive, Morgan Hill CA"
+    "MyId3": "10 Downing St, London, United Kingdom",
+    "MyId4": "4410 S Highway 17 92, Casselberry FL",
+    "MyId5": "15000 NE 24th Street, Redmond WA",
+    "MyId6": "17015 Walnut Grove Drive, Morgan Hill CA"
 })
 ```
 
 ### Field appends
 
-Geocodio allows you to append additional data points such as congressional districts, census codes, timezone, ACS survey results and [much more](https://www.geocod.io/docs/#fields).
+Geocodio allows you to append additional data points such as congressional districts, census codes, timezone, ACS survey results, UK constituencies and wards, and [much more](https://www.geocod.io/docs/#fields).
 
 To request additional fields, simply supply them as a list:
 
@@ -103,6 +105,13 @@ response = client.geocode(
 )
 
 response = client.reverse("38.9002898,-76.9990361", fields=["census2010"])
+
+# United Kingdom addresses support UK-specific appends such as Westminster and
+# devolved parliament constituencies, and local authority wards
+response = client.geocode(
+    "10 Downing St, London, United Kingdom",
+    fields=["uk-westminster", "uk-local"]
+)
 ```
 
 ### Address components
@@ -128,6 +137,12 @@ response = client.geocode([
         "city": "Toronto",
         "state": "ON",
         "country": "Canada"
+    },
+    {
+        "street": "10 Downing St",
+        "city": "London",
+        "postal_code": "SW1A 2AA",
+        "country": "United Kingdom"
     }
 ])
 ```

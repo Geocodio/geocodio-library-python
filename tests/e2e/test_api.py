@@ -610,6 +610,40 @@ def test_integration_with_canadian_fields(client):
         assert isinstance(fields.statcan.census_year, int)
 
 
+def test_integration_with_uk_fields(client):
+    """Test real API call with United Kingdom legislative district fields."""
+    response = client.geocode(
+        "10 Downing St, London",
+        fields=["uk-westminster", "uk-local"],
+        country="United Kingdom",  # Country hint so the address resolves to the UK
+    )
+
+    # Verify response structure
+    assert response is not None
+    assert len(response.results) > 0
+    result = response.results[0]
+
+    # Verify fields data
+    fields = result.fields
+    assert fields is not None
+
+    # Check Westminster parliamentary constituency
+    assert fields.uk_westminster is not None
+    assert len(fields.uk_westminster) > 0
+    westminster = fields.uk_westminster[0]
+    assert westminster.district_type is not None
+    assert westminster.name is not None
+    assert westminster.gss_code is not None
+    assert westminster.ocd_id is not None
+    assert isinstance(westminster.is_upcoming_district, bool)
+    assert westminster.source is not None
+
+    # Check local authority ward
+    assert fields.uk_local is not None
+    assert len(fields.uk_local) > 0
+    assert fields.uk_local[0].name is not None
+
+
 def test_integration_with_census_years(client):
     """Test real API call with various census years."""
     # Test address
