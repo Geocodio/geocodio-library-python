@@ -19,6 +19,7 @@ from geocodio.models import (
     StateLegislativeDistrict,
     StatisticsCanadaData,
     Timezone,
+    UKLegislativeDistrict,
     ZIP4Data,
 )
 
@@ -336,6 +337,26 @@ def test_canadian_riding():
     assert riding.year == 2021
     assert riding.source == "Elections Canada"
     assert riding.get_extra("extra_field") == "extra value"
+
+
+def test_uk_legislative_district():
+    """Test UK legislative district data model."""
+    data = {
+        "district_type": "westminster_constituency",
+        "gss_code": "E14001172",
+        "ocd_id": "ocd-division/country:gb/part:eng/region:uki/ed:cities_of_london_and_westminster",
+        "name": "Cities of London and Westminster",
+        "is_upcoming_district": False,
+        "source": "Office for National Statistics",
+        "extra_field": "extra value",
+    }
+    district = UKLegislativeDistrict.from_api(data)
+    assert district.district_type == "westminster_constituency"
+    assert district.gss_code == "E14001172"
+    assert district.name == "Cities of London and Westminster"
+    assert district.is_upcoming_district is False
+    assert district.source == "Office for National Statistics"
+    assert district.get_extra("extra_field") == "extra value"
 
 
 def test_statistics_canada_data():

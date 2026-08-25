@@ -63,6 +63,7 @@ from geocodio.models import (
     StateLegislativeDistrict,
     StatisticsCanadaData,
     Timezone,
+    UKLegislativeDistrict,
     ZIP4Data,
 )
 
@@ -471,6 +472,7 @@ class Geocodio:
                    - acs, acs-demographics, acs-economics, acs-families, acs-housing, acs-social
                    - riding, provriding, provriding-next (Canadian data)
                    - statcan (Statistics Canada data)
+                   - uk-westminster, uk-westminster-next, uk-devolved, uk-devolved-next, uk-local, uk-local-next (UK legislative districts)
                    - zip4 (ZIP+4 data)
                    - ffiec (FFIEC data, beta)
 
@@ -851,6 +853,35 @@ class Geocodio:
             else None
         )
 
+        # United Kingdom fields (each append returns a list of districts). The
+        # ``-next`` request variants fold into these same response keys.
+        uk_westminster = (
+            [
+                UKLegislativeDistrict.from_api(district)
+                for district in fields_data["uk_westminster"]
+            ]
+            if "uk_westminster" in fields_data
+            else None
+        )
+
+        uk_devolved = (
+            [
+                UKLegislativeDistrict.from_api(district)
+                for district in fields_data["uk_devolved"]
+            ]
+            if "uk_devolved" in fields_data
+            else None
+        )
+
+        uk_local = (
+            [
+                UKLegislativeDistrict.from_api(district)
+                for district in fields_data["uk_local"]
+            ]
+            if "uk_local" in fields_data
+            else None
+        )
+
         # Collect all known field keys that were parsed
         parsed_keys = {
             "timezone",
@@ -875,6 +906,9 @@ class Geocodio:
             "provriding",
             "provriding-next",
             "statcan",
+            "uk_westminster",
+            "uk_devolved",
+            "uk_local",
         }
         # Add flat census keys that were parsed (census2000, census2020, etc.)
         # All census years are now stored in _census dict for dynamic access
@@ -897,6 +931,9 @@ class Geocodio:
             provriding=provriding,
             provriding_next=provriding_next,
             statcan=statcan,
+            uk_westminster=uk_westminster,
+            uk_devolved=uk_devolved,
+            uk_local=uk_local,
             extras=extras,
             _census=census_data_dict,  # All census years stored here
             **acs_fields,  # Dynamically include all ACS metric fields

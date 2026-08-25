@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- United Kingdom data append support. The `uk-westminster`, `uk-devolved`, and `uk-local` appends (and their `-next` variants) are now parsed into a typed `UKLegislativeDistrict` model, exposed via `fields.uk_westminster`, `fields.uk_devolved`, and `fields.uk_local`.
+
 ## [1.0.0] - 2026-06-05
 
 ### Changed
