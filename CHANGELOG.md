@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-08-25
+
 ### Added
 - United Kingdom data append support. The `uk-westminster`, `uk-devolved`, and `uk-local` appends (and their `-next` variants) are now parsed into a typed `UKLegislativeDistrict` model, exposed via `fields.uk_westminster`, `fields.uk_devolved`, and `fields.uk_local`.
 
@@ -82,7 +84,8 @@ When ready to release:
 5. Push tags: `git push --tags`
 6. GitHub Actions will automatically publish to PyPI
 
-[Unreleased]: https://github.com/Geocodio/geocodio-library-python/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Geocodio/geocodio-library-python/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/Geocodio/geocodio-library-python/compare/v1.2.0...v1.3.0
 [1.0.0]: https://github.com/Geocodio/geocodio-library-python/compare/v0.7.0...v1.0.0
 [0.7.0]: https://github.com/Geocodio/geocodio-library-python/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/Geocodio/geocodio-library-python/compare/v0.5.1...v0.6.0
