@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar
 
-import httpx
+import httpx2 as httpx
 
 T = TypeVar("T", bound="ExtrasMixin")
 

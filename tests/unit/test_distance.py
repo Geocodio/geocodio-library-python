@@ -4,7 +4,7 @@ Unit tests for the Distance API implementation.
 
 import json
 
-import httpx
+import httpx2 as httpx
 import pytest
 
 from geocodio import (
