@@ -58,6 +58,7 @@ from geocodio.models import (
     Location,
     PaginatedResponse,
     ProvincialRiding,
+    RateLimit,
     SchoolDistrict,
     Social,
     StateLegislativeDistrict,
@@ -117,6 +118,7 @@ class Geocodio:
         self._http = httpx.Client(
             base_url=f"https://{self.hostname}", verify=verify_ssl
         )
+        self.rate_limit: Optional[RateLimit] = None
 
     # ──────────────────────────────────────────────────────────────────────────
     # Public methods
@@ -226,7 +228,7 @@ class Geocodio:
         response = self._request(
             "POST" if data else "GET", endpoint, params, json=data, timeout=timeout
         )
-        return self._parse_geocoding_response(response.json())
+        return self._parse_geocoding_response(response.json(), response=response)
 
     def reverse(
         self,
@@ -306,7 +308,7 @@ class Geocodio:
         response = self._request(
             "POST" if data else "GET", endpoint, params, json=data, timeout=timeout
         )
-        return self._parse_geocoding_response(response.json())
+        return self._parse_geocoding_response(response.json(), response=response)
 
     # ──────────────────────────────────────────────────────────────────────────
     # Internal helpers
@@ -350,6 +352,12 @@ class Geocodio:
         logger.debug(f"Response headers: {resp.headers}")
         logger.debug(f"Response body: {resp.content}")
 
+        # Keep the most recent rate limit state available to callers, including
+        # for responses that raise below.
+        rate_limit = RateLimit.from_headers(resp.headers)
+        if rate_limit is not None:
+            self.rate_limit = rate_limit
+
         resp = self._handle_error_response(resp)
 
         return resp
@@ -370,8 +378,14 @@ class Geocodio:
                 f"Unrecognized status code {resp.status_code}: {resp.text}"
             )
 
-    def _parse_geocoding_response(self, response_json: dict) -> GeocodingResponse:
+    def _parse_geocoding_response(
+        self,
+        response_json: dict,
+        response: Optional[httpx.Response] = None,
+    ) -> GeocodingResponse:
         logger.debug(f"Raw response: {response_json}")
+
+        rate_limit = RateLimit.from_headers(response.headers) if response else None
 
         # Handle batch response format
         if (
@@ -416,9 +430,14 @@ class Geocodio:
                         query=query,
                         fields=self._parse_fields(top.get("fields")),
                         stable_address_key=top.get("stable_address_key"),
+                        match_type=top.get("match_type"),
+                        address_lines=top.get("address_lines"),
+                        raw=top,
                     )
                 )
-            return GeocodingResponse(results=results)
+            return GeocodingResponse(
+                results=results, raw=response_json, rate_limit=rate_limit
+            )
 
         # Handle single response format
         results = [
@@ -433,10 +452,15 @@ class Geocodio:
                 source=res.get("source", ""),
                 fields=self._parse_fields(res.get("fields")),
                 stable_address_key=res.get("stable_address_key"),
+                match_type=res.get("match_type"),
+                address_lines=res.get("address_lines"),
+                raw=res,
             )
             for res in response_json.get("results", [])
         ]
-        return GeocodingResponse(results=results)
+        return GeocodingResponse(
+            results=results, raw=response_json, rate_limit=rate_limit
+        )
 
     # ──────────────────────────────────────────────────────────────────────────
     # List API methods

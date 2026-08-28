@@ -915,6 +915,7 @@ def test_geocode_batch_with_unmatched_address(client, httpx_mock):
     assert unmatched.query == "qwertyuiop asdfghjkl zxcvbnm"
     assert unmatched.formatted_address == ""
 
+
 def test_geocode_batch_exposes_stable_address_key(client, httpx_mock):
     """stable_address_key is parsed from the nested batch response format."""
     addresses = ["1109 N Highland St, Arlington, VA"]
@@ -1003,3 +1004,215 @@ def test_geocode_stable_address_key_absent_is_none(client, httpx_mock):
     resp = client.geocode("1109 N Highland St, Arlington, VA")
 
     assert resp.results[0].stable_address_key is None
+
+
+def test_geocode_nested_census_public_accessor(client, httpx_mock):
+    """The nested census structure is reachable via the public accessor."""
+
+    def response_callback(request):
+        assert request.url.params["fields"] == "census2023"
+        return httpx.Response(
+            200,
+            json={
+                "results": [
+                    {
+                        "address_components": {
+                            "number": "1109",
+                            "predirectional": "N",
+                            "street": "Highland",
+                            "suffix": "St",
+                            "city": "Arlington",
+                            "state_province": "VA",
+                            "postal_code": "22201",
+                            "country": "US",
+                        },
+                        "formatted_address": "1109 N Highland St, Arlington, VA 22201",
+                        "location": {"lat": 38.886672, "lng": -77.094735},
+                        "accuracy": 1,
+                        "accuracy_type": "rooftop",
+                        "source": "Arlington",
+                        "fields": {
+                            "census": {
+                                "2023": {
+                                    "census_year": 2023,
+                                    "state_fips": "51",
+                                    "county_fips": "51013",
+                                    "tract_code": "101801",
+                                    "block_code": "2004",
+                                    "block_group": "2",
+                                    "full_fips": "510131018012004",
+                                    "source": "US Census Bureau",
+                                }
+                            }
+                        },
+                    }
+                ]
+            },
+        )
+
+    httpx_mock.add_callback(
+        callback=response_callback,
+        url=httpx.URL(
+            "https://api.test/v2/geocode",
+            params={
+                "q": "1109 N Highland St, Arlington, VA",
+                "fields": "census2023",
+            },
+        ),
+        match_headers={"Authorization": "Bearer TEST_KEY"},
+    )
+
+    resp = client.geocode("1109 N Highland St, Arlington, VA", fields=["census2023"])
+    fields = resp.results[0].fields
+
+    # New public accessor
+    assert fields.census is not None
+    assert fields.census.full_fips == "510131018012004"
+    assert fields.census.census_year == 2023
+    assert fields.get_census(2023).full_fips == "510131018012004"
+    assert fields.census_years == [2023]
+
+    # Legacy field name mapping still applies through the accessor
+    assert fields.census.tract == "101801"
+    assert fields.census.block == "2004"
+
+    # Backward compatibility
+    assert fields.census2023.full_fips == "510131018012004"
+    assert fields._census["census2023"].full_fips == "510131018012004"
+
+
+def test_geocode_exposes_match_type_address_lines_and_raw(client, httpx_mock):
+    """match_type, address_lines and the raw payload survive parsing."""
+    payload = {
+        "results": [
+            {
+                "stable_address_key": "gcod_abc123",
+                "address_components": {
+                    "number": "1109",
+                    "predirectional": "N",
+                    "street": "Highland",
+                    "suffix": "St",
+                    "city": "Arlington",
+                    "state_province": "VA",
+                    "postal_code": "22201",
+                    "country": "US",
+                },
+                "address_lines": [
+                    "1109 N Highland St",
+                    "",
+                    "Arlington, VA 22201",
+                ],
+                "formatted_address": "1109 N Highland St, Arlington, VA 22201",
+                "location": {"lat": 38.886672, "lng": -77.094735},
+                "accuracy": 1,
+                "accuracy_type": "rooftop",
+                "match_type": "building_centroid",
+                "source": "Arlington",
+                "some_future_key": {"not": "modelled"},
+            }
+        ]
+    }
+
+    httpx_mock.add_callback(
+        callback=lambda request: httpx.Response(
+            200,
+            json=payload,
+            headers={
+                "X-RateLimit-Limit": "1000",
+                "X-RateLimit-Remaining": "998",
+                "X-RateLimit-Period": "60",
+            },
+        ),
+        url=httpx.URL(
+            "https://api.test/v2/geocode",
+            params={"q": "1109 N Highland St, Arlington, VA"},
+        ),
+        match_headers={"Authorization": "Bearer TEST_KEY"},
+    )
+
+    resp = client.geocode("1109 N Highland St, Arlington, VA")
+    result = resp.results[0]
+
+    assert result.match_type == "building_centroid"
+    assert result.address_lines == [
+        "1109 N Highland St",
+        "",
+        "Arlington, VA 22201",
+    ]
+
+    # Raw payloads keep everything, including keys the models do not map
+    assert resp.raw == payload
+    assert resp.to_dict() == payload
+    assert result.raw == payload["results"][0]
+    assert result.to_dict()["some_future_key"] == {"not": "modelled"}
+
+    # Rate limit headers are exposed on the response and the client
+    assert resp.rate_limit is not None
+    assert resp.rate_limit.limit == 1000
+    assert resp.rate_limit.remaining == 998
+    assert resp.rate_limit.period == 60
+    assert client.rate_limit == resp.rate_limit
+
+
+def test_geocode_batch_exposes_match_type_and_raw(client, httpx_mock):
+    """Batch results carry match_type, address_lines and their raw payload."""
+    payload = {
+        "results": [
+            {
+                "query": "1109 N Highland St, Arlington VA",
+                "response": {
+                    "results": [
+                        {
+                            "address_components": {
+                                "number": "1109",
+                                "street": "Highland",
+                                "suffix": "St",
+                                "city": "Arlington",
+                                "state_province": "VA",
+                                "postal_code": "22201",
+                                "country": "US",
+                            },
+                            "address_lines": [
+                                "1109 N Highland St",
+                                "",
+                                "Arlington, VA 22201",
+                            ],
+                            "formatted_address": (
+                                "1109 N Highland St, Arlington, VA 22201"
+                            ),
+                            "location": {"lat": 38.886672, "lng": -77.094735},
+                            "accuracy": 1,
+                            "accuracy_type": "rooftop",
+                            "match_type": "building_centroid",
+                            "source": "Arlington",
+                        }
+                    ]
+                },
+            },
+            {
+                "query": "zzzzzz nowhere",
+                "response": {"results": []},
+            },
+        ]
+    }
+
+    httpx_mock.add_callback(
+        callback=lambda request: httpx.Response(200, json=payload),
+        url=httpx.URL("https://api.test/v2/geocode"),
+        method="POST",
+        match_headers={"Authorization": "Bearer TEST_KEY"},
+    )
+
+    resp = client.geocode(["1109 N Highland St, Arlington VA", "zzzzzz nowhere"])
+
+    matched, unmatched = resp.results
+    assert matched.match_type == "building_centroid"
+    assert matched.address_lines[0] == "1109 N Highland St"
+    assert matched.raw == payload["results"][0]["response"]["results"][0]
+
+    # Unmatched queries keep their slot; the full payload stays on the response
+    assert unmatched.matched is False
+    assert unmatched.match_type is None
+    assert unmatched.address_lines is None
+    assert unmatched.raw == {}
+    assert resp.raw == payload

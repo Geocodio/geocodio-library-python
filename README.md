@@ -114,6 +114,64 @@ response = client.geocode(
 )
 ```
 
+#### Census appends
+
+Census data is keyed by vintage. `fields.census` gives you the append you
+requested, and `fields.get_census(year)` picks a specific vintage when you
+requested more than one:
+
+```python
+response = client.geocode("1109 N Highland St, Arlington VA", fields=["census2023"])
+census = response.results[0].fields.census
+
+print(census.full_fips)   # "510131018012004"
+print(census.census_year)  # 2023
+
+# When several vintages were requested
+fields = response.results[0].fields
+fields.get_census(2023)      # also accepts "2023" or "census2023"
+fields.census_years          # [2023]
+fields.census_data           # {"census2023": CensusData(...)}
+```
+
+`fields.census` returns the most recent vintage present. Accessing a vintage
+directly (`fields.census2023`) continues to work.
+
+### Raw API responses
+
+Every geocoding response keeps the untouched JSON payload the API returned, so
+you can cache the full response and derive new columns later without paying for
+another lookup:
+
+```python
+response = client.geocode("1109 N Highland St, Arlington VA")
+
+response.raw          # the full JSON payload, exactly as returned
+response.to_dict()    # a deep copy of the same payload
+
+result = response.results[0]
+result.raw            # the JSON object for this result
+result.match_type     # "rooftop", "unit", "building_centroid" or None
+result.address_lines  # ["1109 N Highland St", "", "Arlington, VA 22201"]
+```
+
+### Rate limits
+
+The `X-RateLimit-*` response headers are parsed onto every geocoding response,
+and the most recent values are kept on the client (including for requests that
+raise):
+
+```python
+response = client.geocode("1109 N Highland St, Arlington VA")
+
+response.rate_limit.limit      # 1000
+response.rate_limit.remaining  # 999
+response.rate_limit.period     # 60 (seconds), when sent by the API
+response.rate_limit.reset      # unix timestamp, when sent by the API
+
+client.rate_limit              # the most recent rate limit state seen
+```
+
 ### Address components
 
 For forward geocoding requests it is possible to supply [individual address components](https://www.geocod.io/docs/#single-address) instead of a full address string:
