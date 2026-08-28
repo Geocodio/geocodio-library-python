@@ -2,7 +2,7 @@
 Tests for the Geocodio class
 """
 
-import httpx
+import httpx2 as httpx
 import pytest
 
 from geocodio import Geocodio
@@ -231,8 +231,8 @@ def test_user_agent_header_in_request(mocker):
     """Test that the User-Agent header is included in all requests."""
     from geocodio import __version__
 
-    # Mock the httpx.Client.request method to capture headers
-    mock_httpx_request = mocker.patch("httpx.Client.request")
+    # Mock the httpx2.Client.request method to capture headers
+    mock_httpx_request = mocker.patch("httpx2.Client.request")
     mock_httpx_request.return_value = httpx.Response(
         200,
         json={
@@ -281,8 +281,8 @@ def test_user_agent_header_in_batch_request(mocker):
     """Test that the User-Agent header is included in batch requests."""
     from geocodio import __version__
 
-    # Mock the httpx.Client.request method
-    mock_httpx_request = mocker.patch("httpx.Client.request")
+    # Mock the httpx2.Client.request method
+    mock_httpx_request = mocker.patch("httpx2.Client.request")
     mock_httpx_request.return_value = httpx.Response(200, json={"results": []})
 
     client = Geocodio("test-api-key")
@@ -300,8 +300,8 @@ def test_user_agent_header_in_reverse_geocode(mocker):
     """Test that the User-Agent header is included in reverse geocoding requests."""
     from geocodio import __version__
 
-    # Mock the httpx.Client.request method
-    mock_httpx_request = mocker.patch("httpx.Client.request")
+    # Mock the httpx2.Client.request method
+    mock_httpx_request = mocker.patch("httpx2.Client.request")
     mock_httpx_request.return_value = httpx.Response(
         200,
         json={
@@ -338,8 +338,8 @@ def test_user_agent_header_in_list_api(mocker):
     """Test that the User-Agent header is included in List API requests."""
     from geocodio import __version__
 
-    # Mock the httpx.Client.request method
-    mock_httpx_request = mocker.patch("httpx.Client.request")
+    # Mock the httpx2.Client.request method
+    mock_httpx_request = mocker.patch("httpx2.Client.request")
     mock_httpx_request.return_value = httpx.Response(
         200,
         json={

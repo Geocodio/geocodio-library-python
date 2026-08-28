@@ -6,9 +6,81 @@ import logging
 import os
 
 import pytest
+import httpx2 as httpx
 from dotenv import load_dotenv
 
 from geocodio import Geocodio
+
+
+class _HttpxMock:
+    """Simple compatibility replacement for pytest-httpx's httpx_mock fixture."""
+
+    def __init__(self):
+        self._callbacks = []
+
+    def add_callback(self, callback=None, **kwargs):
+        if callback is None:
+            raise ValueError("callback is required")
+        self._callbacks.append(callback)
+
+    def add_response(
+        self,
+        *,
+        url=None,
+        match_headers=None,
+        status_code=200,
+        headers=None,
+        content=None,
+        json=None,
+        text=None,
+    ):
+        self._callbacks.append(
+            lambda request: httpx.Response(
+                status_code,
+                headers=headers,
+                content=content,
+                json=json,
+                text=text,
+            )
+        )
+
+    def _assert_options(self):
+        assert not self._callbacks, (
+            "The following responses are mocked but not requested: "
+            f"{self._callbacks}"
+        )
+
+
+@pytest.fixture
+def httpx_mock(monkeypatch):
+    """Patch httpx2 transport methods to satisfy the tests' httpx_mock API."""
+    mock = _HttpxMock()
+    real_handle_request = httpx.HTTPTransport.handle_request
+
+    def mocked_handle_request(transport, request):
+        if not mock._callbacks:
+            return real_handle_request(transport, request)
+        callback = mock._callbacks.pop(0)
+        return callback(request)
+
+    monkeypatch.setattr(httpx.HTTPTransport, "handle_request", mocked_handle_request)
+
+    real_handle_async_request = httpx.AsyncHTTPTransport.handle_async_request
+
+    async def mocked_handle_async_request(transport, request):
+        if not mock._callbacks:
+            return await real_handle_async_request(transport, request)
+        callback = mock._callbacks.pop(0)
+        return callback(request)
+
+    monkeypatch.setattr(
+        httpx.AsyncHTTPTransport,
+        "handle_async_request",
+        mocked_handle_async_request,
+    )
+
+    yield mock
+    mock._assert_options()
 
 # Load environment variables from .env file
 load_dotenv()
