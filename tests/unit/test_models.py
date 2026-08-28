@@ -14,6 +14,7 @@ from geocodio.models import (
     GeocodioFields,
     Housing,
     Location,
+    RateLimit,
     SchoolDistrict,
     Social,
     StateLegislativeDistrict,
@@ -397,3 +398,109 @@ def test_ffiec_data():
     data = {"extra_field": "extra value"}
     ffiec = FFIECData.from_api(data)
     assert ffiec.get_extra("extra_field") == "extra value"
+
+
+def test_census_accessors():
+    """fields.census exposes the census append like every other append."""
+    fields = GeocodioFields(
+        _census={
+            "census2020": CensusData.from_api(
+                {"census_year": 2020, "full_fips": "500110960100000"}
+            ),
+            "census2023": CensusData.from_api(
+                {"census_year": 2023, "full_fips": "500110960102004"}
+            ),
+        }
+    )
+
+    # The public accessor returns the most recent vintage
+    assert fields.census is not None
+    assert fields.census.census_year == 2023
+    assert fields.census.full_fips == "500110960102004"
+
+    # A specific vintage can be requested in any form
+    assert fields.get_census(2020).census_year == 2020
+    assert fields.get_census("2020").census_year == 2020
+    assert fields.get_census("census2020").census_year == 2020
+    assert fields.get_census(1999) is None
+
+    # Supporting accessors
+    assert fields.census_years == [2020, 2023]
+    assert sorted(fields.census_data) == ["census2020", "census2023"]
+
+    # Backward compatibility: dynamic attributes and the private dict
+    assert fields.census2023.full_fips == "500110960102004"
+    assert fields._census["census2023"].full_fips == "500110960102004"
+
+
+def test_census_accessors_without_census_data():
+    """fields.census is None when no census field was requested."""
+    fields = GeocodioFields()
+
+    assert fields.census is None
+    assert fields.get_census() is None
+    assert fields.get_census(2023) is None
+    assert fields.census_years == []
+    assert fields.census_data == {}
+
+
+def test_rate_limit_from_headers():
+    """Rate limit state is parsed from the X-RateLimit-* headers."""
+    rate_limit = RateLimit.from_headers(
+        {
+            "Content-Type": "application/json",
+            "X-RateLimit-Limit": "1000",
+            "X-RateLimit-Remaining": "999",
+            "X-RateLimit-Period": "60",
+        }
+    )
+
+    assert rate_limit is not None
+    assert rate_limit.limit == 1000
+    assert rate_limit.remaining == 999
+    assert rate_limit.period == 60
+    assert rate_limit.reset is None
+    assert rate_limit.headers == {
+        "x-ratelimit-limit": "1000",
+        "x-ratelimit-remaining": "999",
+        "x-ratelimit-period": "60",
+    }
+
+
+def test_rate_limit_from_headers_without_rate_limit_headers():
+    """No rate limit headers means no RateLimit object."""
+    assert RateLimit.from_headers({"Content-Type": "application/json"}) is None
+    assert RateLimit.from_headers(None) is None
+
+
+def test_rate_limit_from_headers_with_unparseable_values():
+    """Non-numeric header values are ignored rather than raising."""
+    rate_limit = RateLimit.from_headers(
+        {"X-RateLimit-Limit": "unlimited", "X-RateLimit-Remaining": "5"}
+    )
+
+    assert rate_limit is not None
+    assert rate_limit.limit is None
+    assert rate_limit.remaining == 5
+
+
+def test_geocoding_result_raw_defaults():
+    """raw defaults to an empty dict and to_dict() returns a copy."""
+    result = GeocodingResult(
+        address_components=AddressComponents.from_api({}),
+        formatted_address="",
+        location=None,
+        accuracy=0.0,
+        accuracy_type="",
+        source="",
+        raw={"formatted_address": "", "match_type": None},
+    )
+
+    assert result.to_dict() == {"formatted_address": "", "match_type": None}
+    result.to_dict()["formatted_address"] = "mutated"
+    assert result.raw["formatted_address"] == ""
+
+    response = GeocodingResponse()
+    assert response.raw == {}
+    assert response.to_dict() == {}
+    assert response.rate_limit is None

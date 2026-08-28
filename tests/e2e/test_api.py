@@ -700,3 +700,59 @@ def test_integration_with_congressional_district_variants(client):
             assert district.congress_number is not None
             if district.ocd_id:
                 assert isinstance(district.ocd_id, str)
+
+
+def test_integration_census_public_accessor(client):
+    """Census appends are reachable without touching private attributes."""
+    response = client.geocode(
+        "1109 N Highland St, Arlington, VA", fields=["census2023"]
+    )
+    fields = response.results[0].fields
+
+    assert fields is not None
+    assert fields.census is not None
+    assert fields.census.census_year == 2023
+    assert fields.census.full_fips is not None
+    assert fields.census_years == [2023]
+    assert fields.get_census(2023) is fields.census
+
+    # Backward compatible access paths still work
+    assert fields.census2023 is fields.census
+
+
+def test_integration_match_type_and_address_lines(client):
+    """match_type and address_lines are carried through from the API."""
+    response = client.geocode("1109 N Highland St, Arlington, VA")
+    result = response.results[0]
+
+    assert result.address_lines is not None
+    assert result.address_lines[0] == "1109 N Highland St"
+    # match_type is nullable, but the attribute must exist and match the payload
+    assert result.match_type == result.raw.get("match_type")
+
+
+def test_integration_raw_payload(client):
+    """The untouched API payload is available on the response and results."""
+    response = client.geocode(
+        "1109 N Highland St, Arlington, VA", fields=["census2023"]
+    )
+
+    assert "results" in response.raw
+    raw_result = response.raw["results"][0]
+    assert response.results[0].raw == raw_result
+
+    # Nothing the API sent is dropped from the raw payload
+    assert "match_type" in raw_result
+    assert "address_lines" in raw_result
+    assert raw_result["fields"]["census"]["2023"]["full_fips"] is not None
+
+
+def test_integration_rate_limit_headers(client):
+    """Rate limit headers are exposed on the response and the client."""
+    response = client.geocode("1109 N Highland St, Arlington, VA")
+
+    assert response.rate_limit is not None
+    assert response.rate_limit.limit is not None
+    assert response.rate_limit.remaining is not None
+    assert response.rate_limit.limit >= response.rate_limit.remaining
+    assert client.rate_limit == response.rate_limit

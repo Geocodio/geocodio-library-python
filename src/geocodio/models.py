@@ -5,6 +5,7 @@ Dataclass representations of Geocodio API responses and related objects.
 
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar
 
@@ -398,6 +399,48 @@ class GeocodioFields:
     # Internal storage for census data (all years dynamically accessible)
     _census: Dict[str, CensusData] = field(default_factory=dict, repr=False)
 
+    @property
+    def census(self) -> Optional[CensusData]:
+        """
+        The census append, exposed like every other append on this object.
+
+        Geocodio keys census data by vintage (``census2020``, ``census2023``,
+        …). Requesting a single census field – the common case – makes
+        ``fields.census`` that field. When several vintages are present the
+        most recent one is returned; use :meth:`get_census` to pick one.
+        """
+        return self.get_census()
+
+    @property
+    def census_years(self) -> List[int]:
+        """Census vintages present on this result, oldest first."""
+        return sorted(int(name[6:]) for name in self._census if name[6:].isdigit())
+
+    @property
+    def census_data(self) -> Dict[str, CensusData]:
+        """All census vintages, keyed as requested (``{"census2023": ...}``)."""
+        return dict(self._census)
+
+    def get_census(self, year: Optional[Any] = None) -> Optional[CensusData]:
+        """
+        Return the census append for ``year``.
+
+        ``year`` accepts the vintage in any form the API or a caller might use
+        – ``2023``, ``"2023"`` or ``"census2023"``. Omit it to get the most
+        recent vintage on this result. Returns ``None`` when the requested
+        vintage was not appended.
+        """
+        if year is None:
+            years = self.census_years
+            if not years:
+                return None
+            return self._census.get(f"census{years[-1]}")
+
+        key = str(year)
+        if not key.startswith("census"):
+            key = f"census{key}"
+        return self._census.get(key)
+
     def __getattr__(self, name: str):
         """
         Dynamic attribute access for census years (census2020, census2025, etc.).
@@ -416,6 +459,62 @@ class GeocodioFields:
 
         raise AttributeError(
             f"'{type(self).__name__}' object has no attribute '{name}'"
+        )
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Rate limiting
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+@dataclass(slots=True, frozen=True)
+class RateLimit:
+    """
+    Rate limit state as reported by the ``X-RateLimit-*`` response headers.
+
+    Attributes:
+        limit: Requests allowed in the current window.
+        remaining: Requests left in the current window.
+        reset: Unix timestamp when the window resets, when the API sends it.
+        period: Length of the window in seconds, when the API sends it.
+        headers: The raw ``x-ratelimit-*`` headers, lowercased.
+    """
+
+    limit: Optional[int] = None
+    remaining: Optional[int] = None
+    reset: Optional[int] = None
+    period: Optional[int] = None
+    headers: Dict[str, str] = field(default_factory=dict, repr=False)
+
+    @classmethod
+    def from_headers(cls, headers: Any) -> Optional["RateLimit"]:
+        """
+        Build a RateLimit from response headers, or None when the response
+        carries no rate limit information.
+        """
+        if headers is None:
+            return None
+
+        raw = {
+            key.lower(): value
+            for key, value in headers.items()
+            if key.lower().startswith("x-ratelimit-")
+        }
+        if not raw:
+            return None
+
+        def as_int(name: str) -> Optional[int]:
+            try:
+                return int(raw[f"x-ratelimit-{name}"])
+            except (KeyError, TypeError, ValueError):
+                return None
+
+        return cls(
+            limit=as_int("limit"),
+            remaining=as_int("remaining"),
+            reset=as_int("reset"),
+            period=as_int("period"),
+            headers=raw,
         )
 
 
@@ -691,20 +790,50 @@ class GeocodingResult:
     fields: Optional[GeocodioFields] = None
     query: str = ""
     stable_address_key: Optional[str] = None
+    match_type: Optional[str] = None
+    address_lines: Optional[List[str]] = None
+    raw: Dict[str, Any] = field(default_factory=dict, repr=False)
 
     @property
     def matched(self) -> bool:
         """True when the API returned coordinates for this query."""
         return self.location is not None
 
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        The untouched JSON object the API returned for this result.
+
+        Unlike ``dataclasses.asdict()`` this keeps every key the API sent,
+        including any the models do not (yet) map. Empty for a query the API
+        returned no match for – the full payload is still on
+        ``GeocodingResponse.raw``.
+        """
+        return copy.deepcopy(self.raw)
+
 
 @dataclass(slots=True, frozen=True)
 class GeocodingResponse:
     """
     Top‑level structure returned by client.geocode() / client.reverse().
+
+    Attributes:
+        results: Flat list of results, one per submitted query.
+        raw: The untouched JSON payload as returned by the API.
+        rate_limit: Rate limit state from the response headers, when present.
     """
 
     results: List[GeocodingResult] = field(default_factory=list)
+    raw: Dict[str, Any] = field(default_factory=dict, repr=False)
+    rate_limit: Optional[RateLimit] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        The untouched JSON payload as returned by the API.
+
+        Cache this to avoid re-fetching (and re-paying for) a lookup when a
+        new derived column is needed later.
+        """
+        return copy.deepcopy(self.raw)
 
 
 @dataclass(slots=True, frozen=True)

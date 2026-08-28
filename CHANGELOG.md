@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Public census accessors on `GeocodioFields`: `fields.census` (the requested append, most recent vintage when several are present), `fields.get_census(year)` (accepts `2023`, `"2023"` or `"census2023"`), `fields.census_years` and `fields.census_data`. The private `fields._census` dict and the dynamic `fields.census2023` attributes are unchanged.
+- `GeocodingResult.match_type` and `GeocodingResult.address_lines`, both of which the API returns on every result and the model previously dropped.
+- Raw response access: `GeocodingResponse.raw` / `.to_dict()` for the full untouched JSON payload, and `GeocodingResult.raw` / `.to_dict()` for a single result. Unlike `dataclasses.asdict()` these keep every key the API sent.
+- Rate limit headers are parsed into a `RateLimit` model, exposed as `GeocodingResponse.rate_limit` and `Geocodio.rate_limit` (updated on every request, including ones that raise).
+
 ## [1.3.0] - 2026-08-25
 
 ### Added
