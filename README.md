@@ -172,6 +172,49 @@ response.rate_limit.reset      # unix timestamp, when sent by the API
 client.rate_limit              # the most recent rate limit state seen
 ```
 
+### Warnings
+
+The API reports non-fatal advisories under a `_warnings` key — a misspelled
+field name, an unexpected query parameter, a superseded API version, or an
+append that had to be skipped. The request still succeeds, so nothing is raised
+or logged; the warnings are parsed onto the response as a `warnings` list, which
+is empty when the API sent none:
+
+```python
+response = client.geocode("1109 N Highland St, Arlington VA", fields=["congress"])
+
+for warning in response.warnings:
+    print(warning)
+    # "The field congress is not recognized. Did you mean cd?"
+```
+
+Warnings show up in a few places, depending on what raised them:
+
+| Where | Applies to |
+| -- | -- |
+| `response.warnings` | Single `geocode()` and `reverse()`. For batch requests, the de-duplicated warnings from every query |
+| `response.results[i].warnings` | An individual result, e.g. an `ffiec` append skipped because the match is not street-level. For batch requests, this also includes the warnings attached to that query |
+| `list_response.warnings` | `create_list()`, `get_list()` and `get_lists()` |
+| `job.warnings` | `create_distance_matrix_job()`, `distance_matrix_job_status()` and `distance_matrix_jobs()` |
+
+Warnings are also attached to error responses, where they are available on the
+exception:
+
+```python
+from geocodio.exceptions import GeocodioError
+
+try:
+    response = client.geocode("1109 N Highland St", fields=["congress"])
+except GeocodioError as e:
+    for warning in e.warnings:
+        print(warning)  # "The field congress is not recognized. Did you mean cd?"
+```
+
+> [!TIP]
+> Warnings are worth logging during development — they are how the API tells
+> you a field append was silently skipped, which otherwise looks like missing
+> data.
+
 ### Address components
 
 For forward geocoding requests it is possible to supply [individual address components](https://www.geocod.io/docs/#single-address) instead of a full address string:

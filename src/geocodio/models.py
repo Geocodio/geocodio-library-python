@@ -14,6 +14,21 @@ import httpx
 T = TypeVar("T", bound="ExtrasMixin")
 
 
+def parse_warnings(data: Any) -> List[str]:
+    """
+    Read the ``_warnings`` key from an API payload.
+
+    The API only sends the key when at least one warning was raised, so a
+    missing key (or a payload that is not an object) yields an empty list.
+    """
+    if not isinstance(data, dict):
+        return []
+    warnings = data.get("_warnings")
+    if not isinstance(warnings, list):
+        return []
+    return [str(warning) for warning in warnings]
+
+
 class ExtrasMixin:
     """Mixin to provide additional functionality for API response models."""
 
@@ -733,6 +748,7 @@ class DistanceJobResponse:
         total_calculations: Total number of distance calculations.
         download_url: URL to download results (when completed).
         calculations_completed: Number of completed calculations.
+        warnings: Non-fatal advisories from the API's ``_warnings`` key.
     """
 
     id: int
@@ -746,10 +762,14 @@ class DistanceJobResponse:
     download_url: Optional[str] = None
     calculations_completed: Optional[int] = None
     progress: Optional[int] = None
+    warnings: List[str] = field(default_factory=list)
 
     @classmethod
     def from_api(cls, data: Dict[str, Any]) -> "DistanceJobResponse":
         """Create from API response data."""
+        # Warnings sit beside the nested "data" key, so read them first
+        warnings = parse_warnings(data)
+
         # Handle nested "data" key for status responses
         if "data" in data and isinstance(data["data"], dict):
             data = data["data"]
@@ -771,6 +791,7 @@ class DistanceJobResponse:
             download_url=data.get("download_url"),
             calculations_completed=data.get("calculations_completed"),
             progress=data.get("progress"),
+            warnings=warnings,
         )
 
 
@@ -793,6 +814,9 @@ class GeocodingResult:
     match_type: Optional[str] = None
     address_lines: Optional[List[str]] = None
     raw: Dict[str, Any] = field(default_factory=dict, repr=False)
+    # This result's ``_warnings`` (e.g. a skipped ffiec append). For batch
+    # requests, also the warnings attached to this query's response.
+    warnings: List[str] = field(default_factory=list)
 
     @property
     def matched(self) -> bool:
@@ -820,11 +844,15 @@ class GeocodingResponse:
         results: Flat list of results, one per submitted query.
         raw: The untouched JSON payload as returned by the API.
         rate_limit: Rate limit state from the response headers, when present.
+        warnings: Non-fatal advisories from the API's ``_warnings`` key, e.g.
+            an unrecognized field name. For batch requests, the de-duplicated
+            warnings from every query's response.
     """
 
     results: List[GeocodingResult] = field(default_factory=list)
     raw: Dict[str, Any] = field(default_factory=dict, repr=False)
     rate_limit: Optional[RateLimit] = None
+    warnings: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -851,6 +879,8 @@ class ListProcessingState:
 class ListResponse:
     """
     status, download_url, expires_at are not always present.
+
+    warnings holds non-fatal advisories from the API's ``_warnings`` key.
     """
 
     id: str
@@ -859,6 +889,7 @@ class ListResponse:
     download_url: Optional[str] = None
     expires_at: Optional[str] = None
     http_response: Optional[httpx.Response] = None
+    warnings: List[str] = field(default_factory=list)
 
 
 @dataclass(slots=True, frozen=True)
@@ -876,3 +907,4 @@ class PaginatedResponse:
     first_page_url: str
     next_page_url: Optional[str] = None
     prev_page_url: Optional[str] = None
+    warnings: List[str] = field(default_factory=list)
