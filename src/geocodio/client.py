@@ -66,6 +66,7 @@ from geocodio.models import (
     Timezone,
     UKLegislativeDistrict,
     ZIP4Data,
+    parse_warnings,
 )
 
 
@@ -370,12 +371,19 @@ class Geocodio:
         exception_mappings = self.get_status_exception_mappings()
         # dump the type and content of the exception mappings for debugging
         logger.error(f"Error response: {resp.status_code} - {resp.text}")
+
+        try:
+            warnings = parse_warnings(resp.json())
+        except ValueError:
+            warnings = []
+
         if resp.status_code in exception_mappings:
             exception_class = exception_mappings[resp.status_code]
-            raise exception_class(resp.text)
+            raise exception_class(resp.text, warnings=warnings)
         else:
             raise GeocodioServerError(
-                f"Unrecognized status code {resp.status_code}: {resp.text}"
+                f"Unrecognized status code {resp.status_code}: {resp.text}",
+                warnings=warnings,
             )
 
     def _parse_geocoding_response(
@@ -395,9 +403,14 @@ class Geocodio:
             and "response" in response_json["results"][0]
         ):
             results = []
+            batch_warnings: List[str] = parse_warnings(response_json)
             for res in response_json["results"]:
                 query = res.get("query", "")
                 matches = res.get("response", {}).get("results") or []
+                query_warnings = parse_warnings(res.get("response"))
+                batch_warnings.extend(
+                    w for w in query_warnings if w not in batch_warnings
+                )
 
                 # Unmatched query (e.g. an unparseable address): keep an entry
                 # so the result list stays aligned with the submitted addresses,
@@ -412,6 +425,7 @@ class Geocodio:
                             accuracy_type="",
                             source="",
                             query=query,
+                            warnings=query_warnings,
                         )
                     )
                     continue
@@ -433,10 +447,14 @@ class Geocodio:
                         match_type=top.get("match_type"),
                         address_lines=top.get("address_lines"),
                         raw=top,
+                        warnings=query_warnings + parse_warnings(top),
                     )
                 )
             return GeocodingResponse(
-                results=results, raw=response_json, rate_limit=rate_limit
+                results=results,
+                raw=response_json,
+                rate_limit=rate_limit,
+                warnings=batch_warnings,
             )
 
         # Handle single response format
@@ -455,11 +473,15 @@ class Geocodio:
                 match_type=res.get("match_type"),
                 address_lines=res.get("address_lines"),
                 raw=res,
+                warnings=parse_warnings(res),
             )
             for res in response_json.get("results", [])
         ]
         return GeocodingResponse(
-            results=results, raw=response_json, rate_limit=rate_limit
+            results=results,
+            raw=response_json,
+            rate_limit=rate_limit,
+            warnings=parse_warnings(response_json),
         )
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -566,6 +588,7 @@ class Geocodio:
             first_page_url=pagination_info.get("first_page_url"),
             next_page_url=pagination_info.get("next_page_url"),
             prev_page_url=pagination_info.get("prev_page_url"),
+            warnings=parse_warnings(pagination_info),
         )
 
     def get_list(self, list_id: str) -> ListResponse:
@@ -617,6 +640,7 @@ class Geocodio:
             download_url=response_json.get("download_url"),
             expires_at=response_json.get("expires_at"),
             http_response=response,
+            warnings=parse_warnings(response_json),
         )
 
     @staticmethod
@@ -1365,6 +1389,7 @@ class Geocodio:
             first_page_url=pagination_info.get("first_page_url"),
             next_page_url=pagination_info.get("next_page_url"),
             prev_page_url=pagination_info.get("prev_page_url"),
+            warnings=parse_warnings(pagination_info),
         )
 
     def get_distance_matrix_job_results(
