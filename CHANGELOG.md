@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-06
+
 ### Added
 - Warnings support: the API's `_warnings` response key is now parsed into a `warnings` list on `GeocodingResponse`, `GeocodingResult`, `ListResponse`, `DistanceJobResponse` and `PaginatedResponse` (empty when the API sent none). Previously the key was only reachable through `GeocodingResponse.raw`, and was dropped entirely for list and distance matrix job responses. For batch requests, `GeocodingResult.warnings` includes the warnings attached to that query and `GeocodingResponse.warnings` holds the de-duplicated set across all queries.
 - `GeocodioError.warnings` (and `GeocodioErrorDetail.warnings`), exposing warnings attached to error responses.
