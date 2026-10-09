@@ -1168,6 +1168,7 @@ class Geocodio:
         min_duration: Optional[int] = None,
         order_by: str = DISTANCE_ORDER_BY_DISTANCE,
         sort_order: str = DISTANCE_SORT_ASC,
+        calculation_type: Optional[str] = None,
     ) -> DistanceMatrixResponse:
         """
         Calculate distance matrix (multiple origins × destinations).
@@ -1186,6 +1187,10 @@ class Geocodio:
             min_duration: Minimum duration filter (seconds, driving mode only).
             order_by: Sort results by 'distance' or 'duration'.
             sort_order: Sort direction ('asc' or 'desc').
+            calculation_type: 'matrix' (default, every origin × every destination)
+                or 'pairs' (origin i to destination i only; origins and
+                destinations must be the same length and the max/min filters
+                are not allowed).
 
         Returns:
             DistanceMatrixResponse with results for each origin.
@@ -1234,6 +1239,8 @@ class Geocodio:
             body["order_by"] = order_by
         if sort_order != DISTANCE_SORT_ASC:
             body["sort"] = sort_order
+        if calculation_type is not None:
+            body["calculation_type"] = calculation_type
 
         response = self._request(
             "POST", endpoint, json=body, timeout=self.batch_timeout
@@ -1255,6 +1262,7 @@ class Geocodio:
         min_duration: Optional[int] = None,
         order_by: str = DISTANCE_ORDER_BY_DISTANCE,
         sort_order: str = DISTANCE_SORT_ASC,
+        calculation_type: Optional[str] = None,
     ) -> DistanceJobResponse:
         """
         Create an async distance matrix job for large calculations.
@@ -1273,6 +1281,10 @@ class Geocodio:
             min_duration: Minimum duration filter (seconds, driving mode only).
             order_by: Sort results by 'distance' or 'duration'.
             sort_order: Sort direction ('asc' or 'desc').
+            calculation_type: 'matrix' (default, every origin × every destination)
+                or 'pairs' (origin i to destination i only; origins and
+                destinations must be the same length and the max/min filters
+                are not allowed).
 
         Returns:
             DistanceJobResponse with job ID and status.
@@ -1331,6 +1343,8 @@ class Geocodio:
             body["order_by"] = order_by
         if sort_order != DISTANCE_SORT_ASC:
             body["sort"] = sort_order
+        if calculation_type is not None:
+            body["calculation_type"] = calculation_type
 
         response = self._request("POST", endpoint, json=body, timeout=self.list_timeout)
         return DistanceJobResponse.from_api(response.json())
