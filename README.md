@@ -305,6 +305,8 @@ from geocodio import (
     DISTANCE_ORDER_BY_DURATION,
     DISTANCE_SORT_ASC,           # Default
     DISTANCE_SORT_DESC,
+    DISTANCE_CALCULATION_TYPE_MATRIX,  # Default - every origin × every destination (distance matrix only)
+    DISTANCE_CALCULATION_TYPE_PAIRS,   # Origin i to destination i only (distance matrix only)
 )
 ```
 
@@ -431,7 +433,13 @@ response = client.distance(
 #### Distance matrix (multiple origins × destinations)
 
 ```python
-from geocodio import Geocodio, Coordinate, DISTANCE_MODE_DRIVING, DISTANCE_UNITS_KM
+from geocodio import (
+    Geocodio,
+    Coordinate,
+    DISTANCE_MODE_DRIVING,
+    DISTANCE_UNITS_KM,
+    DISTANCE_CALCULATION_TYPE_PAIRS,
+)
 
 client = Geocodio("YOUR_API_KEY")
 
@@ -470,7 +478,17 @@ destinations = [
     Coordinate(37.7949, -122.3994, "customer_2")
 ]
 response = client.distance_matrix(origins=origins, destinations=destinations)
+
+# One-to-one pairs: origin i is measured against destination i only,
+# so each result has a single destination
+response = client.distance_matrix(
+    origins=["38.8977,-77.0365,home", "38.886672,-77.094735,office"],
+    destinations=["38.9072,-77.0369,capitol", "38.8814,-77.0916,pentagon"],
+    calculation_type=DISTANCE_CALCULATION_TYPE_PAIRS
+)
 ```
+
+> **Note:** With `DISTANCE_CALCULATION_TYPE_PAIRS`, `origins` and `destinations` must be the same length, and the `max_results`, `max_distance`, `max_duration`, `min_distance` and `min_duration` filters are not supported. The API returns a 422 error otherwise.
 
 #### Nearest mode (find closest destinations)
 
@@ -522,7 +540,12 @@ response = client.distance_matrix(
 For large distance matrix calculations, use async jobs that process in the background.
 
 ```python
-from geocodio import Geocodio, DISTANCE_MODE_DRIVING, DISTANCE_UNITS_MILES
+from geocodio import (
+    Geocodio,
+    DISTANCE_MODE_DRIVING,
+    DISTANCE_UNITS_MILES,
+    DISTANCE_CALCULATION_TYPE_PAIRS,
+)
 
 client = Geocodio("YOUR_API_KEY")
 
@@ -547,6 +570,15 @@ job = client.create_distance_matrix_job(
     destinations=67890,  # List ID
     mode=DISTANCE_MODE_STRAIGHTLINE
 )
+
+# One-to-one pairs instead of a full matrix
+job = client.create_distance_matrix_job(
+    name="Commutes",
+    origins=["38.8977,-77.0365,home", "38.886672,-77.094735,office"],
+    destinations=["38.9072,-77.0369,capitol", "38.8814,-77.0916,pentagon"],
+    calculation_type=DISTANCE_CALCULATION_TYPE_PAIRS
+)
+print(job.calculation_type)  # "pairs"
 
 # Check job status
 status = client.distance_matrix_job_status(job.id)

@@ -8,6 +8,8 @@ from .client import Geocodio
 
 # Distance API exports
 from .distance import (
+    DISTANCE_CALCULATION_TYPE_MATRIX,
+    DISTANCE_CALCULATION_TYPE_PAIRS,
     DISTANCE_MODE_DRIVING,
     DISTANCE_MODE_HAVERSINE,
     DISTANCE_MODE_STRAIGHTLINE,
@@ -52,4 +54,7 @@ __all__ = [
     # Distance sort constants
     "DISTANCE_SORT_ASC",
     "DISTANCE_SORT_DESC",
+    # Distance calculation type constants
+    "DISTANCE_CALCULATION_TYPE_MATRIX",
+    "DISTANCE_CALCULATION_TYPE_PAIRS",
 ]

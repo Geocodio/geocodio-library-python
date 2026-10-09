@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-10-12
+
+### Added
+- `calculation_type` parameter on `distance_matrix()` and `create_distance_matrix_job()`, with new `DISTANCE_CALCULATION_TYPE_MATRIX` and `DISTANCE_CALCULATION_TYPE_PAIRS` constants. `"pairs"` measures origin i against destination i only, instead of every origin against every destination.
+- `DistanceJobResponse.calculation_type`, read from job create, status and list responses (`None` when the API does not send it).
+
 ## [1.5.0] - 2026-10-06
 
 ### Added

@@ -37,6 +37,13 @@ DISTANCE_ORDER_BY_DURATION = "duration"
 DISTANCE_SORT_ASC = "asc"
 DISTANCE_SORT_DESC = "desc"
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Calculation Type Constants (distance matrix and distance matrix jobs only)
+# ──────────────────────────────────────────────────────────────────────────────
+
+DISTANCE_CALCULATION_TYPE_MATRIX = "matrix"  # Every origin × every destination
+DISTANCE_CALCULATION_TYPE_PAIRS = "pairs"  # Origin i to destination i only
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Coordinate Class
@@ -263,6 +270,9 @@ __all__ = [
     # Sort constants
     "DISTANCE_SORT_ASC",
     "DISTANCE_SORT_DESC",
+    # Calculation type constants
+    "DISTANCE_CALCULATION_TYPE_MATRIX",
+    "DISTANCE_CALCULATION_TYPE_PAIRS",
     # Classes
     "Coordinate",
     # Functions
