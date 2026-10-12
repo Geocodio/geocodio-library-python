@@ -8,6 +8,7 @@ import httpx
 import pytest
 
 from geocodio import (
+    DISTANCE_CALCULATION_TYPE_PAIRS,
     DISTANCE_MODE_DRIVING,
     DISTANCE_MODE_HAVERSINE,
     DISTANCE_MODE_STRAIGHTLINE,
@@ -441,6 +442,39 @@ class TestDistanceMatrix:
             destinations=[Coordinate(38.8895, -77.0353, "dest1")],
         )
 
+    def test_distance_matrix_sends_calculation_type(self, client, httpx_mock):
+        """Test that calculation_type is sent in the POST body when given."""
+
+        def response_callback(request):
+            body = json.loads(request.content)
+            assert body["calculation_type"] == "pairs"
+            return httpx.Response(200, json=sample_distance_matrix_response())
+
+        httpx_mock.add_callback(callback=response_callback)
+
+        client.distance_matrix(
+            origins=["38.8977,-77.0365,home", "38.886672,-77.094735,office"],
+            destinations=["38.9072,-77.0369,capitol", "38.8814,-77.0916,pentagon"],
+            calculation_type=DISTANCE_CALCULATION_TYPE_PAIRS,
+        )
+
+    def test_distance_matrix_omits_calculation_type_by_default(
+        self, client, httpx_mock
+    ):
+        """Test that calculation_type is left out when not given."""
+
+        def response_callback(request):
+            body = json.loads(request.content)
+            assert "calculation_type" not in body
+            return httpx.Response(200, json=sample_distance_matrix_response())
+
+        httpx_mock.add_callback(callback=response_callback)
+
+        client.distance_matrix(
+            origins=["38.8977,-77.0365"],
+            destinations=["38.9072,-77.0369"],
+        )
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Distance Job Method Tests
@@ -571,6 +605,57 @@ class TestDistanceJobs:
             destinations=[(38.8895, -77.0353)],
             callback_url="https://example.com/webhook",
         )
+
+    def test_create_job_sends_calculation_type(self, client, httpx_mock):
+        """Test creating a job with calculation_type."""
+
+        def response_callback(request):
+            body = json.loads(request.content)
+            assert body["calculation_type"] == "pairs"
+            return httpx.Response(200, json=sample_job_create_response())
+
+        httpx_mock.add_callback(callback=response_callback)
+
+        client.create_distance_matrix_job(
+            name="Commutes",
+            origins=[(38.8977, -77.0365), (38.886672, -77.094735)],
+            destinations=[(38.9072, -77.0369), (38.8814, -77.0916)],
+            calculation_type=DISTANCE_CALCULATION_TYPE_PAIRS,
+        )
+
+    def test_create_job_omits_calculation_type_by_default(self, client, httpx_mock):
+        """Test that calculation_type is left out of the job when not given."""
+
+        def response_callback(request):
+            body = json.loads(request.content)
+            assert "calculation_type" not in body
+            return httpx.Response(200, json=sample_job_create_response())
+
+        httpx_mock.add_callback(callback=response_callback)
+
+        client.create_distance_matrix_job(
+            name="My Job",
+            origins=[(38.8977, -77.0365)],
+            destinations=[(38.8895, -77.0353)],
+        )
+
+    def test_job_status_parses_calculation_type(self, client, httpx_mock):
+        """Test that calculation_type is read from the job response."""
+        payload = sample_job_status_response()
+        payload["data"]["calculation_type"] = "pairs"
+        httpx_mock.add_callback(
+            callback=lambda request: httpx.Response(200, json=payload)
+        )
+
+        response = client.distance_matrix_job_status(123)
+
+        assert response.calculation_type == "pairs"
+
+    def test_job_without_calculation_type_defaults_to_none(self):
+        """Test that responses predating calculation_type still parse."""
+        response = DistanceJobResponse.from_api(sample_job_create_response())
+
+        assert response.calculation_type is None
 
     def test_job_status(self, client, httpx_mock):
         """Test getting job status."""

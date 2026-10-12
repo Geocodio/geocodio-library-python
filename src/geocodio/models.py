@@ -749,6 +749,7 @@ class DistanceJobResponse:
         download_url: URL to download results (when completed).
         calculations_completed: Number of completed calculations.
         warnings: Non-fatal advisories from the API's ``_warnings`` key.
+        calculation_type: 'matrix' or 'pairs' (None if the API did not send it).
     """
 
     id: int
@@ -763,6 +764,7 @@ class DistanceJobResponse:
     calculations_completed: Optional[int] = None
     progress: Optional[int] = None
     warnings: List[str] = field(default_factory=list)
+    calculation_type: Optional[str] = None
 
     @classmethod
     def from_api(cls, data: Dict[str, Any]) -> "DistanceJobResponse":
@@ -792,6 +794,7 @@ class DistanceJobResponse:
             calculations_completed=data.get("calculations_completed"),
             progress=data.get("progress"),
             warnings=warnings,
+            calculation_type=data.get("calculation_type"),
         )
 
 
