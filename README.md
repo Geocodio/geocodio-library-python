@@ -93,7 +93,7 @@ response = client.geocode({
 
 ### Field appends
 
-Geocodio allows you to append additional data points such as congressional districts, census codes, timezone, ACS survey results, UK constituencies and wards, and [much more](https://www.geocod.io/docs/#fields).
+Geocodio allows you to append additional data points such as congressional districts, census codes, timezone, ACS survey results, UK constituencies and wards, Australian census data and electorates, and [much more](https://www.geocod.io/docs/#fields).
 
 To request additional fields, simply supply them as a list:
 
