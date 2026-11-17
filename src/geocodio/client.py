@@ -9,7 +9,7 @@ import logging
 import os
 from typing import Dict, List, Optional, Tuple, Union
 
-import httpx
+import httpx2 as httpx
 
 from geocodio._version import __version__
 

@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-import httpx
+import httpx2 as httpx
 
 from geocodio.models import AddressComponents, GeocodingResponse
 
